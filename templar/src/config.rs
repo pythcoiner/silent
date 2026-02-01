@@ -27,7 +27,10 @@ impl From<Network> for NetworkInternal {
             Network::Signet => NetworkInternal::Signet,
             Network::Testnet => NetworkInternal::Testnet,
             Network::Bitcoin => NetworkInternal::Bitcoin,
-            _ => unreachable!(),
+            // SAFETY: Network enum is defined in CXX bridge with exactly 4 variants.
+            // CXX guarantees type safety - invalid values cannot be constructed.
+            // This wildcard exists only for exhaustiveness checking.
+            _ => unreachable!("CXX enum type safety guarantees no other variants exist"),
         }
     }
 }
@@ -321,7 +324,10 @@ impl From<Network> for BtcNetwork {
             Network::Signet => BtcNetwork::Signet,
             Network::Testnet => BtcNetwork::Testnet,
             Network::Bitcoin => BtcNetwork::Bitcoin,
-            _ => unreachable!(),
+            // SAFETY: Network enum is defined in CXX bridge with exactly 4 variants.
+            // CXX guarantees type safety - invalid values cannot be constructed.
+            // This wildcard exists only for exhaustiveness checking.
+            _ => unreachable!("CXX enum type safety guarantees no other variants exist"),
         }
     }
 }
@@ -333,7 +339,9 @@ impl From<BtcNetwork> for Network {
             BtcNetwork::Signet => Network::Signet,
             BtcNetwork::Testnet => Network::Testnet,
             BtcNetwork::Bitcoin => Network::Bitcoin,
-            _ => unreachable!(),
+            // SAFETY: bitcoin::Network only has 4 variants that we explicitly handle.
+            // This wildcard exists only for exhaustiveness checking.
+            _ => unreachable!("bitcoin::Network enum only has 4 variants"),
         }
     }
 }

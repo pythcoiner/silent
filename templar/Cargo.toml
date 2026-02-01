@@ -8,6 +8,9 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 doctest = false
 
 [dependencies]
+# NOTE: Path dependency required because bwk-sp depends on workspace crates with external path dependencies
+# (spdk/*) that are not available in the git repository. Git dependency would fail to resolve.
+# Build environment requires: bwk repo at ../../bwk/ and spdk repo at ../../spdk/
 bwk-sp = { path = "../../bwk/sp" }
 bitcoin = "0.32"
 cxx = "1.0"

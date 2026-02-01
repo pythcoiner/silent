@@ -113,7 +113,8 @@ mod ffi {
 
     extern "Rust" {
         /// Create a new account from an account name (loads config from file).
-        fn new_account(account_name: String) -> Box<Account>;
+        /// Returns null on error (check logs for details).
+        fn new_account(account_name: String) -> Result<Box<Account>>;
 
         /// Start the scanner.
         fn start_scanner(self: &mut Account) -> Result<()>;

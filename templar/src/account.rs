@@ -28,8 +28,10 @@ impl Account {
     }
 
     /// Start the scanner.
-    pub fn start_scanner(&mut self) -> Result<(), AccountError> {
-        self.inner.start_scanner()
+    pub fn start_scanner(&mut self) -> Result<(), String> {
+        self.inner
+            .start_scanner()
+            .map_err(|e| format!("scanner error: {e}"))
     }
 
     /// Stop the scanner.
@@ -106,17 +108,16 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
 // CXX FFI functions
 
 /// Create a new account.
-pub fn new_account(account_name: String) -> Box<Account> {
+pub fn new_account(account_name: String) -> Result<Box<Account>, String> {
     let config = crate::config::Config::from_file(account_name)
-        .expect("failed to load config");
+        .map_err(|e| format!("failed to load config: {e}"))?;
 
-    match Account::new(config) {
-        Ok(account) => Box::new(account),
-        Err(e) => {
+    Account::new(config)
+        .map(Box::new)
+        .map_err(|e| {
             log::error!("Failed to create account: {e}");
-            panic!("Failed to create account: {e}");
-        }
-    }
+            format!("Failed to create account: {e}")
+        })
 }
 
 /// Poll result wrapper for CXX.
