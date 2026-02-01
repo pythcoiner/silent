@@ -29,6 +29,10 @@ void AppController::initState() {
 void AppController::addAccount(const QString &name) {
     auto *window = AppController::window();
     auto *win = dynamic_cast<MainWindow *>(window);
+    if (win == nullptr) {
+        qCritical() << "Failed to cast window to MainWindow";
+        return;
+    }
     if (!win->accountExists(name)) {
         auto *acc = new AccountWidget(name);
         win->insertAccount(acc, name);

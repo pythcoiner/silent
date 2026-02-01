@@ -45,11 +45,22 @@ void CreateAccount::initUI() {
     m_mnemonic_input->setMaximumHeight(80);
     layout->addRow("Mnemonic:", m_mnemonic_input);
 
-    // Generate button
+    // Generate button (disabled - proper BIP39 implementation needed)
     m_generate_btn = new QPushButton("Generate");
+    m_generate_btn->setEnabled(false);
+    m_generate_btn->setToolTip("Mnemonic generation requires proper BIP39 implementation");
     connect(m_generate_btn, &QPushButton::clicked,
             this, &CreateAccount::onGenerate);
     layout->addRow("", m_generate_btn);
+
+    // Warning label for mnemonic security
+    auto *warning_label = new QLabel(
+        "<b>WARNING:</b> Proper BIP39 mnemonic generation not yet implemented. "
+        "Please use an external tool to generate a secure mnemonic for now."
+    );
+    warning_label->setWordWrap(true);
+    warning_label->setStyleSheet("QLabel { color: red; }");
+    layout->addRow("", warning_label);
 
     // Network selector
     m_network_combo = new QComboBox();
@@ -134,9 +145,10 @@ void CreateAccount::onCreate() {
 
 void CreateAccount::onModeChanged() {
     if (m_generate_radio->isChecked()) {
-        // Generate mode: mnemonic is readonly, generate button enabled
+        // Generate mode: mnemonic is readonly, but generate button stays disabled
+        // until proper BIP39 implementation is added
         m_mnemonic_input->setReadOnly(true);
-        m_generate_btn->setEnabled(true);
+        m_generate_btn->setEnabled(false); // Keep disabled for security
     } else {
         // Restore mode: mnemonic is editable, generate button disabled
         m_mnemonic_input->setReadOnly(false);

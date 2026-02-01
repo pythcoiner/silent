@@ -81,9 +81,23 @@ void AccountController::pollNotifications() {
 
         if (flag == NotificationFlag::ScanProgress) {
             // Parse payload for height and tip
-            // Payload format expected: "height,tip" or similar
-            // For now, emit with placeholder values
-            emit scanProgress(0, 0);
+            // Payload format: "height,tip" (e.g., "100,200")
+            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+            auto parts = payload.split(",");
+            if (parts.size() == 2) {
+                bool ok1 = false, ok2 = false;
+                uint32_t height = parts[0].toUInt(&ok1);
+                uint32_t tip = parts[1].toUInt(&ok2);
+                if (ok1 && ok2) {
+                    emit scanProgress(height, tip);
+                } else {
+                    qWarning() << "Failed to parse scan progress payload:" << payload;
+                    emit scanProgress(0, 0);
+                }
+            } else {
+                qWarning() << "Invalid scan progress payload format:" << payload;
+                emit scanProgress(0, 0);
+            }
         } else if (flag == NotificationFlag::NewOutput) {
             // New output received, update coins
             pollCoins();
@@ -122,18 +136,22 @@ void AccountController::loadPanels() {
 }
 
 void AccountController::coinsClicked() {
+    qDebug() << "Coins screen not yet implemented (Phase 7)";
     this->loadPanel("coins");
 }
 
 void AccountController::sendClicked() {
+    qDebug() << "Send screen not yet implemented (Phase 7)";
     this->loadPanel("send");
 }
 
 void AccountController::receiveClicked() {
+    qDebug() << "Receive screen not yet implemented (Phase 7)";
     this->loadPanel("receive");
 }
 
 void AccountController::settingsClicked() {
+    qDebug() << "Settings screen not yet implemented (Phase 7)";
     this->loadPanel("settings");
 }
 
