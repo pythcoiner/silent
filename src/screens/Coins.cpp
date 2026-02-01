@@ -71,14 +71,23 @@ void insertCoin(QTableWidget *table, const RustCoin &coin, int index) {
         blockHeight = "Unconfirmed";
     }
 
+    auto *heightItem = new QTableWidgetItem(blockHeight);
+    heightItem->setFlags(heightItem->flags() & ~Qt::ItemIsEditable);
+    table->setItem(index, 0, heightItem);
+
+    auto op = coin.outpoint;
+    auto *outpointItem = new QTableWidgetItem(QString(op.c_str()));
+    outpointItem->setFlags(outpointItem->flags() & ~Qt::ItemIsEditable);
+    table->setItem(index, 1, outpointItem);
+
+    auto label = coin.label;
+    auto *labelItem = new QTableWidgetItem(QString(label.c_str()));
+    // Label is editable, keep default flags
+    table->setItem(index, 2, labelItem);
+
     auto *value = new QTableWidgetItem(toBitcoin(coin.value, false));
     value->setTextAlignment(Qt::AlignCenter);
-
-    table->setItem(index, 0, new QTableWidgetItem(blockHeight));
-    auto op = coin.outpoint;
-    table->setItem(index, 1, new QTableWidgetItem(QString(op.c_str())));
-    auto label = coin.label;
-    table->setItem(index, 2, new QTableWidgetItem(QString(label.c_str())));
+    value->setFlags(value->flags() & ~Qt::ItemIsEditable);
     table->setItem(index, 3, value);
 }
 
@@ -114,7 +123,12 @@ void Coins::view() {
     m_table = table;
     delete oldTable;
     table->resizeColumnsToContents();
-    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    // Enable editing only for the Label column (column 2)
+    table->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
+
+    // Connect itemChanged signal to handle label edits
+    connect(table, &QTableWidget::itemChanged, this, &Coins::onLabelEdited);
 
     auto *mainLayout = (new qontrol::Column(this))
                            ->push(m_confirmed_row)
@@ -141,6 +155,38 @@ auto Coins::getCoins() -> std::optional<QList<RustCoin>> {
         return std::nullopt;
     }
     return std::make_optional(coins);
+}
+
+void Coins::onLabelEdited(QTableWidgetItem *item) {
+    if (!item || !m_table) {
+        return;
+    }
+
+    // Only allow editing the Label column (column 2)
+    if (item->column() != 2) {
+        return;
+    }
+
+    int row = item->row();
+    if (row < 0 || row >= static_cast<int>(m_coins.size())) {
+        return;
+    }
+
+    // Get the outpoint from column 1
+    auto *outpointItem = m_table->item(row, 1);
+    if (!outpointItem) {
+        return;
+    }
+
+    QString outpoint = outpointItem->text();
+    QString newLabel = item->text();
+
+    qDebug() << "Coins::onLabelEdited() - Updating label for" << outpoint << "to" << newLabel;
+
+    // Update the coin label through the controller
+    if (m_controller) {
+        m_controller->updateCoinLabel(outpoint, newLabel);
+    }
 }
 
 } // namespace screen

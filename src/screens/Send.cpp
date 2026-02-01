@@ -19,6 +19,32 @@
 
 namespace screen {
 
+InputW::InputW(const RustCoin &coin) {
+    auto *outpointLabel = new QLabel(QString(coin.outpoint.c_str()));
+    outpointLabel->setFixedWidth(300);
+
+    auto *valueLabel = new QLabel(toBitcoin(coin.value, false));
+    valueLabel->setFixedWidth(95);
+    valueLabel->setAlignment(Qt::AlignRight);
+
+    auto *labelLabel = new QLabel(QString(coin.label.c_str()));
+    labelLabel->setFixedWidth(2 * INPUT_WIDTH);
+
+    auto *row = (new qontrol::Row)
+                    ->push(outpointLabel)
+                    ->pushSpacer(H_SPACER)
+                    ->push(valueLabel)
+                    ->pushSpacer(H_SPACER)
+                    ->push(labelLabel)
+                    ->pushSpacer();
+
+    m_widget = row;
+}
+
+auto InputW::widget() -> QWidget * {
+    return m_widget;
+}
+
 OutputW::OutputW(Send *screen, int id) {
     m_address = new QLineEdit;
     m_address->setFixedWidth(300);
@@ -158,6 +184,7 @@ Send::Send(AccountController *ctrl) {
 
 void Send::init() {
     m_outputs_column = (new qontrol::Column);
+    m_inputs_column = (new qontrol::Column);
 
     m_add_output_btn = new QPushButton("+ Add an Output");
     connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput);
@@ -193,7 +220,13 @@ void Send::view() {
     m_outputs_frame = frame(outputsView());
     delete oldOutputs;
 
+    auto *oldInputs = m_inputs_frame;
+    m_inputs_frame = frame(inputsView());
+    delete oldInputs;
+
     auto *row = (new qontrol::Row)
+                    ->push(m_inputs_frame)
+                    ->pushSpacer(20)
                     ->push(m_outputs_frame);
 
     auto *oldWidget = m_main_widget;
@@ -261,6 +294,36 @@ auto Send::outputsView() -> QWidget * {
                     ->push(warningRow)
                     ->pushSpacer(20)
                     ->push(lastRow)
+                    ->pushSpacer();
+
+    return col;
+}
+
+auto Send::inputsView() -> QWidget * {
+    auto *oldColumn = m_inputs_column;
+    m_inputs_column = new qontrol::Column;
+
+    // Display selected coins as inputs
+    for (const auto &coin : m_selected_coins) {
+        auto *input = new InputW(coin);
+        m_inputs_column->push(input->widget());
+    }
+    delete oldColumn;
+
+    auto *title = new QLabel("Selected Inputs");
+    auto font = title->font();
+    font.setPointSize(15);
+    title->setFont(font);
+
+    auto *titleRow = (new qontrol::Row)
+                         ->pushSpacer(15)
+                         ->push(title)
+                         ->pushSpacer();
+
+    auto *col = (new qontrol::Column)
+                    ->push(titleRow)
+                    ->pushSpacer(20)
+                    ->push(m_inputs_column)
                     ->pushSpacer();
 
     return col;
@@ -365,8 +428,9 @@ void Send::addCoins() {
 void Send::onCoinsSelected(const QList<RustCoin> &coins) {
     qDebug() << "Send::onCoinsSelected() - " << coins.size() << " coins selected";
 
-    // TODO: Store selected coins and use them for transaction building
-    // For now, just log the selected coins
+    // Store selected coins for transaction building
+    m_selected_coins = coins;
+
     uint64_t totalValue = 0;
     for (const auto &coin : coins) {
         totalValue += coin.value;
@@ -444,6 +508,11 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
         txTemplate.outputs.push_back(output);
     }
 
+    // Add selected coins as input outpoints
+    for (const auto &coin : m_selected_coins) {
+        txTemplate.input_outpoints.push_back(rust::String(coin.outpoint.c_str()));
+    }
+
     return txTemplate;
 }
 
@@ -517,8 +586,18 @@ void Send::simulateTransaction() {
 
 void Send::sendTransaction() {
     qDebug() << "Send::sendTransaction()";
-    // This would prepare, sign, and broadcast the transaction
-    auto *modal = new qontrol::Modal("Not Implemented", "Transaction signing and broadcasting not yet implemented");
+    // NOTE: Transaction signing and broadcasting not yet implemented.
+    // This will be implemented in a future phase. The UI and transaction
+    // preparation logic is in place and ready for integration.
+    //
+    // Implementation would involve:
+    // 1. Get transaction template via txTemplate()
+    // 2. Call m_controller->getAccount()->prepare_transaction(txTemplate)
+    // 3. Call m_controller->getAccount()->sign_and_broadcast(psbt_result)
+    // 4. Display success/failure modal with txid
+    auto *modal = new qontrol::Modal("Not Implemented",
+        "Transaction signing and broadcasting will be implemented in a future phase.\n\n"
+        "Use the Simulate button to verify transaction details.");
     AppController::execModal(modal);
 }
 

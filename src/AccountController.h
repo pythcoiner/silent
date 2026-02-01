@@ -38,6 +38,7 @@ public slots:
     void pollCoins();
     void pollNotifications();
     auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
+    void updateCoinLabel(const QString &outpoint, const QString &label);
     void stop();
 
     // Screen button actions

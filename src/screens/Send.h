@@ -18,6 +18,15 @@ class AccountController;
 namespace screen {
 class Send;
 
+class InputW {
+public:
+    InputW(const RustCoin &coin);
+    auto widget() -> QWidget *;
+
+private:
+    QWidget *m_widget = nullptr;
+};
+
 class OutputW {
 public:
     OutputW(Send *screen, int id);
@@ -83,6 +92,7 @@ protected:
     void doConnect() override;
     void view() override;
     auto outputsView() -> QWidget *;
+    auto inputsView() -> QWidget *;
     auto txTemplate() -> std::optional<TransactionTemplate>;
 
 private:
@@ -90,9 +100,11 @@ private:
     int m_output_id = 0;
     QHash<int, OutputW *> m_outputs;
     qontrol::Column *m_outputs_column = nullptr;
+    qontrol::Column *m_inputs_column = nullptr;
 
     QWidget *m_main_widget = nullptr;
     QWidget *m_outputs_frame = nullptr;
+    QWidget *m_inputs_frame = nullptr;
 
     RadioElement *m_fee_sats_vb = nullptr;
     QButtonGroup *m_fee_group = nullptr;
@@ -107,6 +119,7 @@ private:
     QPushButton *m_send_button = nullptr;
 
     bool m_broadcastable = false;
+    QList<RustCoin> m_selected_coins;
 
     auto output() -> QWidget *;
 };

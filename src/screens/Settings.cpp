@@ -1,5 +1,6 @@
 #include "Settings.h"
 #include "AccountController.h"
+#include "AppController.h"
 #include "common.h"
 #include <Qontrol>
 #include <qcombobox.h>
@@ -30,8 +31,7 @@ void Settings::actionSave() {
     qDebug() << "Settings::actionSave()";
     // TODO: Save settings to config
     auto *modal = new qontrol::Modal("Settings", "Settings saved (not yet implemented)");
-    // Note: Would need AppController to exec modal, but we don't have access here
-    // This is a placeholder for now
+    AppController::execModal(modal);
     emit configSaved();
 }
 
@@ -39,16 +39,14 @@ void Settings::actionConnect() {
     qDebug() << "Settings::actionConnect()";
     // TODO: Connect to BlindBit server
     auto *modal = new qontrol::Modal("Connect", "Connect to BlindBit (not yet implemented)");
-    // Note: Would need AppController to exec modal, but we don't have access here
-    // This is a placeholder for now
+    AppController::execModal(modal);
 }
 
 void Settings::actionDisconnect() {
     qDebug() << "Settings::actionDisconnect()";
     // TODO: Disconnect from BlindBit server
     auto *modal = new qontrol::Modal("Disconnect", "Disconnect from BlindBit (not yet implemented)");
-    // Note: Would need AppController to exec modal, but we don't have access here
-    // This is a placeholder for now
+    AppController::execModal(modal);
 }
 
 void Settings::view() {

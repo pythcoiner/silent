@@ -25,6 +25,7 @@ signals:
 
 public slots:
     void recvPayload(const CoinState &state);
+    void onLabelEdited(QTableWidgetItem *item);
 
 protected:
     void init() override;

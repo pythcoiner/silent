@@ -209,3 +209,18 @@ auto AccountController::coins() -> qontrol::Screen * {
     }
     return nullptr;
 }
+
+void AccountController::updateCoinLabel(const QString &outpoint, const QString &label) {
+    if (m_account.has_value()) {
+        try {
+            m_account.value()->update_coin_label(
+                rust::String(outpoint.toStdString()),
+                rust::String(label.toStdString())
+            );
+            // Refresh coins to show updated label
+            pollCoins();
+        } catch (const std::exception &e) {
+            qWarning() << "Failed to update coin label:" << e.what();
+        }
+    }
+}
