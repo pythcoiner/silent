@@ -1,0 +1,345 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "templar",
+    "description": "Privacy-focused desktop Bitcoin wallet using Silent Payments protocol",
+    "created_at": "2026-02-01T15:59:00Z"
+  },
+  "global_context": {
+    "plan_summary": "Desktop Bitcoin wallet modeled on qoinstr architecture (C++ Qt6 GUI + Rust backend via CXX FFI). Uses bwk-sp as the wallet backend with BlindBit for blockchain sync. SP-only addressing, all Bitcoin networks supported. No Electrum, no CoinJoin, no Nostr."
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Scaffolding",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-1.task-1",
+          "name": "Set up CMake project with Qt6 and qontrol FetchContent",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": ["../qoinstr/CMakeLists.txt"]
+          },
+          "plan_file": ".cm/plans/plan-1.md",
+          "roadmap_item_id": "phase-1-item-1"
+        },
+        {
+          "id": "phase-1.task-2",
+          "name": "Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": {
+            "files_to_read": ["../qoinstr/cpp_joinstr/Cargo.toml", "../qoinstr/cpp_joinstr/src/lib.rs", "../qoinstr/cpp_joinstr/build.rs", "../bwk/sp/Cargo.toml"]
+          },
+          "plan_file": ".cm/plans/plan-1.md",
+          "roadmap_item_id": "phase-1-item-2"
+        },
+        {
+          "id": "phase-1.task-3",
+          "name": "Create build pipeline script (build.sh: cargo build, copy libs and headers)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-1.task-1", "phase-1.task-2"],
+          "context": {
+            "files_to_read": ["../qoinstr/joinstr.sh"]
+          },
+          "plan_file": ".cm/plans/plan-1.md",
+          "roadmap_item_id": "phase-1-item-3"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Config & Account",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-2.task-1",
+          "name": "Implement Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-1.task-2"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/config.rs", "../qoinstr/cpp_joinstr/src/config.rs"]
+          },
+          "plan_file": ".cm/plans/plan-2.md",
+          "roadmap_item_id": "phase-2-item-1"
+        },
+        {
+          "id": "phase-2.task-2",
+          "name": "Implement Account struct wrapping bwk-sp::Account with CXX-exposed lifecycle methods",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-1"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs", "../qoinstr/cpp_joinstr/src/account.rs", "../qoinstr/cpp_joinstr/src/lib.rs"]
+          },
+          "plan_file": ".cm/plans/plan-2.md",
+          "roadmap_item_id": "phase-2-item-2"
+        },
+        {
+          "id": "phase-2.task-3",
+          "name": "Implement Notification polling: wrap bwk-sp mpsc Receiver into CXX-compatible try_recv",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-2"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs", "../qoinstr/cpp_joinstr/src/lib.rs"]
+          },
+          "plan_file": ".cm/plans/plan-2.md",
+          "roadmap_item_id": "phase-2-item-3"
+        },
+        {
+          "id": "phase-2.task-4",
+          "name": "Expand CXX bridge with Config, Account, Network enum, LogLevel, Notification types",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-3"],
+          "context": {
+            "files_to_read": ["../qoinstr/cpp_joinstr/src/lib.rs"]
+          },
+          "plan_file": ".cm/plans/plan-2.md",
+          "roadmap_item_id": "phase-2-item-4"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "SP Addresses & BlindBit Sync",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-3.task-1",
+          "name": "Expose SP address generation and display via CXX",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-2"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/lib.rs"]
+          },
+          "plan_file": ".cm/plans/plan-3.md",
+          "roadmap_item_id": "phase-3-item-1"
+        },
+        {
+          "id": "phase-3.task-2",
+          "name": "Expose BlindBit scanner start/stop and coin tracking via CXX",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-3", "phase-3.task-1"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/coin_store.rs", "../bwk/sp/src/scan_state.rs"]
+          },
+          "plan_file": ".cm/plans/plan-3.md",
+          "roadmap_item_id": "phase-3-item-2"
+        },
+        {
+          "id": "phase-3.task-3",
+          "name": "Expose payment history and CXX types (RustCoin, CoinState)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-3.task-2"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/tx_store.rs", "../bwk/sp/src/coin_store.rs"]
+          },
+          "plan_file": ".cm/plans/plan-3.md",
+          "roadmap_item_id": "phase-3-item-3"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Transaction Types & Simulation",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-4.task-1",
+          "name": "Define CXX-exposed TransactionTemplate, Output, TransactionSimulation structs",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-3.task-3"],
+          "context": {
+            "files_to_read": ["../qoinstr/cpp_joinstr/src/lib.rs"]
+          },
+          "plan_file": ".cm/plans/plan-4.md",
+          "roadmap_item_id": "phase-4-item-1"
+        },
+        {
+          "id": "phase-4.task-2",
+          "name": "Implement simulate_transaction method and PsbtResult wrapper",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-4.task-1"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs"]
+          },
+          "plan_file": ".cm/plans/plan-4.md",
+          "roadmap_item_id": "phase-4-item-2"
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Coin Selection, Signing & Broadcast",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-5.task-1",
+          "name": "Implement coin selection and SP transaction creation via bwk-sp",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-4.task-2"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/coin_store.rs"]
+          },
+          "plan_file": ".cm/plans/plan-5.md",
+          "roadmap_item_id": "phase-5-item-1"
+        },
+        {
+          "id": "phase-5.task-2",
+          "name": "Implement transaction signing and broadcast via ureq HTTP",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-5.task-1"],
+          "context": {
+            "files_to_read": ["../bwk/sp/src/account.rs"]
+          },
+          "plan_file": ".cm/plans/plan-5.md",
+          "roadmap_item_id": "phase-5-item-2"
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "GUI Controllers",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-6.task-1",
+          "name": "Implement AppController, MainWindow, and AccountController with timer-based polling",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-4"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/AppController.h", "../qoinstr/src/AppController.cpp", "../qoinstr/src/MainWindow.h", "../qoinstr/src/MainWindow.cpp", "../qoinstr/src/AccountController.h", "../qoinstr/src/AccountController.cpp"]
+          },
+          "plan_file": ".cm/plans/plan-6.md",
+          "roadmap_item_id": "phase-6-item-1"
+        },
+        {
+          "id": "phase-6.task-2",
+          "name": "Implement AccountWidget, MenuTab, and CreateAccount modal",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-1"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/AccountWidget.h", "../qoinstr/src/AccountWidget.cpp", "../qoinstr/src/screens/MenuTab.h", "../qoinstr/src/screens/MenuTab.cpp"]
+          },
+          "plan_file": ".cm/plans/plan-6.md",
+          "roadmap_item_id": "phase-6-item-2"
+        },
+        {
+          "id": "phase-6.task-3",
+          "name": "Update main.cpp and CMakeLists.txt for full application startup",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-2"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/main.cpp", "../qoinstr/CMakeLists.txt"]
+          },
+          "plan_file": ".cm/plans/plan-6.md",
+          "roadmap_item_id": "phase-6-item-3"
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Wallet Screens",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-7.task-1",
+          "name": "Implement Coins screen and Receive screen",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-1", "phase-3.task-3"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/screens/Coins.h", "../qoinstr/src/screens/Coins.cpp", "../qoinstr/src/screens/Receive.h", "../qoinstr/src/screens/Receive.cpp"]
+          },
+          "plan_file": ".cm/plans/plan-7.md",
+          "roadmap_item_id": "phase-7-item-1"
+        },
+        {
+          "id": "phase-7.task-2",
+          "name": "Implement Send screen with SelectCoins modal",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-1", "phase-5.task-2"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/screens/Send.h", "../qoinstr/src/screens/Send.cpp", "../qoinstr/src/screens/modals/SelectCoins.h", "../qoinstr/src/screens/modals/SelectCoins.cpp"]
+          },
+          "plan_file": ".cm/plans/plan-7.md",
+          "roadmap_item_id": "phase-7-item-2"
+        },
+        {
+          "id": "phase-7.task-3",
+          "name": "Implement Settings screen and common UI utilities",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-1"],
+          "context": {
+            "files_to_read": ["../qoinstr/src/screens/Settings.h", "../qoinstr/src/screens/Settings.cpp", "../qoinstr/src/screens/common.h", "../qoinstr/src/screens/common.cpp"]
+          },
+          "plan_file": ".cm/plans/plan-7.md",
+          "roadmap_item_id": "phase-7-item-3"
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Integration & Testing",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-8.task-1",
+          "name": "End-to-end integration testing on regtest and signet",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-7.task-1", "phase-7.task-2", "phase-7.task-3"],
+          "context": {
+            "files_to_read": []
+          },
+          "plan_file": ".cm/plans/plan-8.md",
+          "roadmap_item_id": "phase-8-item-1"
+        },
+        {
+          "id": "phase-8.task-2",
+          "name": "Multi-account testing, error handling, and edge cases",
+          "type": "test",
+          "status": "pending",
+          "depends_on": ["phase-8.task-1"],
+          "context": {
+            "files_to_read": []
+          },
+          "plan_file": ".cm/plans/plan-8.md",
+          "roadmap_item_id": "phase-8-item-2"
+        }
+      ]
+    }
+  ],
+  "current_phase": null,
+  "current_task": null,
+  "agent_history": [],
+  "log_records": []
+}
