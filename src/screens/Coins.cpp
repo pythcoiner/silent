@@ -22,13 +22,7 @@ void Coins::init() {
 }
 
 void Coins::recvPayload(const CoinState &state) {
-    // Check if state has changed
-    if (m_state.confirmed_balance == state.confirmed_balance &&
-        m_state.confirmed_count == state.confirmed_count &&
-        m_state.unconfirmed_balance == state.unconfirmed_balance &&
-        m_state.unconfirmed_count == state.unconfirmed_count) {
-        return;
-    }
+    // Always update to ensure coin list changes (like label updates) are reflected
     m_state = state;
     this->view();
     emit coinsUpdated();

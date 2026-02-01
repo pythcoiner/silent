@@ -253,8 +253,7 @@ CoinWidget::CoinWidget(const RustCoin &coin, SelectCoins *modal) {
     m_label = new QLineEdit();
     auto label = m_coin.label;
     m_label->setText(QString(label.c_str()));
-    connect(m_label, &QLineEdit::textEdited, this, &CoinWidget::updateLabel,
-            qontrol::UNIQUE);
+    m_label->setEnabled(false); // Disable editing to prevent non-persisted changes
 
     m_value = new QLineEdit();
     double fValue = m_coin.value;

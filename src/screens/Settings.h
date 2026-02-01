@@ -39,6 +39,8 @@ private:
     QPushButton *m_btn_save = nullptr;
     QPushButton *m_btn_connect = nullptr;
     QPushButton *m_btn_disconnect = nullptr;
+    QString m_current_url;
+    Network m_current_network = Network::Signet;
 };
 
 } // namespace screen

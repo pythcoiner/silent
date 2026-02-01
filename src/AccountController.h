@@ -23,6 +23,7 @@ public:
     auto getCoins() -> rust::Vec<RustCoin>;
     auto getSpAddress() -> rust::String;
     auto coins() -> qontrol::Screen *;
+    auto getAccount() -> std::optional<rust::Box<Account>> &;
 
 signals:
     void updateCoins(CoinState coins);

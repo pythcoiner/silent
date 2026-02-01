@@ -224,3 +224,7 @@ void AccountController::updateCoinLabel(const QString &outpoint, const QString &
         }
     }
 }
+
+auto AccountController::getAccount() -> std::optional<rust::Box<Account>> & {
+    return m_account;
+}
