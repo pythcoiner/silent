@@ -70,5 +70,5 @@ cargo clean --manifest-path templar/Cargo.toml && rm -rf build/ lib/
 ## Notes
 
 - Rust must be built before C++ (build.sh handles this)
-- Integration tests require a local Electrum server on regtest
+- Integration tests require a local BlindBit server on regtest
 - The build.sh script copies libtemplar.a and headers to lib/ for CMake linking
