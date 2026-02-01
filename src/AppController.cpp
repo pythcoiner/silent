@@ -44,6 +44,10 @@ void AppController::addAccount(const QString &name) {
 
 void AppController::removeAccount(const QString &account) {
     auto *win = dynamic_cast<MainWindow *>(window());
+    if (win == nullptr) {
+        qCritical() << "Failed to cast window to MainWindow";
+        return;
+    }
     win->removeAccount(account);
     m_accounts.remove(account);
 }
