@@ -23,21 +23,21 @@ Status: **Complete** (3/3)
 
 ## Phase 2: Config & Account
 
-Status: **Not Started** (0/4)
+Status: **Complete** (4/4)
 
-- [ ] Config module wrapping bwk-sp::Config
-  - [ ] Config struct with mnemonic, network, BlindBit URL
-  - [ ] JSON file persistence (~/.templar/<account>/)
-  - [ ] CXX-exposed config creation and loading
-- [ ] Account struct wrapping bwk-sp::Account
-  - [ ] Account struct with bwk-sp::Account inner
-  - [ ] CXX-exposed lifecycle methods (new, start_scanner, stop_scanner)
-- [ ] Notification polling via CXX try_recv
-  - [ ] Wrap bwk-sp mpsc Receiver
-  - [ ] CXX-compatible Poll<Notification> return type
-- [ ] CXX bridge expansion with all types
-  - [ ] Config, Account opaque types
-  - [ ] Network enum, LogLevel, Notification types
+- [x] Config module wrapping bwk-sp::Config
+  - [x] Config struct with mnemonic, network, BlindBit URL
+  - [x] JSON file persistence (~/.templar/<account>/)
+  - [x] CXX-exposed config creation and loading
+- [x] Account struct wrapping bwk-sp::Account
+  - [x] Account struct with bwk-sp::Account inner
+  - [x] CXX-exposed lifecycle methods (new, start_scanner, stop_scanner)
+- [x] Notification polling via CXX try_recv
+  - [x] Wrap bwk-sp mpsc Receiver
+  - [x] CXX-compatible Poll<Notification> return type
+- [x] CXX bridge expansion with all types
+  - [x] Config, Account opaque types
+  - [x] Network enum, LogLevel, Notification types
 
 ---
 
@@ -141,11 +141,11 @@ Status: **Not Started** (0/2)
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Scaffolding | Complete | 12/12 |
-| Phase 2: Config & Account | Not Started | 0/13 |
+| Phase 2: Config & Account | Complete | 13/13 |
 | Phase 3: SP Addresses & BlindBit Sync | Not Started | 0/10 |
 | Phase 4: Transaction Types & Simulation | Not Started | 0/7 |
 | Phase 5: Coin Selection, Signing & Broadcast | Not Started | 0/8 |
 | Phase 6: GUI Controllers | Not Started | 0/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **12/78** |
+| **Total** | | **25/78** |

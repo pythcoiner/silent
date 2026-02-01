@@ -50,6 +50,35 @@ mod ffi {
         pub payload: String,
     }
 
+    /// A coin entry from the wallet.
+    #[derive(Debug, Clone)]
+    pub struct RustCoin {
+        pub outpoint: String,
+        pub value: u64,
+        pub height: u32,
+        pub label: String,
+        pub spent: bool,
+    }
+
+    /// Summary of spendable coins.
+    #[derive(Debug, Clone)]
+    pub struct CoinState {
+        pub confirmed_count: u64,
+        pub confirmed_balance: u64,
+        pub unconfirmed_count: u64,
+        pub unconfirmed_balance: u64,
+    }
+
+    /// A transaction entry from payment history.
+    #[derive(Debug, Clone)]
+    pub struct RustTx {
+        pub txid: String,
+        pub direction: String,
+        pub amount: u64,
+        pub fee: u64,
+        pub height: u32,
+    }
+
     // ===== Opaque Rust Types =====
 
     extern "Rust" {
@@ -130,6 +159,21 @@ mod ffi {
 
         /// Get balance in satoshis.
         fn balance(self: &Account) -> u64;
+
+        /// Get the Silent Payment address.
+        fn sp_address(self: &Account) -> String;
+
+        /// Get all coins (spent and unspent).
+        fn coins(self: &Account) -> Vec<RustCoin>;
+
+        /// Get spendable coins summary.
+        fn spendable_coins(self: &Account) -> CoinState;
+
+        /// Update a coin's label.
+        fn update_coin_label(self: &mut Account, outpoint: String, label: String) -> Result<()>;
+
+        /// Get payment history.
+        fn payment_history(self: &Account) -> Vec<RustTx>;
     }
 
     // ===== Poll Methods =====

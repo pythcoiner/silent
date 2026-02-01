@@ -79,13 +79,13 @@
       "id": "phase-2",
       "name": "Config & Account",
       "plan": "",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-2.task-1",
           "name": "Implement Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-1.task-2"
           ],
@@ -105,7 +105,7 @@
           "id": "phase-2.task-2",
           "name": "Implement Account struct wrapping bwk-sp::Account with CXX-exposed lifecycle methods",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-2.task-1"
           ],
@@ -126,7 +126,7 @@
           "id": "phase-2.task-3",
           "name": "Implement Notification polling: wrap bwk-sp mpsc Receiver into CXX-compatible try_recv",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-2.task-2"
           ],
@@ -146,7 +146,7 @@
           "id": "phase-2.task-4",
           "name": "Expand CXX bridge with Config, Account, Network enum, LogLevel, Notification types",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-2.task-3"
           ],
@@ -570,6 +570,48 @@
       "started_at": "2026-02-01T16:12:44.411498417Z",
       "completed_at": "2026-02-01T16:13:29.381347894Z",
       "exit_status": 0
+    },
+    {
+      "id": "1e9b4eb2-18f5-4aac-a260-5290b4377ded",
+      "task_id": "phase-2",
+      "agent_type": "plan",
+      "started_at": "2026-02-01T16:13:29.385864049Z",
+      "completed_at": "2026-02-01T16:15:28.254574516Z",
+      "exit_status": 0
+    },
+    {
+      "id": "3cf18c66-8b07-4d2a-a138-6021a78e5d80",
+      "task_id": "phase-2",
+      "agent_type": "implem",
+      "started_at": "2026-02-01T16:15:28.256070893Z",
+      "completed_at": "2026-02-01T16:20:14.340715759Z",
+      "exit_status": 0,
+      "commit_hash": "93a19a5f09f307e1ab488c1399ab68d59d3ea26b"
+    },
+    {
+      "id": "83c1032a-c6d6-48f3-9c6b-0847aea519cb",
+      "task_id": "phase-2",
+      "agent_type": "review",
+      "started_at": "2026-02-01T16:20:15.331383187Z",
+      "completed_at": "2026-02-01T16:20:59.797320001Z",
+      "exit_status": 0
+    },
+    {
+      "id": "3e763657-eeb4-4c6b-a4e6-ca40eb60ee31",
+      "task_id": "phase-2",
+      "agent_type": "fix",
+      "started_at": "2026-02-01T16:20:59.797514305Z",
+      "completed_at": "2026-02-01T16:23:55.615920846Z",
+      "exit_status": 0,
+      "commit_hash": "69e0f74b509bdd90fc3087d990a23c24615806af"
+    },
+    {
+      "id": "886f4b93-720e-4482-aca3-b87aef76eee8",
+      "task_id": "phase-2",
+      "agent_type": "review",
+      "started_at": "2026-02-01T16:23:57.477420108Z",
+      "completed_at": "2026-02-01T16:24:51.268331644Z",
+      "exit_status": 0
     }
   ],
   "log_records": [
@@ -673,6 +715,121 @@
       "timestamp": "2026-02-01T16:13:29.381594061Z",
       "action": "task_complete",
       "task_id": "phase-1.task-3",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "0ea3e545-34ad-4786-86e7-d8a168f7d0ad",
+      "timestamp": "2026-02-01T16:13:29.385861960Z",
+      "action": "agent_spawn",
+      "task_id": "phase-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "plan",
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Config & Account\n\n## Initial Plan\n\n\n\n## Tasks in This Phase\n\n- **phase-2.task-1**: Implement Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence\n- **phase-2.task-2**: Implement Account struct wrapping bwk-sp::Account with CXX-exposed lifecycle methods\n- **phase-2.task-3**: Implement Notification polling: wrap bwk-sp mpsc Receiver into CXX-compatible try_recv\n- **phase-2.task-4**: Expand CXX bridge with Config, Account, Network enum, LogLevel, Notification types\n\n"
+      }
+    },
+    {
+      "id": "4b9a63f5-ce34-4ec7-a3e4-7999ead381f8",
+      "timestamp": "2026-02-01T16:15:28.256068375Z",
+      "action": "agent_spawn",
+      "task_id": "phase-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute tasks according to the specification provided by the manager.\n\nYou may be assigned:\n- **A single task** - implement one specific feature or fix\n- **Multiple tasks in a phase** - implement all tasks in a logical group, completing them in order\n\n## Your Responsibilities\n\n1. **Read the Task(s)**: Understand the exact requirements from each task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution(s)**: Write clean, focused code that solves each task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Complete All Tasks**: For multi-task phases, complete ALL tasks before returning\n6. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The task description(s) for this session\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project roadmap\n- Historical conversations\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block. The format depends on whether you're han\n\n... [truncated, 15486 more bytes]"
+      }
+    },
+    {
+      "id": "d89660bb-ccde-47de-b444-3c6ded0242ca",
+      "timestamp": "2026-02-01T16:20:15.331382562Z",
+      "action": "agent_spawn",
+      "task_id": "phase-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 115788 more bytes]"
+      }
+    },
+    {
+      "id": "0d6d13dc-69d0-4e7c-bbb0-1f618f58d077",
+      "timestamp": "2026-02-01T16:20:59.797322366Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "8de540af-c456-4a8f-b94e-652268f10d8d",
+      "timestamp": "2026-02-01T16:20:59.797512961Z",
+      "action": "agent_spawn",
+      "task_id": "phase-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "# Fix Agent Instructions\n\nYou are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.\n\nYou may be fixing:\n- **A single task** - fix issues from one task's review\n- **Multiple tasks in a phase** - fix all issues found across a phase's review\n\n## Your Responsibilities\n\n1. **Understand Issues**: Carefully read ALL review feedback and understand what needs to be fixed\n2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems\n3. **Fix All Issues**: For phase reviews, address ALL issues across all tasks\n4. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality\n5. **Follow Conventions**: Adhere to the project's code style and architectural patterns\n6. **Verify Changes**: Test your fixes to ensure they resolve the issues\n\n## Review Issues Format\n\nReview issues are provided as formatted text sections in your prompt. Each issue contains:\n\n- **Issue ID** and severity level (e.g., \"Issue: issue-1 (high)\")\n- **Location**: File and line number reference\n- **Problem**: Description of what's wrong\n- **Suggested Fix**: How to resolve it\n\nExample of how issues appear:\n\n```\n### Issue: issue-1 (high)\n**Location:** src/lib.rs:42\n**Problem:** Missing error handling for file read\n**Suggested Fix:** Add proper Result handling with ? operator\n```\n\nYou should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.\n\n## Fix Guidelines\n\n- **Be Precise**: Only change what's necessary to fix the identified issues\n- **Preserve Intent**: Maintain the original functionality while correcting problems\n- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase\n- **Document Changes**: Use clear commit messages that explain what was fixed and why\n\n## Code Quality Standards\n\nAll fixes must:\n- Resolve the reported issues completely\n- Follow the project's code style guidelines\n- Pass build verific\n\n... [truncated, 5881 more bytes]"
+      }
+    },
+    {
+      "id": "9388e7b2-93b2-476b-8b11-76ca7ce2e7ba",
+      "timestamp": "2026-02-01T16:23:57.477419389Z",
+      "action": "agent_spawn",
+      "task_id": "phase-2",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 117014 more bytes]"
+      }
+    },
+    {
+      "id": "ec3054eb-dae2-41d0-806c-8fa93f7cd646",
+      "timestamp": "2026-02-01T16:24:51.268338983Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "b3638bb2-5e26-4022-9c5b-ae8730d0bf0a",
+      "timestamp": "2026-02-01T16:24:51.268482622Z",
+      "action": "task_complete",
+      "task_id": "phase-2.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "86ba900d-dca7-40e5-aa67-320496ee1b4a",
+      "timestamp": "2026-02-01T16:24:51.268530488Z",
+      "action": "task_complete",
+      "task_id": "phase-2.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "441d450e-d056-4a41-abff-0b578ac0833d",
+      "timestamp": "2026-02-01T16:24:51.268573772Z",
+      "action": "task_complete",
+      "task_id": "phase-2.task-3",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "8db11037-e132-4705-a1fa-cfb5441be0de",
+      "timestamp": "2026-02-01T16:24:51.268605272Z",
+      "action": "task_complete",
+      "task_id": "phase-2.task-4",
       "data": {
         "type": "task_complete",
         "status": "completed"
