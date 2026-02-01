@@ -22,6 +22,8 @@ signals:
 
 public slots:
     void actionSave();
+    void actionConnect();
+    void actionDisconnect();
 
 protected:
     void init() override;
@@ -35,6 +37,8 @@ private:
     QLineEdit *m_blindbit_url = nullptr;
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_btn_save = nullptr;
+    QPushButton *m_btn_connect = nullptr;
+    QPushButton *m_btn_disconnect = nullptr;
 };
 
 } // namespace screen

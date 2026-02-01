@@ -162,6 +162,9 @@ void Send::init() {
     m_add_output_btn = new QPushButton("+ Add an Output");
     connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput);
 
+    m_select_coins_btn = new QPushButton("Select Coins");
+    connect(m_select_coins_btn, &QPushButton::clicked, this, &Send::addCoins);
+
     m_simulate_btn = new QPushButton("Simulate");
     connect(m_simulate_btn, &QPushButton::clicked, this, &Send::simulateTransaction);
 
@@ -219,6 +222,8 @@ auto Send::outputsView() -> QWidget * {
     auto *addOutputRow = (new qontrol::Row)
                              ->pushSpacer()
                              ->push(m_add_output_btn)
+                             ->pushSpacer()
+                             ->push(m_select_coins_btn)
                              ->pushSpacer();
 
     auto *lastRow = (new qontrol::Row)
@@ -334,12 +339,49 @@ void Send::clearOutputs() {
 }
 
 void Send::addCoins() {
-    // Not implemented in simplified version
-    qDebug() << "Manual coin selection not implemented";
+    qDebug() << "Send::addCoins() - Opening SelectCoins modal";
+
+    // Get available coins from AccountController
+    auto availableCoins = m_controller->getCoins();
+
+    // Convert rust::Vec to QList
+    QList<RustCoin> coinsList;
+    for (const auto &coin : availableCoins) {
+        coinsList.append(coin);
+    }
+
+    if (coinsList.isEmpty()) {
+        auto *modal = new qontrol::Modal("No Coins", "No spendable coins available for selection");
+        AppController::execModal(modal);
+        return;
+    }
+
+    // Create and show SelectCoins modal
+    auto *selectCoinsModal = new modal::SelectCoins(coinsList);
+    connect(selectCoinsModal, &modal::SelectCoins::coinsSelected, this, &Send::onCoinsSelected, qontrol::UNIQUE);
+    AppController::execModal(selectCoinsModal);
 }
 
 void Send::onCoinsSelected(const QList<RustCoin> &coins) {
-    // Not implemented in simplified version
+    qDebug() << "Send::onCoinsSelected() - " << coins.size() << " coins selected";
+
+    // TODO: Store selected coins and use them for transaction building
+    // For now, just log the selected coins
+    uint64_t totalValue = 0;
+    for (const auto &coin : coins) {
+        totalValue += coin.value;
+        qDebug() << "  Selected coin:" << QString(coin.outpoint.c_str())
+                 << "Value:" << coin.value;
+    }
+
+    auto *modal = new qontrol::Modal("Coins Selected",
+        QString("Selected %1 coin(s) with total value: %2 BTC")
+            .arg(coins.size())
+            .arg(toBitcoin(totalValue)));
+    AppController::execModal(modal);
+
+    // Re-process transaction with new coin selection
+    process();
 }
 
 auto RadioElement::text() -> QString {

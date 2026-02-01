@@ -100,6 +100,7 @@ private:
     QLabel *m_warning_label = nullptr;
 
     QPushButton *m_add_output_btn = nullptr;
+    QPushButton *m_select_coins_btn = nullptr;
 
     QPushButton *m_clear_outputs_btn = nullptr;
     QPushButton *m_simulate_btn = nullptr;

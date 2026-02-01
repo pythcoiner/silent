@@ -22,6 +22,8 @@ void Settings::init() {
 
 void Settings::doConnect() {
     connect(m_btn_save, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
+    connect(m_btn_connect, &QPushButton::clicked, this, &Settings::actionConnect, qontrol::UNIQUE);
+    connect(m_btn_disconnect, &QPushButton::clicked, this, &Settings::actionDisconnect, qontrol::UNIQUE);
 }
 
 void Settings::actionSave() {
@@ -31,6 +33,22 @@ void Settings::actionSave() {
     // Note: Would need AppController to exec modal, but we don't have access here
     // This is a placeholder for now
     emit configSaved();
+}
+
+void Settings::actionConnect() {
+    qDebug() << "Settings::actionConnect()";
+    // TODO: Connect to BlindBit server
+    auto *modal = new qontrol::Modal("Connect", "Connect to BlindBit (not yet implemented)");
+    // Note: Would need AppController to exec modal, but we don't have access here
+    // This is a placeholder for now
+}
+
+void Settings::actionDisconnect() {
+    qDebug() << "Settings::actionDisconnect()";
+    // TODO: Disconnect from BlindBit server
+    auto *modal = new qontrol::Modal("Disconnect", "Disconnect from BlindBit (not yet implemented)");
+    // Note: Would need AppController to exec modal, but we don't have access here
+    // This is a placeholder for now
 }
 
 void Settings::view() {
@@ -65,8 +83,17 @@ void Settings::view() {
                             ->pushSpacer();
 
     m_btn_save = new QPushButton("Save");
+    m_btn_connect = new QPushButton("Connect");
+    m_btn_disconnect = new QPushButton("Disconnect");
 
-    auto *saveRow = (new qontrol::Row)->pushSpacer()->push(m_btn_save)->pushSpacer();
+    auto *buttonRow = (new qontrol::Row)
+                          ->pushSpacer()
+                          ->push(m_btn_connect)
+                          ->pushSpacer(H_SPACER)
+                          ->push(m_btn_disconnect)
+                          ->pushSpacer(H_SPACER)
+                          ->push(m_btn_save)
+                          ->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->pushSpacer(50)
@@ -74,7 +101,7 @@ void Settings::view() {
                     ->pushSpacer(V_SPACER)
                     ->push(network_row)
                     ->pushSpacer(30)
-                    ->push(saveRow)
+                    ->push(buttonRow)
                     ->pushSpacer();
 
     auto *row = (new qontrol::Row)->pushSpacer()->push(col)->pushSpacer()->pushSpacer();
