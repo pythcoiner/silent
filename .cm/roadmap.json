@@ -184,17 +184,17 @@
         {
           "id": "phase-3-item-1",
           "name": "SP address generation and display",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-3-item-1.sub-0",
               "name": "SP receive address from mnemonic via SpClient",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-3-item-1.sub-1",
               "name": "CXX-exposed address display",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -204,22 +204,22 @@
         {
           "id": "phase-3-item-2",
           "name": "BlindBit scanner and coin tracking",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-3-item-2.sub-0",
               "name": "start_scanner/stop_scanner exposed via CXX",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-3-item-2.sub-1",
               "name": "SpCoinStore wrapped with coin list and balances",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-3-item-2.sub-2",
               "name": "RustCoin and CoinState CXX types",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -229,17 +229,17 @@
         {
           "id": "phase-3-item-3",
           "name": "Payment history via CXX",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-3-item-3.sub-0",
               "name": "SpTxStore wrapped for transaction list",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-3-item-3.sub-1",
               "name": "Transaction history exposed via CXX",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

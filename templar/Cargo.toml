@@ -12,6 +12,7 @@ doctest = false
 # (spdk/*) that are not available in the git repository. Git dependency would fail to resolve.
 # Build environment requires: bwk repo at ../../bwk/ and spdk repo at ../../spdk/
 bwk-sp = { path = "../../bwk/sp" }
+spdk-core = { path = "../../spdk/spdk-core", default-features = false, features = ["sync", "bitcoin_32"] }
 bitcoin = "0.32"
 cxx = "1.0"
 serde = { version = "1.0", features = ["derive"] }

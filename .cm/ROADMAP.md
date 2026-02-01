@@ -43,18 +43,18 @@ Status: **Complete** (4/4)
 
 ## Phase 3: SP Addresses & BlindBit Sync
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] SP address generation and display
-  - [ ] SP receive address from mnemonic via SpClient
-  - [ ] CXX-exposed address display
-- [ ] BlindBit scanner and coin tracking
-  - [ ] start_scanner/stop_scanner exposed via CXX
-  - [ ] SpCoinStore wrapped with coin list and balances
-  - [ ] RustCoin and CoinState CXX types
-- [ ] Payment history via CXX
-  - [ ] SpTxStore wrapped for transaction list
-  - [ ] Transaction history exposed via CXX
+- [x] SP address generation and display
+  - [x] SP receive address from mnemonic via SpClient
+  - [x] CXX-exposed address display
+- [x] BlindBit scanner and coin tracking
+  - [x] start_scanner/stop_scanner exposed via CXX
+  - [x] SpCoinStore wrapped with coin list and balances
+  - [x] RustCoin and CoinState CXX types
+- [x] Payment history via CXX
+  - [x] SpTxStore wrapped for transaction list
+  - [x] Transaction history exposed via CXX
 
 ---
 
@@ -142,10 +142,10 @@ Status: **Not Started** (0/2)
 |-------|--------|----------|
 | Phase 1: Scaffolding | Complete | 12/12 |
 | Phase 2: Config & Account | Complete | 13/13 |
-| Phase 3: SP Addresses & BlindBit Sync | Not Started | 0/10 |
+| Phase 3: SP Addresses & BlindBit Sync | Complete | 10/10 |
 | Phase 4: Transaction Types & Simulation | Not Started | 0/7 |
 | Phase 5: Coin Selection, Signing & Broadcast | Not Started | 0/8 |
 | Phase 6: GUI Controllers | Not Started | 0/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **25/78** |
+| **Total** | | **35/78** |

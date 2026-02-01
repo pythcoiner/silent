@@ -5,9 +5,10 @@
 use std::sync::mpsc;
 
 use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification};
+use spdk_core::{RecipientAddress, SilentPaymentUnsignedTransaction};
 
 use crate::config::Config;
-use crate::ffi::{CoinState, Notification, NotificationFlag, RustCoin, RustTx};
+use crate::ffi::{CoinState, Notification, NotificationFlag, RustCoin, RustTx, TransactionSimulation, TransactionTemplate};
 
 /// Account wrapping bwk-sp::Account.
 pub struct Account {
@@ -139,6 +140,118 @@ impl Account {
             })
             .collect()
     }
+
+    /// Simulate a transaction without actually creating it.
+    pub fn simulate_transaction(&self, tx_template: TransactionTemplate) -> TransactionSimulation {
+        use bitcoin::Amount;
+        use spdk_core::FeeRate;
+
+        // Parse outputs and check for send_max flag
+        let mut recipients = Vec::new();
+        let mut has_send_max = false;
+        let mut send_max_addr = None;
+
+        for output in tx_template.outputs {
+            // Parse address
+            let addr = match RecipientAddress::try_from(output.address.clone()) {
+                Ok(a) => a,
+                Err(e) => {
+                    return TransactionSimulation {
+                        is_valid: false,
+                        fee: 0,
+                        weight: 0,
+                        input_total: 0,
+                        output_total: 0,
+                        input_count: 0,
+                        error: format!("Invalid address '{}': {}", output.address, e),
+                    };
+                }
+            };
+
+            if output.send_max {
+                if has_send_max {
+                    return TransactionSimulation {
+                        is_valid: false,
+                        fee: 0,
+                        weight: 0,
+                        input_total: 0,
+                        output_total: 0,
+                        input_count: 0,
+                        error: String::from("Only one output can have send_max=true"),
+                    };
+                }
+                has_send_max = true;
+                send_max_addr = Some(addr);
+            } else {
+                recipients.push((addr, Amount::from_sat(output.amount)));
+            }
+        }
+
+        // Convert fee rate (ensure it's at least 1.0 sat/vb)
+        let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
+
+        // Create the unsigned transaction
+        let unsigned_tx_result = if has_send_max {
+            if !recipients.is_empty() {
+                return TransactionSimulation {
+                    is_valid: false,
+                    fee: 0,
+                    weight: 0,
+                    input_total: 0,
+                    output_total: 0,
+                    input_count: 0,
+                    error: String::from("send_max cannot be combined with other outputs"),
+                };
+            }
+            self.inner.create_drain_transaction(send_max_addr.unwrap(), fee_rate)
+        } else {
+            self.inner.create_transaction(recipients, fee_rate)
+        };
+
+        // Extract simulation data
+        match unsigned_tx_result {
+            Ok(unsigned_tx) => {
+                let input_total: u64 = unsigned_tx.selected_utxos.iter()
+                    .map(|(_, owned)| owned.amount.to_sat())
+                    .sum();
+                let output_total: u64 = unsigned_tx.recipients.iter()
+                    .map(|r| r.amount.to_sat())
+                    .sum();
+                let fee = input_total.saturating_sub(output_total);
+                let input_count = unsigned_tx.selected_utxos.len() as u64;
+
+                // Estimate weight from unsigned_tx if available
+                let weight = if let Some(ref tx) = unsigned_tx.unsigned_tx {
+                    tx.weight().to_wu()
+                } else {
+                    // Rough estimate: 4 * vsize, where vsize ≈ fee / fee_rate
+                    let vbytes = (fee as f64 / tx_template.fee_rate).ceil() as u64;
+                    vbytes * 4
+                };
+
+                TransactionSimulation {
+                    is_valid: true,
+                    fee,
+                    weight,
+                    input_total,
+                    output_total,
+                    input_count,
+                    error: String::new(),
+                }
+            }
+            Err(e) => {
+                TransactionSimulation {
+                    is_valid: false,
+                    fee: 0,
+                    weight: 0,
+                    input_total: 0,
+                    output_total: 0,
+                    input_count: 0,
+                    error: e.to_string(),
+                }
+            }
+        }
+    }
 }
 
 /// Convert bwk-sp::Notification to Templar Notification.
@@ -247,5 +360,45 @@ impl Poll {
     /// Get error message.
     pub fn get_error(&self) -> String {
         self.error.clone()
+    }
+}
+
+/// PsbtResult wrapper for CXX.
+pub struct PsbtResult {
+    inner: Result<SilentPaymentUnsignedTransaction, String>,
+}
+
+impl PsbtResult {
+    /// Check if result is valid.
+    pub fn is_ok(&self) -> bool {
+        self.inner.is_ok()
+    }
+
+    /// Get error message (only valid if !is_ok()).
+    pub fn get_psbt_error(&self) -> String {
+        match &self.inner {
+            Ok(_) => String::new(),
+            Err(e) => e.clone(),
+        }
+    }
+
+    /// Get transaction ID preview (only valid if is_ok()).
+    pub fn get_txid_preview(&self) -> String {
+        match &self.inner {
+            Ok(unsigned_tx) => {
+                if let Some(ref tx) = unsigned_tx.unsigned_tx {
+                    tx.compute_txid().to_string()
+                } else {
+                    String::from("[not finalized]")
+                }
+            }
+            Err(_) => String::new(),
+        }
+    }
+
+    /// Internal: get the unsigned transaction (for signing later)
+    #[allow(dead_code)]
+    pub(crate) fn into_inner(self) -> Result<SilentPaymentUnsignedTransaction, String> {
+        self.inner
     }
 }

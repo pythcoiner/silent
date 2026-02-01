@@ -79,6 +79,49 @@ mod ffi {
         pub height: u32,
     }
 
+    /// Transaction output specification.
+    #[derive(Debug, Clone)]
+    pub struct Output {
+        /// Recipient address (SP address, legacy address, or hex data for OP_RETURN)
+        pub address: String,
+        /// Amount in satoshis (must be 0 for OP_RETURN outputs)
+        pub amount: u64,
+        /// Optional label for this output
+        pub label: String,
+        /// If true, send maximum possible amount (minus fees) to this output
+        pub send_max: bool,
+    }
+
+    /// Template for creating a transaction.
+    #[derive(Debug, Clone)]
+    pub struct TransactionTemplate {
+        /// List of output specifications
+        pub outputs: Vec<Output>,
+        /// Fee rate in sat/vbyte
+        pub fee_rate: f64,
+        /// Optional: specific UTXOs to use (empty = automatic selection)
+        pub input_outpoints: Vec<String>,
+    }
+
+    /// Result of transaction simulation.
+    #[derive(Debug, Clone)]
+    pub struct TransactionSimulation {
+        /// Whether the transaction can be created with current funds
+        pub is_valid: bool,
+        /// Estimated fee in satoshis (0 if invalid)
+        pub fee: u64,
+        /// Estimated weight in weight units (0 if invalid)
+        pub weight: u64,
+        /// Total input amount in satoshis (0 if invalid)
+        pub input_total: u64,
+        /// Total output amount in satoshis (0 if invalid)
+        pub output_total: u64,
+        /// Number of inputs selected (0 if invalid)
+        pub input_count: u64,
+        /// Error message (empty if valid)
+        pub error: String,
+    }
+
     // ===== Opaque Rust Types =====
 
     extern "Rust" {
@@ -90,6 +133,9 @@ mod ffi {
 
         /// Poll result for checking notifications.
         type Poll;
+
+        /// Result wrapper for unsigned transactions.
+        type PsbtResult;
     }
 
     // ===== Config Methods =====
@@ -174,6 +220,10 @@ mod ffi {
 
         /// Get payment history.
         fn payment_history(self: &Account) -> Vec<RustTx>;
+
+        /// Simulate a transaction to check feasibility and estimate fees.
+        /// Returns simulation result with fee, weight, and validity info.
+        fn simulate_transaction(self: &Account, tx_template: TransactionTemplate) -> TransactionSimulation;
     }
 
     // ===== Poll Methods =====
@@ -188,9 +238,22 @@ mod ffi {
         /// Get error message (if any).
         fn get_error(self: &Poll) -> String;
     }
+
+    // ===== PsbtResult Methods =====
+
+    extern "Rust" {
+        /// Check if result is valid.
+        fn is_ok(self: &PsbtResult) -> bool;
+
+        /// Get error message (only valid if !is_ok()).
+        fn get_psbt_error(self: &PsbtResult) -> String;
+
+        /// Get transaction ID preview (only valid if is_ok()).
+        fn get_txid_preview(self: &PsbtResult) -> String;
+    }
 }
 
 // Re-export main types
-pub use account::{new_account, Account, Poll};
+pub use account::{new_account, Account, Poll, PsbtResult};
 pub use config::{config_from_file, list_configs, new_config, Config};
-pub use ffi::{LogLevel, Network, Notification, NotificationFlag};
+pub use ffi::{LogLevel, Network, Notification, NotificationFlag, Output, TransactionTemplate, TransactionSimulation};
