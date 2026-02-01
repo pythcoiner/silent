@@ -13,45 +13,67 @@
       "id": "phase-1",
       "name": "Scaffolding",
       "plan": "",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-1.task-1",
           "name": "Set up CMake project with Qt6 and qontrol FetchContent",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [],
           "context": {
-            "files_to_read": ["../qoinstr/CMakeLists.txt"]
+            "files_to_read": [
+              "../qoinstr/CMakeLists.txt"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-1.md",
-          "roadmap_item_id": "phase-1-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-1-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-1.task-2",
           "name": "Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [],
           "context": {
-            "files_to_read": ["../qoinstr/cpp_joinstr/Cargo.toml", "../qoinstr/cpp_joinstr/src/lib.rs", "../qoinstr/cpp_joinstr/build.rs", "../bwk/sp/Cargo.toml"]
+            "files_to_read": [
+              "../qoinstr/cpp_joinstr/Cargo.toml",
+              "../qoinstr/cpp_joinstr/src/lib.rs",
+              "../qoinstr/cpp_joinstr/build.rs",
+              "../bwk/sp/Cargo.toml"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-1.md",
-          "roadmap_item_id": "phase-1-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-1-item-2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-1.task-3",
           "name": "Create build pipeline script (build.sh: cargo build, copy libs and headers)",
           "type": "implement",
-          "status": "pending",
-          "depends_on": ["phase-1.task-1", "phase-1.task-2"],
+          "status": "completed",
+          "depends_on": [
+            "phase-1.task-1",
+            "phase-1.task-2"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/joinstr.sh"]
+            "files_to_read": [
+              "../qoinstr/joinstr.sh"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-1.md",
-          "roadmap_item_id": "phase-1-item-3"
+          "attempts": [],
+          "roadmap_item_id": "phase-1-item-3",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-2",
@@ -64,50 +86,83 @@
           "name": "Implement Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-1.task-2"],
+          "depends_on": [
+            "phase-1.task-2"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/config.rs", "../qoinstr/cpp_joinstr/src/config.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/config.rs",
+              "../qoinstr/cpp_joinstr/src/config.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-2.md",
-          "roadmap_item_id": "phase-2-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-2-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-2.task-2",
           "name": "Implement Account struct wrapping bwk-sp::Account with CXX-exposed lifecycle methods",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-1"],
+          "depends_on": [
+            "phase-2.task-1"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs", "../qoinstr/cpp_joinstr/src/account.rs", "../qoinstr/cpp_joinstr/src/lib.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs",
+              "../qoinstr/cpp_joinstr/src/account.rs",
+              "../qoinstr/cpp_joinstr/src/lib.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-2.md",
-          "roadmap_item_id": "phase-2-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-2-item-2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-2.task-3",
           "name": "Implement Notification polling: wrap bwk-sp mpsc Receiver into CXX-compatible try_recv",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-2"],
+          "depends_on": [
+            "phase-2.task-2"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs", "../qoinstr/cpp_joinstr/src/lib.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs",
+              "../qoinstr/cpp_joinstr/src/lib.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-2.md",
-          "roadmap_item_id": "phase-2-item-3"
+          "attempts": [],
+          "roadmap_item_id": "phase-2-item-3",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-2.task-4",
           "name": "Expand CXX bridge with Config, Account, Network enum, LogLevel, Notification types",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-3"],
+          "depends_on": [
+            "phase-2.task-3"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/cpp_joinstr/src/lib.rs"]
+            "files_to_read": [
+              "../qoinstr/cpp_joinstr/src/lib.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-2.md",
-          "roadmap_item_id": "phase-2-item-4"
+          "attempts": [],
+          "roadmap_item_id": "phase-2-item-4",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-3",
@@ -120,38 +175,65 @@
           "name": "Expose SP address generation and display via CXX",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-2"],
+          "depends_on": [
+            "phase-2.task-2"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/lib.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs",
+              "../bwk/sp/src/lib.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-3.md",
-          "roadmap_item_id": "phase-3-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-3-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-3.task-2",
           "name": "Expose BlindBit scanner start/stop and coin tracking via CXX",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-3", "phase-3.task-1"],
+          "depends_on": [
+            "phase-2.task-3",
+            "phase-3.task-1"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/coin_store.rs", "../bwk/sp/src/scan_state.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs",
+              "../bwk/sp/src/coin_store.rs",
+              "../bwk/sp/src/scan_state.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-3.md",
-          "roadmap_item_id": "phase-3-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-3-item-2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-3.task-3",
           "name": "Expose payment history and CXX types (RustCoin, CoinState)",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-3.task-2"],
+          "depends_on": [
+            "phase-3.task-2"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/tx_store.rs", "../bwk/sp/src/coin_store.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/tx_store.rs",
+              "../bwk/sp/src/coin_store.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-3.md",
-          "roadmap_item_id": "phase-3-item-3"
+          "attempts": [],
+          "roadmap_item_id": "phase-3-item-3",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-4",
@@ -164,26 +246,41 @@
           "name": "Define CXX-exposed TransactionTemplate, Output, TransactionSimulation structs",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-3.task-3"],
+          "depends_on": [
+            "phase-3.task-3"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/cpp_joinstr/src/lib.rs"]
+            "files_to_read": [
+              "../qoinstr/cpp_joinstr/src/lib.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-4.md",
-          "roadmap_item_id": "phase-4-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-4-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-4.task-2",
           "name": "Implement simulate_transaction method and PsbtResult wrapper",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-4.task-1"],
+          "depends_on": [
+            "phase-4.task-1"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-4.md",
-          "roadmap_item_id": "phase-4-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-4-item-2",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-5",
@@ -196,26 +293,42 @@
           "name": "Implement coin selection and SP transaction creation via bwk-sp",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-4.task-2"],
+          "depends_on": [
+            "phase-4.task-2"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs", "../bwk/sp/src/coin_store.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs",
+              "../bwk/sp/src/coin_store.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-5.md",
-          "roadmap_item_id": "phase-5-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-5-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-5.task-2",
           "name": "Implement transaction signing and broadcast via ureq HTTP",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-5.task-1"],
+          "depends_on": [
+            "phase-5.task-1"
+          ],
           "context": {
-            "files_to_read": ["../bwk/sp/src/account.rs"]
+            "files_to_read": [
+              "../bwk/sp/src/account.rs"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-5.md",
-          "roadmap_item_id": "phase-5-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-5-item-2",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-6",
@@ -228,38 +341,69 @@
           "name": "Implement AppController, MainWindow, and AccountController with timer-based polling",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-2.task-4"],
+          "depends_on": [
+            "phase-2.task-4"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/AppController.h", "../qoinstr/src/AppController.cpp", "../qoinstr/src/MainWindow.h", "../qoinstr/src/MainWindow.cpp", "../qoinstr/src/AccountController.h", "../qoinstr/src/AccountController.cpp"]
+            "files_to_read": [
+              "../qoinstr/src/AppController.h",
+              "../qoinstr/src/AppController.cpp",
+              "../qoinstr/src/MainWindow.h",
+              "../qoinstr/src/MainWindow.cpp",
+              "../qoinstr/src/AccountController.h",
+              "../qoinstr/src/AccountController.cpp"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-6.md",
-          "roadmap_item_id": "phase-6-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-6-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-6.task-2",
           "name": "Implement AccountWidget, MenuTab, and CreateAccount modal",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-6.task-1"],
+          "depends_on": [
+            "phase-6.task-1"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/AccountWidget.h", "../qoinstr/src/AccountWidget.cpp", "../qoinstr/src/screens/MenuTab.h", "../qoinstr/src/screens/MenuTab.cpp"]
+            "files_to_read": [
+              "../qoinstr/src/AccountWidget.h",
+              "../qoinstr/src/AccountWidget.cpp",
+              "../qoinstr/src/screens/MenuTab.h",
+              "../qoinstr/src/screens/MenuTab.cpp"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-6.md",
-          "roadmap_item_id": "phase-6-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-6-item-2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-6.task-3",
           "name": "Update main.cpp and CMakeLists.txt for full application startup",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-6.task-2"],
+          "depends_on": [
+            "phase-6.task-2"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/main.cpp", "../qoinstr/CMakeLists.txt"]
+            "files_to_read": [
+              "../qoinstr/src/main.cpp",
+              "../qoinstr/CMakeLists.txt"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-6.md",
-          "roadmap_item_id": "phase-6-item-3"
+          "attempts": [],
+          "roadmap_item_id": "phase-6-item-3",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-7",
@@ -272,38 +416,71 @@
           "name": "Implement Coins screen and Receive screen",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-6.task-1", "phase-3.task-3"],
+          "depends_on": [
+            "phase-6.task-1",
+            "phase-3.task-3"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/screens/Coins.h", "../qoinstr/src/screens/Coins.cpp", "../qoinstr/src/screens/Receive.h", "../qoinstr/src/screens/Receive.cpp"]
+            "files_to_read": [
+              "../qoinstr/src/screens/Coins.h",
+              "../qoinstr/src/screens/Coins.cpp",
+              "../qoinstr/src/screens/Receive.h",
+              "../qoinstr/src/screens/Receive.cpp"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-7.md",
-          "roadmap_item_id": "phase-7-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-7-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-7.task-2",
           "name": "Implement Send screen with SelectCoins modal",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-6.task-1", "phase-5.task-2"],
+          "depends_on": [
+            "phase-6.task-1",
+            "phase-5.task-2"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/screens/Send.h", "../qoinstr/src/screens/Send.cpp", "../qoinstr/src/screens/modals/SelectCoins.h", "../qoinstr/src/screens/modals/SelectCoins.cpp"]
+            "files_to_read": [
+              "../qoinstr/src/screens/Send.h",
+              "../qoinstr/src/screens/Send.cpp",
+              "../qoinstr/src/screens/modals/SelectCoins.h",
+              "../qoinstr/src/screens/modals/SelectCoins.cpp"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-7.md",
-          "roadmap_item_id": "phase-7-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-7-item-2",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-7.task-3",
           "name": "Implement Settings screen and common UI utilities",
           "type": "implement",
           "status": "pending",
-          "depends_on": ["phase-6.task-1"],
+          "depends_on": [
+            "phase-6.task-1"
+          ],
           "context": {
-            "files_to_read": ["../qoinstr/src/screens/Settings.h", "../qoinstr/src/screens/Settings.cpp", "../qoinstr/src/screens/common.h", "../qoinstr/src/screens/common.cpp"]
+            "files_to_read": [
+              "../qoinstr/src/screens/Settings.h",
+              "../qoinstr/src/screens/Settings.cpp",
+              "../qoinstr/src/screens/common.h",
+              "../qoinstr/src/screens/common.cpp"
+            ],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-7.md",
-          "roadmap_item_id": "phase-7-item-3"
+          "attempts": [],
+          "roadmap_item_id": "phase-7-item-3",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     },
     {
       "id": "phase-8",
@@ -316,30 +493,190 @@
           "name": "End-to-end integration testing on regtest and signet",
           "type": "test",
           "status": "pending",
-          "depends_on": ["phase-7.task-1", "phase-7.task-2", "phase-7.task-3"],
+          "depends_on": [
+            "phase-7.task-1",
+            "phase-7.task-2",
+            "phase-7.task-3"
+          ],
           "context": {
-            "files_to_read": []
+            "files_to_read": [],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-8.md",
-          "roadmap_item_id": "phase-8-item-1"
+          "attempts": [],
+          "roadmap_item_id": "phase-8-item-1",
+          "review_cycles_completed": 0
         },
         {
           "id": "phase-8.task-2",
           "name": "Multi-account testing, error handling, and edge cases",
           "type": "test",
           "status": "pending",
-          "depends_on": ["phase-8.task-1"],
+          "depends_on": [
+            "phase-8.task-1"
+          ],
           "context": {
-            "files_to_read": []
+            "files_to_read": [],
+            "prior_review_issues": []
           },
           "plan_file": ".cm/plans/plan-8.md",
-          "roadmap_item_id": "phase-8-item-2"
+          "attempts": [],
+          "roadmap_item_id": "phase-8-item-2",
+          "review_cycles_completed": 0
         }
-      ]
+      ],
+      "review_cycles_completed": 0
     }
   ],
-  "current_phase": null,
-  "current_task": null,
-  "agent_history": [],
-  "log_records": []
+  "agent_history": [
+    {
+      "id": "ea5d4d2b-5024-4285-99b6-11613d967c95",
+      "task_id": "phase-1",
+      "agent_type": "plan",
+      "started_at": "2026-02-01T16:06:53.716352727Z",
+      "completed_at": "2026-02-01T16:08:06.333938458Z",
+      "exit_status": 0
+    },
+    {
+      "id": "02d91e3b-c751-47f0-bdc0-c8937136a5d5",
+      "task_id": "phase-1",
+      "agent_type": "implem",
+      "started_at": "2026-02-01T16:08:06.335304340Z",
+      "completed_at": "2026-02-01T16:11:36.730472726Z",
+      "exit_status": 0,
+      "commit_hash": "bf50fc36b6281e557dace9b0bdeb4c2af3da40df"
+    },
+    {
+      "id": "d2b847ec-45de-4345-885b-975c24bfafd1",
+      "task_id": "phase-1",
+      "agent_type": "review",
+      "started_at": "2026-02-01T16:11:42.331011473Z",
+      "completed_at": "2026-02-01T16:12:23.200894999Z",
+      "exit_status": 0
+    },
+    {
+      "id": "8d4ea530-b46f-445e-8371-e45fa9cedce1",
+      "task_id": "phase-1",
+      "agent_type": "fix",
+      "started_at": "2026-02-01T16:12:23.201115536Z",
+      "completed_at": "2026-02-01T16:12:43.936436314Z",
+      "exit_status": 0,
+      "commit_hash": "a91f0cdf9eb3a555a85af0d32ed14c6f341845f7"
+    },
+    {
+      "id": "aa19dc37-c813-41fd-866b-187183c4b49a",
+      "task_id": "phase-1",
+      "agent_type": "review",
+      "started_at": "2026-02-01T16:12:44.411498417Z",
+      "completed_at": "2026-02-01T16:13:29.381347894Z",
+      "exit_status": 0
+    }
+  ],
+  "log_records": [
+    {
+      "id": "fb004323-890e-4cfc-a0bf-bd1220aae444",
+      "timestamp": "2026-02-01T16:06:53.716350498Z",
+      "action": "agent_spawn",
+      "task_id": "phase-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "plan",
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Scaffolding\n\n## Initial Plan\n\n\n\n## Tasks in This Phase\n\n- **phase-1.task-1**: Set up CMake project with Qt6 and qontrol FetchContent\n- **phase-1.task-2**: Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency\n- **phase-1.task-3**: Create build pipeline script (build.sh: cargo build, copy libs and headers)\n\n"
+      }
+    },
+    {
+      "id": "b74c46ad-f14d-4b45-b583-b2df699fceec",
+      "timestamp": "2026-02-01T16:08:06.335301703Z",
+      "action": "agent_spawn",
+      "task_id": "phase-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute tasks according to the specification provided by the manager.\n\nYou may be assigned:\n- **A single task** - implement one specific feature or fix\n- **Multiple tasks in a phase** - implement all tasks in a logical group, completing them in order\n\n## Your Responsibilities\n\n1. **Read the Task(s)**: Understand the exact requirements from each task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution(s)**: Write clean, focused code that solves each task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Complete All Tasks**: For multi-task phases, complete ALL tasks before returning\n6. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The task description(s) for this session\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project roadmap\n- Historical conversations\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block. The format depends on whether you're han\n\n... [truncated, 19277 more bytes]"
+      }
+    },
+    {
+      "id": "dc86f935-ceb0-4c7e-b5a9-9f3545b74b9c",
+      "timestamp": "2026-02-01T16:11:42.331010914Z",
+      "action": "agent_spawn",
+      "task_id": "phase-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 34849 more bytes]"
+      }
+    },
+    {
+      "id": "c460521d-c8dd-4f1c-ad97-527e774ff064",
+      "timestamp": "2026-02-01T16:12:23.200902186Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "needs_fixes",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "f29de3f6-43ea-417a-b074-d6040971d83f",
+      "timestamp": "2026-02-01T16:12:23.201111889Z",
+      "action": "agent_spawn",
+      "task_id": "phase-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "fix",
+        "prompt_preview": "# Fix Agent Instructions\n\nYou are a **Fix Agent**. Your role is to resolve issues identified during code review by making targeted corrections to the codebase.\n\nYou may be fixing:\n- **A single task** - fix issues from one task's review\n- **Multiple tasks in a phase** - fix all issues found across a phase's review\n\n## Your Responsibilities\n\n1. **Understand Issues**: Carefully read ALL review feedback and understand what needs to be fixed\n2. **Make Targeted Fixes**: Apply corrections that directly address the identified problems\n3. **Fix All Issues**: For phase reviews, address ALL issues across all tasks\n4. **Maintain Quality**: Ensure fixes don't introduce new issues or break existing functionality\n5. **Follow Conventions**: Adhere to the project's code style and architectural patterns\n6. **Verify Changes**: Test your fixes to ensure they resolve the issues\n\n## Review Issues Format\n\nReview issues are provided as formatted text sections in your prompt. Each issue contains:\n\n- **Issue ID** and severity level (e.g., \"Issue: issue-1 (high)\")\n- **Location**: File and line number reference\n- **Problem**: Description of what's wrong\n- **Suggested Fix**: How to resolve it\n\nExample of how issues appear:\n\n```\n### Issue: issue-1 (high)\n**Location:** src/lib.rs:42\n**Problem:** Missing error handling for file read\n**Suggested Fix:** Add proper Result handling with ? operator\n```\n\nYou should address **EACH** issue systematically. If an issue cannot be fixed, explain why in your response.\n\n## Fix Guidelines\n\n- **Be Precise**: Only change what's necessary to fix the identified issues\n- **Preserve Intent**: Maintain the original functionality while correcting problems\n- **Check Dependencies**: Ensure your fixes don't break other parts of the codebase\n- **Document Changes**: Use clear commit messages that explain what was fixed and why\n\n## Code Quality Standards\n\nAll fixes must:\n- Resolve the reported issues completely\n- Follow the project's code style guidelines\n- Pass build verific\n\n... [truncated, 4615 more bytes]"
+      }
+    },
+    {
+      "id": "ed7e4f88-c40d-44b7-9ae6-d58f83ae4ffe",
+      "timestamp": "2026-02-01T16:12:44.411497784Z",
+      "action": "agent_spawn",
+      "task_id": "phase-1",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 34646 more bytes]"
+      }
+    },
+    {
+      "id": "31311d7f-611b-454d-99c6-77bb38a56125",
+      "timestamp": "2026-02-01T16:13:29.381356356Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "26f7f339-bed6-4bad-9fea-a6a61df452c1",
+      "timestamp": "2026-02-01T16:13:29.381488861Z",
+      "action": "task_complete",
+      "task_id": "phase-1.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "18ed0f17-d409-4bda-a534-0024c80b7385",
+      "timestamp": "2026-02-01T16:13:29.381537696Z",
+      "action": "task_complete",
+      "task_id": "phase-1.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "4ef601d1-655d-47a4-b6a3-b0b3cc32405f",
+      "timestamp": "2026-02-01T16:13:29.381594061Z",
+      "action": "task_complete",
+      "task_id": "phase-1.task-3",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    }
+  ]
 }

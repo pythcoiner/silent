@@ -10,35 +10,77 @@
         {
           "id": "phase-1-item-1",
           "name": "Set up CMake project with Qt6 and qontrol",
-          "completed": false,
+          "completed": true,
           "sub_items": [
-            { "name": "CMakeLists.txt with Qt6 Widgets dependency", "completed": false },
-            { "name": "qontrol fetched via FetchContent", "completed": false },
-            { "name": "Empty Qt window compiles and runs", "completed": false }
+            {
+              "id": "phase-1-item-1.sub-0",
+              "name": "CMakeLists.txt with Qt6 Widgets dependency",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-1.sub-1",
+              "name": "qontrol fetched via FetchContent",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-1.sub-2",
+              "name": "Empty Qt window compiles and runs",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-1.task-1"]
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
         },
         {
           "id": "phase-1-item-2",
           "name": "Create templar Rust crate with CXX bridge skeleton",
-          "completed": false,
+          "completed": true,
           "sub_items": [
-            { "name": "Cargo.toml with bwk-sp and cxx dependencies", "completed": false },
-            { "name": "lib.rs with cxx::bridge module skeleton", "completed": false },
-            { "name": "build.rs with cxx_build", "completed": false }
+            {
+              "id": "phase-1-item-2.sub-0",
+              "name": "Cargo.toml with bwk-sp and cxx dependencies",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-2.sub-1",
+              "name": "lib.rs with cxx::bridge module skeleton",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-2.sub-2",
+              "name": "build.rs with cxx_build",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-1.task-2"]
+          "linked_task_ids": [
+            "phase-1.task-2"
+          ]
         },
         {
           "id": "phase-1-item-3",
           "name": "Create build pipeline script",
-          "completed": false,
+          "completed": true,
           "sub_items": [
-            { "name": "build.sh runs cargo build --release", "completed": false },
-            { "name": "Copies .a library and generated headers to lib/", "completed": false },
-            { "name": "CMake links against built library", "completed": false }
+            {
+              "id": "phase-1-item-3.sub-0",
+              "name": "build.sh runs cargo build --release",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-3.sub-1",
+              "name": "Copies .a library and generated headers to lib/",
+              "completed": true
+            },
+            {
+              "id": "phase-1-item-3.sub-2",
+              "name": "CMake links against built library",
+              "completed": true
+            }
           ],
-          "linked_task_ids": ["phase-1.task-3"]
+          "linked_task_ids": [
+            "phase-1.task-3"
+          ]
         }
       ]
     },
@@ -52,41 +94,85 @@
           "name": "Config module wrapping bwk-sp::Config",
           "completed": false,
           "sub_items": [
-            { "name": "Config struct with mnemonic, network, BlindBit URL", "completed": false },
-            { "name": "JSON file persistence (~/.templar/<account>/)", "completed": false },
-            { "name": "CXX-exposed config creation and loading", "completed": false }
+            {
+              "id": "phase-2-item-1.sub-0",
+              "name": "Config struct with mnemonic, network, BlindBit URL",
+              "completed": false
+            },
+            {
+              "id": "phase-2-item-1.sub-1",
+              "name": "JSON file persistence (~/.templar/<account>/)",
+              "completed": false
+            },
+            {
+              "id": "phase-2-item-1.sub-2",
+              "name": "CXX-exposed config creation and loading",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-2.task-1"]
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
         },
         {
           "id": "phase-2-item-2",
           "name": "Account struct wrapping bwk-sp::Account",
           "completed": false,
           "sub_items": [
-            { "name": "Account struct with bwk-sp::Account inner", "completed": false },
-            { "name": "CXX-exposed lifecycle methods (new, start_scanner, stop_scanner)", "completed": false }
+            {
+              "id": "phase-2-item-2.sub-0",
+              "name": "Account struct with bwk-sp::Account inner",
+              "completed": false
+            },
+            {
+              "id": "phase-2-item-2.sub-1",
+              "name": "CXX-exposed lifecycle methods (new, start_scanner, stop_scanner)",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-2.task-2"]
+          "linked_task_ids": [
+            "phase-2.task-2"
+          ]
         },
         {
           "id": "phase-2-item-3",
           "name": "Notification polling via CXX try_recv",
           "completed": false,
           "sub_items": [
-            { "name": "Wrap bwk-sp mpsc Receiver", "completed": false },
-            { "name": "CXX-compatible Poll<Notification> return type", "completed": false }
+            {
+              "id": "phase-2-item-3.sub-0",
+              "name": "Wrap bwk-sp mpsc Receiver",
+              "completed": false
+            },
+            {
+              "id": "phase-2-item-3.sub-1",
+              "name": "CXX-compatible Poll<Notification> return type",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-2.task-3"]
+          "linked_task_ids": [
+            "phase-2.task-3"
+          ]
         },
         {
           "id": "phase-2-item-4",
           "name": "CXX bridge expansion with all types",
           "completed": false,
           "sub_items": [
-            { "name": "Config, Account opaque types", "completed": false },
-            { "name": "Network enum, LogLevel, Notification types", "completed": false }
+            {
+              "id": "phase-2-item-4.sub-0",
+              "name": "Config, Account opaque types",
+              "completed": false
+            },
+            {
+              "id": "phase-2-item-4.sub-1",
+              "name": "Network enum, LogLevel, Notification types",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-2.task-4"]
+          "linked_task_ids": [
+            "phase-2.task-4"
+          ]
         }
       ]
     },
@@ -100,31 +186,65 @@
           "name": "SP address generation and display",
           "completed": false,
           "sub_items": [
-            { "name": "SP receive address from mnemonic via SpClient", "completed": false },
-            { "name": "CXX-exposed address display", "completed": false }
+            {
+              "id": "phase-3-item-1.sub-0",
+              "name": "SP receive address from mnemonic via SpClient",
+              "completed": false
+            },
+            {
+              "id": "phase-3-item-1.sub-1",
+              "name": "CXX-exposed address display",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-3.task-1"]
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
         },
         {
           "id": "phase-3-item-2",
           "name": "BlindBit scanner and coin tracking",
           "completed": false,
           "sub_items": [
-            { "name": "start_scanner/stop_scanner exposed via CXX", "completed": false },
-            { "name": "SpCoinStore wrapped with coin list and balances", "completed": false },
-            { "name": "RustCoin and CoinState CXX types", "completed": false }
+            {
+              "id": "phase-3-item-2.sub-0",
+              "name": "start_scanner/stop_scanner exposed via CXX",
+              "completed": false
+            },
+            {
+              "id": "phase-3-item-2.sub-1",
+              "name": "SpCoinStore wrapped with coin list and balances",
+              "completed": false
+            },
+            {
+              "id": "phase-3-item-2.sub-2",
+              "name": "RustCoin and CoinState CXX types",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-3.task-2"]
+          "linked_task_ids": [
+            "phase-3.task-2"
+          ]
         },
         {
           "id": "phase-3-item-3",
           "name": "Payment history via CXX",
           "completed": false,
           "sub_items": [
-            { "name": "SpTxStore wrapped for transaction list", "completed": false },
-            { "name": "Transaction history exposed via CXX", "completed": false }
+            {
+              "id": "phase-3-item-3.sub-0",
+              "name": "SpTxStore wrapped for transaction list",
+              "completed": false
+            },
+            {
+              "id": "phase-3-item-3.sub-1",
+              "name": "Transaction history exposed via CXX",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-3.task-3"]
+          "linked_task_ids": [
+            "phase-3.task-3"
+          ]
         }
       ]
     },
@@ -138,21 +258,45 @@
           "name": "CXX transaction type definitions",
           "completed": false,
           "sub_items": [
-            { "name": "TransactionTemplate struct (inputs, outputs, fee_rate)", "completed": false },
-            { "name": "Output struct (SP address, amount, label, max flag)", "completed": false },
-            { "name": "TransactionSimulation struct (is_valid, fee, weight, error)", "completed": false }
+            {
+              "id": "phase-4-item-1.sub-0",
+              "name": "TransactionTemplate struct (inputs, outputs, fee_rate)",
+              "completed": false
+            },
+            {
+              "id": "phase-4-item-1.sub-1",
+              "name": "Output struct (SP address, amount, label, max flag)",
+              "completed": false
+            },
+            {
+              "id": "phase-4-item-1.sub-2",
+              "name": "TransactionSimulation struct (is_valid, fee, weight, error)",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-4.task-1"]
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
         },
         {
           "id": "phase-4-item-2",
           "name": "Transaction simulation and result wrappers",
           "completed": false,
           "sub_items": [
-            { "name": "simulate_transaction() method on Account", "completed": false },
-            { "name": "PsbtResult wrapper type for CXX error handling", "completed": false }
+            {
+              "id": "phase-4-item-2.sub-0",
+              "name": "simulate_transaction() method on Account",
+              "completed": false
+            },
+            {
+              "id": "phase-4-item-2.sub-1",
+              "name": "PsbtResult wrapper type for CXX error handling",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-4.task-2"]
+          "linked_task_ids": [
+            "phase-4.task-2"
+          ]
         }
       ]
     },
@@ -166,22 +310,50 @@
           "name": "Coin selection and SP transaction creation",
           "completed": false,
           "sub_items": [
-            { "name": "Manual and automatic coin selection", "completed": false },
-            { "name": "SilentPaymentUnsignedTransaction via bwk-sp", "completed": false },
-            { "name": "Change output handling", "completed": false }
+            {
+              "id": "phase-5-item-1.sub-0",
+              "name": "Manual and automatic coin selection",
+              "completed": false
+            },
+            {
+              "id": "phase-5-item-1.sub-1",
+              "name": "SilentPaymentUnsignedTransaction via bwk-sp",
+              "completed": false
+            },
+            {
+              "id": "phase-5-item-1.sub-2",
+              "name": "Change output handling",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-5.task-1"]
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
         },
         {
           "id": "phase-5-item-2",
           "name": "Transaction signing and broadcast",
           "completed": false,
           "sub_items": [
-            { "name": "Signing via bwk-sp (spdk-core)", "completed": false },
-            { "name": "Broadcast via ureq HTTP POST", "completed": false },
-            { "name": "Success notification", "completed": false }
+            {
+              "id": "phase-5-item-2.sub-0",
+              "name": "Signing via bwk-sp (spdk-core)",
+              "completed": false
+            },
+            {
+              "id": "phase-5-item-2.sub-1",
+              "name": "Broadcast via ureq HTTP POST",
+              "completed": false
+            },
+            {
+              "id": "phase-5-item-2.sub-2",
+              "name": "Success notification",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-5.task-2"]
+          "linked_task_ids": [
+            "phase-5.task-2"
+          ]
         }
       ]
     },
@@ -195,32 +367,70 @@
           "name": "AppController, MainWindow, AccountController",
           "completed": false,
           "sub_items": [
-            { "name": "AppController (qontrol::Controller) with account management", "completed": false },
-            { "name": "MainWindow (qontrol::Window) with tab widget", "completed": false },
-            { "name": "AccountController with QTimer polling", "completed": false }
+            {
+              "id": "phase-6-item-1.sub-0",
+              "name": "AppController (qontrol::Controller) with account management",
+              "completed": false
+            },
+            {
+              "id": "phase-6-item-1.sub-1",
+              "name": "MainWindow (qontrol::Window) with tab widget",
+              "completed": false
+            },
+            {
+              "id": "phase-6-item-1.sub-2",
+              "name": "AccountController with QTimer polling",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-6.task-1"]
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
         },
         {
           "id": "phase-6-item-2",
           "name": "AccountWidget, MenuTab, CreateAccount modal",
           "completed": false,
           "sub_items": [
-            { "name": "AccountWidget with side menu and screen container", "completed": false },
-            { "name": "MenuTab for account creation entry", "completed": false },
-            { "name": "CreateAccount modal (mnemonic gen/restore, network)", "completed": false }
+            {
+              "id": "phase-6-item-2.sub-0",
+              "name": "AccountWidget with side menu and screen container",
+              "completed": false
+            },
+            {
+              "id": "phase-6-item-2.sub-1",
+              "name": "MenuTab for account creation entry",
+              "completed": false
+            },
+            {
+              "id": "phase-6-item-2.sub-2",
+              "name": "CreateAccount modal (mnemonic gen/restore, network)",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-6.task-2"]
+          "linked_task_ids": [
+            "phase-6.task-2"
+          ]
         },
         {
           "id": "phase-6-item-3",
           "name": "main.cpp and CMakeLists.txt updates",
           "completed": false,
           "sub_items": [
-            { "name": "Full application startup in main.cpp", "completed": false },
-            { "name": "All source files added to CMakeLists.txt", "completed": false }
+            {
+              "id": "phase-6-item-3.sub-0",
+              "name": "Full application startup in main.cpp",
+              "completed": false
+            },
+            {
+              "id": "phase-6-item-3.sub-1",
+              "name": "All source files added to CMakeLists.txt",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-6.task-3"]
+          "linked_task_ids": [
+            "phase-6.task-3"
+          ]
         }
       ]
     },
@@ -234,30 +444,60 @@
           "name": "Coins screen and Receive screen",
           "completed": false,
           "sub_items": [
-            { "name": "Coins: UTXO table, balance display, labels", "completed": false },
-            { "name": "Receive: SP address display, copy, address list", "completed": false }
+            {
+              "id": "phase-7-item-1.sub-0",
+              "name": "Coins: UTXO table, balance display, labels",
+              "completed": false
+            },
+            {
+              "id": "phase-7-item-1.sub-1",
+              "name": "Receive: SP address display, copy, address list",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-7.task-1"]
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
         },
         {
           "id": "phase-7-item-2",
           "name": "Send screen with SelectCoins modal",
           "completed": false,
           "sub_items": [
-            { "name": "Send: SP address input, amount, fee rate, simulate, send", "completed": false },
-            { "name": "SelectCoins: UTXO checkboxes, selected total", "completed": false }
+            {
+              "id": "phase-7-item-2.sub-0",
+              "name": "Send: SP address input, amount, fee rate, simulate, send",
+              "completed": false
+            },
+            {
+              "id": "phase-7-item-2.sub-1",
+              "name": "SelectCoins: UTXO checkboxes, selected total",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-7.task-2"]
+          "linked_task_ids": [
+            "phase-7.task-2"
+          ]
         },
         {
           "id": "phase-7-item-3",
           "name": "Settings screen and common utilities",
           "completed": false,
           "sub_items": [
-            { "name": "Settings: BlindBit URL, network selector, save/connect", "completed": false },
-            { "name": "Common: BTC formatting, standard layouts", "completed": false }
+            {
+              "id": "phase-7-item-3.sub-0",
+              "name": "Settings: BlindBit URL, network selector, save/connect",
+              "completed": false
+            },
+            {
+              "id": "phase-7-item-3.sub-1",
+              "name": "Common: BTC formatting, standard layouts",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-7.task-3"]
+          "linked_task_ids": [
+            "phase-7.task-3"
+          ]
         }
       ]
     },
@@ -271,22 +511,50 @@
           "name": "End-to-end integration testing",
           "completed": false,
           "sub_items": [
-            { "name": "Send/receive SP flow on regtest", "completed": false },
-            { "name": "SP address generation and sync on signet", "completed": false },
-            { "name": "Wallet restore from mnemonic", "completed": false }
+            {
+              "id": "phase-8-item-1.sub-0",
+              "name": "Send/receive SP flow on regtest",
+              "completed": false
+            },
+            {
+              "id": "phase-8-item-1.sub-1",
+              "name": "SP address generation and sync on signet",
+              "completed": false
+            },
+            {
+              "id": "phase-8-item-1.sub-2",
+              "name": "Wallet restore from mnemonic",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-8.task-1"]
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
         },
         {
           "id": "phase-8-item-2",
           "name": "Multi-account and error handling",
           "completed": false,
           "sub_items": [
-            { "name": "Multiple accounts with independent state", "completed": false },
-            { "name": "Invalid BlindBit URL, mnemonic, SP address handling", "completed": false },
-            { "name": "Edge cases: zero balance, dust outputs", "completed": false }
+            {
+              "id": "phase-8-item-2.sub-0",
+              "name": "Multiple accounts with independent state",
+              "completed": false
+            },
+            {
+              "id": "phase-8-item-2.sub-1",
+              "name": "Invalid BlindBit URL, mnemonic, SP address handling",
+              "completed": false
+            },
+            {
+              "id": "phase-8-item-2.sub-2",
+              "name": "Edge cases: zero balance, dust outputs",
+              "completed": false
+            }
           ],
-          "linked_task_ids": ["phase-8.task-2"]
+          "linked_task_ids": [
+            "phase-8.task-2"
+          ]
         }
       ]
     }

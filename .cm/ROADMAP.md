@@ -4,20 +4,20 @@ This document tracks implementation progress. Check off items as they are comple
 
 ## Phase 1: Scaffolding
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Set up CMake project with Qt6 and qontrol
-  - [ ] CMakeLists.txt with Qt6 Widgets dependency
-  - [ ] qontrol fetched via FetchContent
-  - [ ] Empty Qt window compiles and runs
-- [ ] Create templar Rust crate with CXX bridge skeleton
-  - [ ] Cargo.toml with bwk-sp and cxx dependencies
-  - [ ] lib.rs with cxx::bridge module skeleton
-  - [ ] build.rs with cxx_build
-- [ ] Create build pipeline script
-  - [ ] build.sh runs cargo build --release
-  - [ ] Copies .a library and generated headers to lib/
-  - [ ] CMake links against built library
+- [x] Set up CMake project with Qt6 and qontrol
+  - [x] CMakeLists.txt with Qt6 Widgets dependency
+  - [x] qontrol fetched via FetchContent
+  - [x] Empty Qt window compiles and runs
+- [x] Create templar Rust crate with CXX bridge skeleton
+  - [x] Cargo.toml with bwk-sp and cxx dependencies
+  - [x] lib.rs with cxx::bridge module skeleton
+  - [x] build.rs with cxx_build
+- [x] Create build pipeline script
+  - [x] build.sh runs cargo build --release
+  - [x] Copies .a library and generated headers to lib/
+  - [x] CMake links against built library
 
 ---
 
@@ -140,7 +140,7 @@ Status: **Not Started** (0/2)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Scaffolding | Not Started | 0/12 |
+| Phase 1: Scaffolding | Complete | 12/12 |
 | Phase 2: Config & Account | Not Started | 0/13 |
 | Phase 3: SP Addresses & BlindBit Sync | Not Started | 0/10 |
 | Phase 4: Transaction Types & Simulation | Not Started | 0/7 |
@@ -148,4 +148,4 @@ Status: **Not Started** (0/2)
 | Phase 6: GUI Controllers | Not Started | 0/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **0/78** |
+| **Total** | | **12/78** |
