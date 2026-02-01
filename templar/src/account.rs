@@ -376,6 +376,145 @@ impl Account {
             }
         }
     }
+
+    /// Prepare a transaction for signing.
+    ///
+    /// This method:
+    /// 1. Creates an unsigned transaction (with manual or automatic coin selection)
+    /// 2. Finalizes it (generates recipient public keys, builds outputs)
+    /// 3. Returns a PsbtResult that can be signed and broadcast
+    pub fn prepare_transaction(&self, tx_template: TransactionTemplate) -> Box<PsbtResult> {
+        use bitcoin::Amount;
+        use spdk_core::FeeRate;
+
+        // Parse outputs and check for max flag (same logic as simulate_transaction)
+        let mut recipients = Vec::new();
+        let mut has_max = false;
+        let mut max_addr = None;
+
+        for output in tx_template.outputs {
+            let addr = match RecipientAddress::try_from(output.address.clone()) {
+                Ok(a) => a,
+                Err(e) => {
+                    return Box::new(PsbtResult {
+                        inner: Err(format!("Invalid address '{}': {}", output.address, e)),
+                    });
+                }
+            };
+
+            if output.max {
+                if has_max {
+                    return Box::new(PsbtResult {
+                        inner: Err(String::from("Only one output can have max=true")),
+                    });
+                }
+                has_max = true;
+                max_addr = Some(addr);
+            } else {
+                recipients.push((addr, Amount::from_sat(output.amount)));
+            }
+        }
+
+        // Convert fee rate
+        let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
+
+        // Create the unsigned transaction
+        let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
+            // Manual coin selection
+            self.create_transaction_with_manual_selection(
+                tx_template.input_outpoints,
+                recipients,
+                max_addr,
+                has_max,
+                fee_rate,
+            )
+        } else {
+            // Automatic coin selection
+            if has_max {
+                if !recipients.is_empty() {
+                    return Box::new(PsbtResult {
+                        inner: Err(String::from("max cannot be combined with other outputs")),
+                    });
+                }
+                self.inner.create_drain_transaction(max_addr.unwrap(), fee_rate)
+            } else {
+                self.inner.create_transaction(recipients, fee_rate)
+            }
+        };
+
+        // Finalize the transaction
+        let finalized_result = unsigned_tx_result.and_then(|unsigned_tx| {
+            self.inner.finalize_transaction(unsigned_tx)
+        });
+
+        // Return PsbtResult
+        Box::new(PsbtResult {
+            inner: finalized_result.map_err(|e| e.to_string()),
+        })
+    }
+
+    /// Sign a prepared transaction.
+    ///
+    /// Takes a PsbtResult containing a finalized unsigned transaction,
+    /// signs it using the account's spend key, and returns the signed
+    /// transaction as a hex string.
+    pub fn sign_transaction(&self, psbt_result: &PsbtResult) -> Result<String, String> {
+        use bitcoin::consensus::encode::serialize_hex;
+
+        // Extract the unsigned transaction from PsbtResult
+        let unsigned_tx = match &psbt_result.inner {
+            Ok(tx) => tx.clone(),
+            Err(e) => return Err(format!("Cannot sign invalid transaction: {e}")),
+        };
+
+        // Sign the transaction using the inner account
+        let signed_tx = self.inner
+            .sign_transaction(unsigned_tx)
+            .map_err(|e| format!("Signing failed: {e}"))?;
+
+        // Serialize to hex
+        let tx_hex = serialize_hex(&signed_tx);
+
+        Ok(tx_hex)
+    }
+
+    /// Broadcast a signed transaction to the network.
+    ///
+    /// Takes a hex-encoded signed transaction and broadcasts it via the
+    /// configured broadcast URL. Returns the txid on success.
+    pub fn broadcast_transaction(&self, signed_tx_hex: String) -> Result<String, String> {
+        use bitcoin::consensus::encode::deserialize_hex;
+        use bitcoin::Transaction;
+
+        // Deserialize the hex transaction
+        let tx: Transaction = deserialize_hex(&signed_tx_hex)
+            .map_err(|e| format!("Invalid transaction hex: {e}"))?;
+
+        // Broadcast using the inner account
+        let txid = self.inner
+            .broadcast(&tx)
+            .map_err(|e| format!("Broadcast failed: {e}"))?;
+
+        Ok(txid.to_string())
+    }
+
+    /// Sign and broadcast a transaction in one step.
+    ///
+    /// Convenience method that combines sign_transaction() and broadcast_transaction().
+    pub fn sign_and_broadcast(&self, psbt_result: &PsbtResult) -> Result<String, String> {
+        // Extract the unsigned transaction from PsbtResult
+        let unsigned_tx = match &psbt_result.inner {
+            Ok(tx) => tx.clone(),
+            Err(e) => return Err(format!("Cannot sign invalid transaction: {e}")),
+        };
+
+        // Sign and broadcast using the inner account's convenience method
+        let txid = self.inner
+            .sign_and_broadcast(unsigned_tx)
+            .map_err(|e| format!("Sign and broadcast failed: {e}"))?;
+
+        Ok(txid.to_string())
+    }
 }
 
 /// Convert bwk-sp::Notification to Templar Notification.

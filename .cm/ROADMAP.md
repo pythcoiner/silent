@@ -60,15 +60,15 @@ Status: **Complete** (3/3)
 
 ## Phase 4: Transaction Types & Simulation
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] CXX transaction type definitions
-  - [ ] TransactionTemplate struct (inputs, outputs, fee_rate)
-  - [ ] Output struct (SP address, amount, label, max flag)
-  - [ ] TransactionSimulation struct (is_valid, fee, weight, error)
-- [ ] Transaction simulation and result wrappers
-  - [ ] simulate_transaction() method on Account
-  - [ ] PsbtResult wrapper type for CXX error handling
+- [x] CXX transaction type definitions
+  - [x] TransactionTemplate struct (inputs, outputs, fee_rate)
+  - [x] Output struct (SP address, amount, label, max flag)
+  - [x] TransactionSimulation struct (is_valid, fee, weight, error)
+- [x] Transaction simulation and result wrappers
+  - [x] simulate_transaction() method on Account
+  - [x] PsbtResult wrapper type for CXX error handling
 
 ---
 
@@ -143,9 +143,9 @@ Status: **Not Started** (0/2)
 | Phase 1: Scaffolding | Complete | 12/12 |
 | Phase 2: Config & Account | Complete | 13/13 |
 | Phase 3: SP Addresses & BlindBit Sync | Complete | 10/10 |
-| Phase 4: Transaction Types & Simulation | Not Started | 0/7 |
+| Phase 4: Transaction Types & Simulation | Complete | 7/7 |
 | Phase 5: Coin Selection, Signing & Broadcast | Not Started | 0/8 |
 | Phase 6: GUI Controllers | Not Started | 0/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **35/78** |
+| **Total** | | **42/78** |

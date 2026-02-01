@@ -256,22 +256,22 @@
         {
           "id": "phase-4-item-1",
           "name": "CXX transaction type definitions",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-4-item-1.sub-0",
               "name": "TransactionTemplate struct (inputs, outputs, fee_rate)",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-4-item-1.sub-1",
               "name": "Output struct (SP address, amount, label, max flag)",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-4-item-1.sub-2",
               "name": "TransactionSimulation struct (is_valid, fee, weight, error)",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -281,17 +281,17 @@
         {
           "id": "phase-4-item-2",
           "name": "Transaction simulation and result wrappers",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-4-item-2.sub-0",
               "name": "simulate_transaction() method on Account",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-4-item-2.sub-1",
               "name": "PsbtResult wrapper type for CXX error handling",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

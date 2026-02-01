@@ -224,6 +224,24 @@ mod ffi {
         /// Simulate a transaction to check feasibility and estimate fees.
         /// Returns simulation result with fee, weight, and validity info.
         fn simulate_transaction(self: &Account, tx_template: TransactionTemplate) -> TransactionSimulation;
+
+        /// Prepare a transaction for signing.
+        /// Creates an unsigned transaction from the template and returns a PsbtResult.
+        /// The transaction will be finalized and ready to sign.
+        fn prepare_transaction(self: &Account, tx_template: TransactionTemplate) -> Box<PsbtResult>;
+
+        /// Sign a prepared transaction.
+        /// Takes a PsbtResult from prepare_transaction() and returns the signed
+        /// transaction as a hex string, or an error message.
+        fn sign_transaction(self: &Account, psbt_result: &PsbtResult) -> Result<String>;
+
+        /// Broadcast a signed transaction (hex string) to the network.
+        /// Returns the txid on success.
+        fn broadcast_transaction(self: &Account, signed_tx_hex: String) -> Result<String>;
+
+        /// Sign and broadcast a transaction in one step.
+        /// Takes a PsbtResult and returns the txid on success.
+        fn sign_and_broadcast(self: &Account, psbt_result: &PsbtResult) -> Result<String>;
     }
 
     // ===== Poll Methods =====
