@@ -308,22 +308,22 @@
         {
           "id": "phase-5-item-1",
           "name": "Coin selection and SP transaction creation",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-5-item-1.sub-0",
               "name": "Manual and automatic coin selection",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-5-item-1.sub-1",
               "name": "SilentPaymentUnsignedTransaction via bwk-sp",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-5-item-1.sub-2",
               "name": "Change output handling",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -333,22 +333,22 @@
         {
           "id": "phase-5-item-2",
           "name": "Transaction signing and broadcast",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-5-item-2.sub-0",
               "name": "Signing via bwk-sp (spdk-core)",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-5-item-2.sub-1",
               "name": "Broadcast via ureq HTTP POST",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-5-item-2.sub-2",
               "name": "Success notification",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

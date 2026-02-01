@@ -1,13 +1,23 @@
 #include <QApplication>
-#include <QMainWindow>
+#include "AppController.h"
+#include "MainWindow.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    QMainWindow window;
-    window.setWindowTitle("Templar");
-    window.resize(800, 600);
-    window.show();
+    // Initialize application controller
+    AppController::init();
+    auto *controller = AppController::get();
+
+    // Create and show main window
+    auto *window = new MainWindow();
+    controller->start(window);
+
+    // Initialize state (load accounts)
+    controller->initState();
+
+    // Show window
+    window->show();
 
     return app.exec();
 }

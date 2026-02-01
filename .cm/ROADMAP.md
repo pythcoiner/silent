@@ -74,16 +74,16 @@ Status: **Complete** (2/2)
 
 ## Phase 5: Coin Selection, Signing & Broadcast
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] Coin selection and SP transaction creation
-  - [ ] Manual and automatic coin selection
-  - [ ] SilentPaymentUnsignedTransaction via bwk-sp
-  - [ ] Change output handling
-- [ ] Transaction signing and broadcast
-  - [ ] Signing via bwk-sp (spdk-core)
-  - [ ] Broadcast via ureq HTTP POST
-  - [ ] Success notification
+- [x] Coin selection and SP transaction creation
+  - [x] Manual and automatic coin selection
+  - [x] SilentPaymentUnsignedTransaction via bwk-sp
+  - [x] Change output handling
+- [x] Transaction signing and broadcast
+  - [x] Signing via bwk-sp (spdk-core)
+  - [x] Broadcast via ureq HTTP POST
+  - [x] Success notification
 
 ---
 
@@ -144,8 +144,8 @@ Status: **Not Started** (0/2)
 | Phase 2: Config & Account | Complete | 13/13 |
 | Phase 3: SP Addresses & BlindBit Sync | Complete | 10/10 |
 | Phase 4: Transaction Types & Simulation | Complete | 7/7 |
-| Phase 5: Coin Selection, Signing & Broadcast | Not Started | 0/8 |
+| Phase 5: Coin Selection, Signing & Broadcast | Complete | 8/8 |
 | Phase 6: GUI Controllers | Not Started | 0/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **42/78** |
+| **Total** | | **50/78** |

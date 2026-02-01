@@ -286,13 +286,13 @@
       "id": "phase-5",
       "name": "Coin Selection, Signing & Broadcast",
       "plan": "",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         {
           "id": "phase-5.task-1",
           "name": "Implement coin selection and SP transaction creation via bwk-sp",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-4.task-2"
           ],
@@ -312,7 +312,7 @@
           "id": "phase-5.task-2",
           "name": "Implement transaction signing and broadcast via ureq HTTP",
           "type": "implement",
-          "status": "pending",
+          "status": "completed",
           "depends_on": [
             "phase-5.task-1"
           ],
@@ -679,6 +679,31 @@
       "started_at": "2026-02-01T16:45:33.826784267Z",
       "completed_at": "2026-02-01T16:46:12.979129333Z",
       "exit_status": 0
+    },
+    {
+      "id": "11d51c34-aca5-4967-a935-8e5425fe4473",
+      "task_id": "phase-5",
+      "agent_type": "plan",
+      "started_at": "2026-02-01T16:46:12.983941864Z",
+      "completed_at": "2026-02-01T16:47:46.437865100Z",
+      "exit_status": 0
+    },
+    {
+      "id": "11756482-d0f3-40d5-bc38-038e8c5fa9a7",
+      "task_id": "phase-5",
+      "agent_type": "implem",
+      "started_at": "2026-02-01T16:47:46.438451321Z",
+      "completed_at": "2026-02-01T16:51:22.048176663Z",
+      "exit_status": 0,
+      "commit_hash": "549bba2e525d73787667a822c18183df5bcda951"
+    },
+    {
+      "id": "e774a1a5-5624-48bb-b1fe-c507f09189ff",
+      "task_id": "phase-5",
+      "agent_type": "review",
+      "started_at": "2026-02-01T16:51:22.764731801Z",
+      "completed_at": "2026-02-01T16:52:15.158159425Z",
+      "exit_status": 1
     }
   ],
   "log_records": [
@@ -1065,6 +1090,69 @@
       "timestamp": "2026-02-01T16:46:12.979336804Z",
       "action": "task_complete",
       "task_id": "phase-4.task-2",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "d8513537-e712-41dc-9be5-1fee13747fed",
+      "timestamp": "2026-02-01T16:46:12.983939442Z",
+      "action": "agent_spawn",
+      "task_id": "phase-5",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "plan",
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Coin Selection, Signing & Broadcast\n\n## Initial Plan\n\n\n\n## Tasks in This Phase\n\n- **phase-5.task-1**: Implement coin selection and SP transaction creation via bwk-sp\n- **phase-5.task-2**: Implement transaction signing and broadcast via ureq HTTP\n\n"
+      }
+    },
+    {
+      "id": "3b39fd62-a51c-43ac-b589-0a4f340f88fd",
+      "timestamp": "2026-02-01T16:47:46.438450633Z",
+      "action": "agent_spawn",
+      "task_id": "phase-5",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "implem",
+        "prompt_preview": "# Implementer Agent Instructions\n\nYou are an **Implementer Agent**. Your role is to execute tasks according to the specification provided by the manager.\n\nYou may be assigned:\n- **A single task** - implement one specific feature or fix\n- **Multiple tasks in a phase** - implement all tasks in a logical group, completing them in order\n\n## Your Responsibilities\n\n1. **Read the Task(s)**: Understand the exact requirements from each task description\n2. **Read Context Files**: Review all files listed in \"Files to Read for Context\"\n3. **Implement the Solution(s)**: Write clean, focused code that solves each task\n4. **Follow Conventions**: Adhere to the project's code style and patterns\n5. **Complete All Tasks**: For multi-task phases, complete ALL tasks before returning\n6. **Output Results**: Return a JSON response with your completion status\n\n## Context Boundaries\n\nYou receive ONLY:\n- The task description(s) for this session\n- A list of relevant files to read\n- Code style guidelines\n- Prior review feedback (if this is a fix attempt)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project roadmap\n- Historical conversations\n\n## Implementation Guidelines\n\n### Code Quality\n\n- Match existing code style exactly\n- Use the same patterns found in the codebase\n- Keep changes minimal and focused\n- Don't over-engineer solutions\n- Don't add features beyond the task scope\n\n### Error Handling\n\n- Use the project's established error types\n- Follow the error handling patterns in existing code\n- Never use generic string errors if typed errors exist\n\n### Testing\n\n- Add tests for new functionality\n- Update tests when modifying existing code\n- Ensure tests follow the project's testing conventions\n\n### Documentation\n\n- Add comments only where logic isn't self-evident\n- Update documentation if the task requires it\n- Don't add unnecessary comments to unchanged code\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block. The format depends on whether you're han\n\n... [truncated, 18772 more bytes]"
+      }
+    },
+    {
+      "id": "2a0b94a0-58d3-462c-8b09-3954435226d7",
+      "timestamp": "2026-02-01T16:51:22.764731163Z",
+      "action": "agent_spawn",
+      "task_id": "phase-5",
+      "data": {
+        "type": "agent_spawn",
+        "agent_type": "review",
+        "prompt_preview": "# Reviewer Agent Instructions\n\nYou are a **Reviewer Agent**. Your role is to analyze code changes and provide actionable feedback.\n\nYou may be reviewing:\n- **A single task** - review changes from one implementation\n- **Multiple tasks in a phase** - review all changes from a phase's implementations together\n\n## Your Responsibilities\n\n1. **Analyze Changes**: Review the git diff showing all code changes\n2. **Verify Correctness**: Check that changes correctly implement the task requirements\n3. **Check Quality**: Ensure code is clean, well-structured, and idiomatic\n4. **Identify Issues**: Find bugs, errors, or problems in the implementation\n5. **Provide Feedback**: Give clear, specific instructions for fixing issues\n6. **Output Results**: Return a JSON response with your verdict\n\n## Context You Receive\n\nYou are provided with:\n- The task description(s) being reviewed\n- Git diff of all changes since baseline\n- Code style guidelines (if applicable)\n\nYou do NOT have access to:\n- Tasks from other phases\n- Global project state\n- Historical conversations\n\n## Review Guidelines\n\n### Review Criteria\n\n1. **Correctness**: Do the changes correctly implement all requested tasks?\n2. **Code Quality**: Is the code clean, well-structured, and idiomatic?\n3. **Error Handling**: Are errors handled appropriately?\n4. **Style**: Does the code follow the project's style conventions?\n5. **Completeness**: Are all requirements addressed?\n\n### For Multi-Task (Phase) Reviews\n\nWhen reviewing a phase with multiple tasks:\n- Verify ALL tasks were implemented\n- Check that task implementations don't conflict\n- Ensure changes work together as a coherent whole\n\n### Plan Compliance Check\n\nIf a phase plan is provided above, you **MUST** verify:\n\n1. **All numbered/bulleted items** in the plan were implemented\n2. **Any tests mentioned** in the plan were actually added\n3. **Any specific file changes** mentioned in the plan were completed\n\nIf any plan items were NOT addressed, report them as issues:\n- Use severity\n\n... [truncated, 33412 more bytes]"
+      }
+    },
+    {
+      "id": "5f4dde1c-88d9-4154-8384-9f2332c8e146",
+      "timestamp": "2026-02-01T16:52:15.158164012Z",
+      "action": "review_result",
+      "data": {
+        "type": "review_result",
+        "verdict": "approved",
+        "issues_count": 0
+      }
+    },
+    {
+      "id": "42df3b14-25f1-4faa-9a01-e7cb15018ebb",
+      "timestamp": "2026-02-01T16:52:15.158225598Z",
+      "action": "task_complete",
+      "task_id": "phase-5.task-1",
+      "data": {
+        "type": "task_complete",
+        "status": "completed"
+      }
+    },
+    {
+      "id": "0f42bc23-c6b4-4e95-b2ba-499d0bf46240",
+      "timestamp": "2026-02-01T16:52:15.158249470Z",
+      "action": "task_complete",
+      "task_id": "phase-5.task-2",
       "data": {
         "type": "task_complete",
         "status": "completed"

@@ -43,6 +43,18 @@ set(CMAKE_AUTOUIC ON)
 
 set(SOURCES
     src/main.cpp
+    src/AppController.h
+    src/AppController.cpp
+    src/MainWindow.h
+    src/MainWindow.cpp
+    src/AccountController.h
+    src/AccountController.cpp
+    src/AccountWidget.h
+    src/AccountWidget.cpp
+    src/screens/MenuTab.h
+    src/screens/MenuTab.cpp
+    src/screens/modals/CreateAccount.h
+    src/screens/modals/CreateAccount.cpp
 )
 
 qt_add_executable(${BIN}
