@@ -20,6 +20,9 @@ public:
     void init(const QString &account);
     auto screen(const QString &screen) -> std::optional<qontrol::Screen *>;
     void loadPanels();
+    auto getCoins() -> rust::Vec<RustCoin>;
+    auto getSpAddress() -> rust::String;
+    auto coins() -> qontrol::Screen *;
 
 signals:
     void updateCoins(CoinState coins);

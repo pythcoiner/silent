@@ -55,6 +55,18 @@ set(SOURCES
     src/screens/MenuTab.cpp
     src/screens/modals/CreateAccount.h
     src/screens/modals/CreateAccount.cpp
+    src/screens/common.h
+    src/screens/common.cpp
+    src/screens/Coins.h
+    src/screens/Coins.cpp
+    src/screens/Receive.h
+    src/screens/Receive.cpp
+    src/screens/Send.h
+    src/screens/Send.cpp
+    src/screens/Settings.h
+    src/screens/Settings.cpp
+    src/screens/modals/SelectCoins.h
+    src/screens/modals/SelectCoins.cpp
 )
 
 qt_add_executable(${BIN}

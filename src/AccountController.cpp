@@ -1,6 +1,10 @@
 #include "AccountController.h"
 #include "AccountWidget.h"
 #include "AppController.h"
+#include "screens/Coins.h"
+#include "screens/Receive.h"
+#include "screens/Send.h"
+#include "screens/Settings.h"
 #include <qlogging.h>
 #include <qtimer.h>
 #include <string>
@@ -123,35 +127,40 @@ void AccountController::pollNotifications() {
 }
 
 void AccountController::loadPanels() {
-    // Phase 6: Create placeholder panels
-    // Phase 7 will implement the actual screen classes
-    // For now, we'll just create empty panels to make the side menu work
+    // Create Coins screen panel
+    auto *coinsScreen = new screen::Coins(this);
+    auto *coinsPanel = new qontrol::Panel(coinsScreen, "coins");
+    this->insertPanel(coinsPanel);
 
-    // TODO: Implement actual screen classes in Phase 7
-    // auto *cScreen = new screen::Coins(this);
-    // auto *coins = new qontrol::Panel(cScreen, "coins");
-    // this->insertPanel(coins);
+    // Create Receive screen panel
+    auto *receiveScreen = new screen::Receive(this);
+    auto *receivePanel = new qontrol::Panel(receiveScreen, "receive");
+    this->insertPanel(receivePanel);
 
-    // Similar for Send, Receive, Settings screens
+    // Create Send screen panel
+    auto *sendScreen = new screen::Send(this);
+    auto *sendPanel = new qontrol::Panel(sendScreen, "send");
+    this->insertPanel(sendPanel);
+
+    // Create Settings screen panel
+    auto *settingsScreen = new screen::Settings(this);
+    auto *settingsPanel = new qontrol::Panel(settingsScreen, "settings");
+    this->insertPanel(settingsPanel);
 }
 
 void AccountController::coinsClicked() {
-    qDebug() << "Coins screen not yet implemented (Phase 7)";
     this->loadPanel("coins");
 }
 
 void AccountController::sendClicked() {
-    qDebug() << "Send screen not yet implemented (Phase 7)";
     this->loadPanel("send");
 }
 
 void AccountController::receiveClicked() {
-    qDebug() << "Receive screen not yet implemented (Phase 7)";
     this->loadPanel("receive");
 }
 
 void AccountController::settingsClicked() {
-    qDebug() << "Settings screen not yet implemented (Phase 7)";
     this->loadPanel("settings");
 }
 
@@ -177,4 +186,26 @@ void AccountController::stop() {
     if (m_account.has_value()) {
         m_account.value()->stop_scanner();
     }
+}
+
+auto AccountController::getCoins() -> rust::Vec<RustCoin> {
+    if (m_account.has_value()) {
+        return m_account.value()->coins();
+    }
+    return rust::Vec<RustCoin>();
+}
+
+auto AccountController::getSpAddress() -> rust::String {
+    if (m_account.has_value()) {
+        return m_account.value()->sp_address();
+    }
+    return rust::String("");
+}
+
+auto AccountController::coins() -> qontrol::Screen * {
+    auto scr = screen("coins");
+    if (scr.has_value()) {
+        return scr.value();
+    }
+    return nullptr;
 }

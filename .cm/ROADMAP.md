@@ -89,19 +89,19 @@ Status: **Complete** (2/2)
 
 ## Phase 6: GUI Controllers
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] AppController, MainWindow, AccountController
-  - [ ] AppController (qontrol::Controller) with account management
-  - [ ] MainWindow (qontrol::Window) with tab widget
-  - [ ] AccountController with QTimer polling
-- [ ] AccountWidget, MenuTab, CreateAccount modal
-  - [ ] AccountWidget with side menu and screen container
-  - [ ] MenuTab for account creation entry
-  - [ ] CreateAccount modal (mnemonic gen/restore, network)
-- [ ] main.cpp and CMakeLists.txt updates
-  - [ ] Full application startup in main.cpp
-  - [ ] All source files added to CMakeLists.txt
+- [x] AppController, MainWindow, AccountController
+  - [x] AppController (qontrol::Controller) with account management
+  - [x] MainWindow (qontrol::Window) with tab widget
+  - [x] AccountController with QTimer polling
+- [x] AccountWidget, MenuTab, CreateAccount modal
+  - [x] AccountWidget with side menu and screen container
+  - [x] MenuTab for account creation entry
+  - [x] CreateAccount modal (mnemonic gen/restore, network)
+- [x] main.cpp and CMakeLists.txt updates
+  - [x] Full application startup in main.cpp
+  - [x] All source files added to CMakeLists.txt
 
 ---
 
@@ -145,7 +145,7 @@ Status: **Not Started** (0/2)
 | Phase 3: SP Addresses & BlindBit Sync | Complete | 10/10 |
 | Phase 4: Transaction Types & Simulation | Complete | 7/7 |
 | Phase 5: Coin Selection, Signing & Broadcast | Complete | 8/8 |
-| Phase 6: GUI Controllers | Not Started | 0/11 |
+| Phase 6: GUI Controllers | Complete | 11/11 |
 | Phase 7: Wallet Screens | Not Started | 0/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **50/78** |
+| **Total** | | **61/78** |

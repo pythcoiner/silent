@@ -365,22 +365,22 @@
         {
           "id": "phase-6-item-1",
           "name": "AppController, MainWindow, AccountController",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-6-item-1.sub-0",
               "name": "AppController (qontrol::Controller) with account management",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-6-item-1.sub-1",
               "name": "MainWindow (qontrol::Window) with tab widget",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-6-item-1.sub-2",
               "name": "AccountController with QTimer polling",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -390,22 +390,22 @@
         {
           "id": "phase-6-item-2",
           "name": "AccountWidget, MenuTab, CreateAccount modal",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-6-item-2.sub-0",
               "name": "AccountWidget with side menu and screen container",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-6-item-2.sub-1",
               "name": "MenuTab for account creation entry",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-6-item-2.sub-2",
               "name": "CreateAccount modal (mnemonic gen/restore, network)",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -415,17 +415,17 @@
         {
           "id": "phase-6-item-3",
           "name": "main.cpp and CMakeLists.txt updates",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-6-item-3.sub-0",
               "name": "Full application startup in main.cpp",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-6-item-3.sub-1",
               "name": "All source files added to CMakeLists.txt",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
