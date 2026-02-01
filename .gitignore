@@ -1,1 +1,4 @@
 .cm/logs/
+build/
+lib/
+templar/target/
