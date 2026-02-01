@@ -5,7 +5,7 @@
 use std::sync::mpsc;
 
 use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification};
-use spdk_core::{RecipientAddress, SilentPaymentUnsignedTransaction};
+use spdk_core::{RecipientAddress, SilentPaymentUnsignedTransaction, SpClient};
 
 use crate::config::Config;
 use crate::ffi::{CoinState, Notification, NotificationFlag, RustCoin, RustTx, TransactionSimulation, TransactionTemplate};
@@ -16,6 +16,8 @@ pub struct Account {
     inner: SpAccount,
     /// Notification receiver
     receiver: Option<mpsc::Receiver<SpNotification>>,
+    /// SP client for manual transaction creation
+    client: SpClient,
 }
 
 impl Account {
@@ -25,7 +27,20 @@ impl Account {
         let mut inner = SpAccount::new(sp_config)?;
         let receiver = inner.receiver();
 
-        Ok(Account { inner, receiver })
+        // Create SpClient from mnemonic for manual transaction creation
+        let mnemonic = spdk_core::bip39::Mnemonic::parse(&config.mnemonic)
+            .map_err(|e| AccountError::Config(format!("Invalid mnemonic: {e}")))?;
+        let network = match config.network {
+            crate::ffi::Network::Regtest => bitcoin::Network::Regtest,
+            crate::ffi::Network::Signet => bitcoin::Network::Signet,
+            crate::ffi::Network::Testnet => bitcoin::Network::Testnet,
+            crate::ffi::Network::Bitcoin => bitcoin::Network::Bitcoin,
+            _ => unreachable!("Invalid network variant"),
+        };
+        let client = SpClient::new_from_mnemonic(mnemonic, network)
+            .map_err(|e| AccountError::Config(format!("Failed to create SpClient: {e}")))?;
+
+        Ok(Account { inner, receiver, client })
     }
 
     /// Start the scanner.
@@ -141,15 +156,112 @@ impl Account {
             .collect()
     }
 
+    /// Create transaction with manual coin selection.
+    ///
+    /// Filters wallet UTXOs to only use the specified outpoints, then creates
+    /// a transaction using the SpClient directly.
+    fn create_transaction_with_manual_selection(
+        &self,
+        input_outpoints: Vec<String>,
+        recipients: Vec<(RecipientAddress, bitcoin::Amount)>,
+        max_addr: Option<RecipientAddress>,
+        has_max: bool,
+        fee_rate: spdk_core::FeeRate,
+    ) -> Result<SilentPaymentUnsignedTransaction, AccountError> {
+        use bitcoin::OutPoint;
+        use spdk_core::OwnedOutput;
+
+        // Parse the input outpoints from "txid:vout" format
+        let mut selected_outpoints = Vec::new();
+        for outpoint_str in &input_outpoints {
+            let parts: Vec<&str> = outpoint_str.split(':').collect();
+            if parts.len() != 2 {
+                return Err(AccountError::Transaction(
+                    format!("Invalid outpoint format '{outpoint_str}', expected 'txid:vout'")
+                ));
+            }
+
+            let txid = parts[0]
+                .parse::<bitcoin::Txid>()
+                .map_err(|e| AccountError::Transaction(format!("Invalid txid in '{outpoint_str}': {e}")))?;
+            let vout = parts[1]
+                .parse::<u32>()
+                .map_err(|e| AccountError::Transaction(format!("Invalid vout in '{outpoint_str}': {e}")))?;
+
+            selected_outpoints.push(OutPoint { txid, vout });
+        }
+
+        // Get all coins from the wallet
+        let all_coins = self.inner.coins();
+
+        // Filter to only the specified outpoints
+        let mut available_utxos: Vec<(OutPoint, OwnedOutput)> = Vec::new();
+        for outpoint in selected_outpoints {
+            match all_coins.get(&outpoint) {
+                Some(entry) if entry.is_spendable() => {
+                    available_utxos.push((outpoint, entry.owned_output().clone()));
+                }
+                Some(_) => {
+                    return Err(AccountError::Transaction(
+                        format!("Coin {}:{} is not spendable", outpoint.txid, outpoint.vout)
+                    ));
+                }
+                None => {
+                    return Err(AccountError::Transaction(
+                        format!("Coin {}:{} not found in wallet", outpoint.txid, outpoint.vout)
+                    ));
+                }
+            }
+        }
+
+        if available_utxos.is_empty() {
+            return Err(AccountError::Transaction(
+                "No valid spendable coins selected".to_string()
+            ));
+        }
+
+        // Create transaction using the SpClient with filtered UTXOs
+        if has_max {
+            if !recipients.is_empty() {
+                return Err(AccountError::Transaction(
+                    "max cannot be combined with other outputs".to_string()
+                ));
+            }
+            self.client
+                .create_drain_transaction(
+                    available_utxos,
+                    max_addr.unwrap(),
+                    fee_rate,
+                    self.inner.network(),
+                )
+                .map_err(|e| AccountError::Transaction(e.to_string()))
+        } else {
+            use spdk_core::Recipient;
+            let recipients: Vec<Recipient> = recipients
+                .into_iter()
+                .map(|(address, amount)| Recipient { address, amount })
+                .collect();
+
+            self.client
+                .create_new_transaction(
+                    available_utxos,
+                    recipients,
+                    fee_rate,
+                    self.inner.network(),
+                )
+                .map_err(|e| AccountError::Transaction(e.to_string()))
+        }
+    }
+
     /// Simulate a transaction without actually creating it.
     pub fn simulate_transaction(&self, tx_template: TransactionTemplate) -> TransactionSimulation {
         use bitcoin::Amount;
         use spdk_core::FeeRate;
 
-        // Parse outputs and check for send_max flag
+        // Parse outputs and check for max flag
         let mut recipients = Vec::new();
-        let mut has_send_max = false;
-        let mut send_max_addr = None;
+        let mut has_max = false;
+        let mut max_addr = None;
 
         for output in tx_template.outputs {
             // Parse address
@@ -168,8 +280,8 @@ impl Account {
                 }
             };
 
-            if output.send_max {
-                if has_send_max {
+            if output.max {
+                if has_max {
                     return TransactionSimulation {
                         is_valid: false,
                         fee: 0,
@@ -177,11 +289,11 @@ impl Account {
                         input_total: 0,
                         output_total: 0,
                         input_count: 0,
-                        error: String::from("Only one output can have send_max=true"),
+                        error: String::from("Only one output can have max=true"),
                     };
                 }
-                has_send_max = true;
-                send_max_addr = Some(addr);
+                has_max = true;
+                max_addr = Some(addr);
             } else {
                 recipients.push((addr, Amount::from_sat(output.amount)));
             }
@@ -190,22 +302,34 @@ impl Account {
         // Convert fee rate (ensure it's at least 1.0 sat/vb)
         let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
 
-        // Create the unsigned transaction
-        let unsigned_tx_result = if has_send_max {
-            if !recipients.is_empty() {
-                return TransactionSimulation {
-                    is_valid: false,
-                    fee: 0,
-                    weight: 0,
-                    input_total: 0,
-                    output_total: 0,
-                    input_count: 0,
-                    error: String::from("send_max cannot be combined with other outputs"),
-                };
-            }
-            self.inner.create_drain_transaction(send_max_addr.unwrap(), fee_rate)
+        // Create the unsigned transaction (with manual or automatic coin selection)
+        let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
+            // Manual coin selection: use specified outpoints
+            self.create_transaction_with_manual_selection(
+                tx_template.input_outpoints,
+                recipients,
+                max_addr,
+                has_max,
+                fee_rate,
+            )
         } else {
-            self.inner.create_transaction(recipients, fee_rate)
+            // Automatic coin selection: use inner Account methods
+            if has_max {
+                if !recipients.is_empty() {
+                    return TransactionSimulation {
+                        is_valid: false,
+                        fee: 0,
+                        weight: 0,
+                        input_total: 0,
+                        output_total: 0,
+                        input_count: 0,
+                        error: String::from("max cannot be combined with other outputs"),
+                    };
+                }
+                self.inner.create_drain_transaction(max_addr.unwrap(), fee_rate)
+            } else {
+                self.inner.create_transaction(recipients, fee_rate)
+            }
         };
 
         // Extract simulation data
@@ -364,6 +488,11 @@ impl Poll {
 }
 
 /// PsbtResult wrapper for CXX.
+///
+/// This type wraps unsigned Silent Payment transactions for Phase 5 (Coin Selection, Signing & Broadcast).
+/// It will be used by methods like `prepare_transaction()` to return unsigned transactions that can be
+/// signed and broadcast. The type is defined now to establish the CXX bridge interface, but will be
+/// actively used once transaction signing and broadcasting are implemented in Phase 5.
 pub struct PsbtResult {
     inner: Result<SilentPaymentUnsignedTransaction, String>,
 }

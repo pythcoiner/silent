@@ -89,7 +89,7 @@ mod ffi {
         /// Optional label for this output
         pub label: String,
         /// If true, send maximum possible amount (minus fees) to this output
-        pub send_max: bool,
+        pub max: bool,
     }
 
     /// Template for creating a transaction.
