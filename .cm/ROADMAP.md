@@ -107,17 +107,17 @@ Status: **Complete** (3/3)
 
 ## Phase 7: Wallet Screens
 
-Status: **Not Started** (0/3)
+Status: **Complete** (3/3)
 
-- [ ] Coins screen and Receive screen
-  - [ ] Coins: UTXO table, balance display, labels
-  - [ ] Receive: SP address display, copy, address list
-- [ ] Send screen with SelectCoins modal
-  - [ ] Send: SP address input, amount, fee rate, simulate, send
-  - [ ] SelectCoins: UTXO checkboxes, selected total
-- [ ] Settings screen and common utilities
-  - [ ] Settings: BlindBit URL, network selector, save/connect
-  - [ ] Common: BTC formatting, standard layouts
+- [x] Coins screen and Receive screen
+  - [x] Coins: UTXO table, balance display, labels
+  - [x] Receive: SP address display, copy, address list
+- [x] Send screen with SelectCoins modal
+  - [x] Send: SP address input, amount, fee rate, simulate, send
+  - [x] SelectCoins: UTXO checkboxes, selected total
+- [x] Settings screen and common utilities
+  - [x] Settings: BlindBit URL, network selector, save/connect
+  - [x] Common: BTC formatting, standard layouts
 
 ---
 
@@ -146,6 +146,6 @@ Status: **Not Started** (0/2)
 | Phase 4: Transaction Types & Simulation | Complete | 7/7 |
 | Phase 5: Coin Selection, Signing & Broadcast | Complete | 8/8 |
 | Phase 6: GUI Controllers | Complete | 11/11 |
-| Phase 7: Wallet Screens | Not Started | 0/9 |
+| Phase 7: Wallet Screens | Complete | 9/9 |
 | Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **61/78** |
+| **Total** | | **70/78** |

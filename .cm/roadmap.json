@@ -442,17 +442,17 @@
         {
           "id": "phase-7-item-1",
           "name": "Coins screen and Receive screen",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-7-item-1.sub-0",
               "name": "Coins: UTXO table, balance display, labels",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-7-item-1.sub-1",
               "name": "Receive: SP address display, copy, address list",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -462,17 +462,17 @@
         {
           "id": "phase-7-item-2",
           "name": "Send screen with SelectCoins modal",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-7-item-2.sub-0",
               "name": "Send: SP address input, amount, fee rate, simulate, send",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-7-item-2.sub-1",
               "name": "SelectCoins: UTXO checkboxes, selected total",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -482,17 +482,17 @@
         {
           "id": "phase-7-item-3",
           "name": "Settings screen and common utilities",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-7-item-3.sub-0",
               "name": "Settings: BlindBit URL, network selector, save/connect",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-7-item-3.sub-1",
               "name": "Common: BTC formatting, standard layouts",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
