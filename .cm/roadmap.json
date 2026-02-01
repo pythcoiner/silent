@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "title": "Templar",
+  "phases": [
+    {
+      "id": "phase-1",
+      "number": "1",
+      "name": "Scaffolding",
+      "items": [
+        {
+          "id": "phase-1-item-1",
+          "name": "Set up CMake project with Qt6 and qontrol FetchContent",
+          "completed": false,
+          "sub_items": [
+            { "name": "CMakeLists.txt with Qt6 Widgets dependency", "completed": false },
+            { "name": "qontrol fetched via FetchContent", "completed": false },
+            { "name": "Empty Qt window compiles and runs", "completed": false }
+          ],
+          "linked_task_ids": ["phase-1.task-1"]
+        },
+        {
+          "id": "phase-1-item-2",
+          "name": "Create templar Rust crate with CXX bridge skeleton",
+          "completed": false,
+          "sub_items": [
+            { "name": "Cargo.toml with bwk and cxx dependencies", "completed": false },
+            { "name": "lib.rs with cxx::bridge module skeleton", "completed": false },
+            { "name": "build.rs with cxx_build", "completed": false }
+          ],
+          "linked_task_ids": ["phase-1.task-2"]
+        },
+        {
+          "id": "phase-1-item-3",
+          "name": "Create build pipeline script",
+          "completed": false,
+          "sub_items": [
+            { "name": "build.sh runs cargo build --release", "completed": false },
+            { "name": "Copies .a library and generated headers to lib/", "completed": false },
+            { "name": "CMake links against built library", "completed": false }
+          ],
+          "linked_task_ids": ["phase-1.task-3"]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "number": "2",
+      "name": "Core Backend",
+      "items": [
+        {
+          "id": "phase-2-item-1",
+          "name": "Config module with persistence",
+          "completed": false,
+          "sub_items": [
+            { "name": "Config struct with mnemonic, network, electrum URL, SP descriptor", "completed": false },
+            { "name": "JSON file persistence (~/.templar/<account>/config.json)", "completed": false },
+            { "name": "CXX-exposed config creation and loading", "completed": false }
+          ],
+          "linked_task_ids": ["phase-2.task-1"]
+        },
+        {
+          "id": "phase-2-item-2",
+          "name": "Account struct wrapping bwk::Account",
+          "completed": false,
+          "sub_items": [
+            { "name": "Account struct with bwk::Account inner", "completed": false },
+            { "name": "CXX-exposed lifecycle methods (new, start, stop)", "completed": false },
+            { "name": "Signal/Poll notification types exposed to C++", "completed": false }
+          ],
+          "linked_task_ids": ["phase-2.task-2"]
+        },
+        {
+          "id": "phase-2-item-3",
+          "name": "SP address generation",
+          "completed": false,
+          "sub_items": [
+            { "name": "SP receive address derivation via bwk-sp", "completed": false },
+            { "name": "Address store with status tracking", "completed": false },
+            { "name": "CXX-exposed address list and generation", "completed": false }
+          ],
+          "linked_task_ids": ["phase-2.task-3"]
+        },
+        {
+          "id": "phase-2-item-4",
+          "name": "Electrum sync integration",
+          "completed": false,
+          "sub_items": [
+            { "name": "Electrum listener thread via bwk_electrum", "completed": false },
+            { "name": "mpsc channel for notifications", "completed": false },
+            { "name": "Signal types (TxListenerStarted, CoinUpdate, etc.)", "completed": false }
+          ],
+          "linked_task_ids": ["phase-2.task-4"]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "number": "3",
+      "name": "Transaction Flow",
+      "items": [
+        {
+          "id": "phase-3-item-1",
+          "name": "CXX-exposed transaction types",
+          "completed": false,
+          "sub_items": [
+            { "name": "TransactionTemplate (inputs, outputs, fee rate)", "completed": false },
+            { "name": "TransactionSimulation (fee estimation, validation)", "completed": false },
+            { "name": "CoinState (confirmed/unconfirmed balances)", "completed": false }
+          ],
+          "linked_task_ids": ["phase-3.task-1"]
+        },
+        {
+          "id": "phase-3-item-2",
+          "name": "Coin selection and PSBT creation",
+          "completed": false,
+          "sub_items": [
+            { "name": "Coin selection from SP UTXOs", "completed": false },
+            { "name": "PSBT creation with SP outputs", "completed": false },
+            { "name": "Fee estimation modes", "completed": false }
+          ],
+          "linked_task_ids": ["phase-3.task-2"]
+        },
+        {
+          "id": "phase-3-item-3",
+          "name": "Transaction signing and broadcast",
+          "completed": false,
+          "sub_items": [
+            { "name": "PSBT signing via bwk_sign (hot signer from mnemonic)", "completed": false },
+            { "name": "Broadcast via Electrum", "completed": false },
+            { "name": "SignedTx signal notification", "completed": false }
+          ],
+          "linked_task_ids": ["phase-3.task-3"]
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "number": "4",
+      "name": "GUI Screens",
+      "items": [
+        {
+          "id": "phase-4-item-1",
+          "name": "AppController, MainWindow, and AccountController",
+          "completed": false,
+          "sub_items": [
+            { "name": "AppController (qontrol::Controller) with account management", "completed": false },
+            { "name": "MainWindow (qontrol::Window) with tab widget", "completed": false },
+            { "name": "AccountController with 100ms polling timer", "completed": false },
+            { "name": "AccountWidget with side menu and screen container", "completed": false }
+          ],
+          "linked_task_ids": ["phase-4.task-1"]
+        },
+        {
+          "id": "phase-4-item-2",
+          "name": "Coins screen and Receive screen",
+          "completed": false,
+          "sub_items": [
+            { "name": "Coins screen: UTXO table, balance display, labels", "completed": false },
+            { "name": "Receive screen: SP address display and copy", "completed": false }
+          ],
+          "linked_task_ids": ["phase-4.task-2"]
+        },
+        {
+          "id": "phase-4-item-3",
+          "name": "Send screen and Settings screen",
+          "completed": false,
+          "sub_items": [
+            { "name": "Send screen: SP address input, amount, fee rate, coin selection", "completed": false },
+            { "name": "Settings screen: Electrum URL/port, network selector", "completed": false }
+          ],
+          "linked_task_ids": ["phase-4.task-3"]
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "number": "5",
+      "name": "Integration and Testing",
+      "items": [
+        {
+          "id": "phase-5-item-1",
+          "name": "End-to-end integration testing",
+          "completed": false,
+          "sub_items": [
+            { "name": "Send/receive flow on regtest", "completed": false },
+            { "name": "Send/receive flow on signet", "completed": false },
+            { "name": "Wallet restore from mnemonic", "completed": false }
+          ],
+          "linked_task_ids": ["phase-5.task-1"]
+        },
+        {
+          "id": "phase-5-item-2",
+          "name": "Multi-account and error handling",
+          "completed": false,
+          "sub_items": [
+            { "name": "Multiple accounts with independent state", "completed": false },
+            { "name": "Electrum connection error handling", "completed": false },
+            { "name": "Edge cases (zero balance send, dust outputs)", "completed": false }
+          ],
+          "linked_task_ids": ["phase-5.task-2"]
+        }
+      ]
+    }
+  ]
+}

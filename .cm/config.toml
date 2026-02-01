@@ -1,0 +1,17 @@
+# cm configuration file
+
+# Claude model to use for agent spawning
+# Options: "claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101"
+# model = "claude-sonnet-4-5-20250929"
+
+# Maximum number of fix cycles per task before deferring
+# Default: 5
+# max_cycles = 5
+
+# Working directory for build verification (relative to project root)
+# Default: "."
+# working_dir = "."
+
+# Build commands to run for verification
+# If empty or not specified, build verification is skipped entirely
+build_commands = ["cargo build --release --manifest-path templar/Cargo.toml", "cargo clippy --manifest-path templar/Cargo.toml"]
