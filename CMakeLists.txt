@@ -24,19 +24,8 @@ set_target_properties(templar_rust PROPERTIES
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
 
-# Fetch qontrol framework from GitHub
-include(FetchContent)
-if(NOT DEFINED ENV{OFFLINE} OR "$ENV{OFFLINE}" STREQUAL "false")
-    FetchContent_Declare(qontrol
-        GIT_REPOSITORY https://github.com/pythcoiner/qontrol.git
-        GIT_TAG 4444fc3
-    )
-else()
-    FetchContent_Declare(qontrol
-        SOURCE_DIR ./_deps/qontrol-src/
-    )
-endif()
-FetchContent_MakeAvailable(qontrol)
+# qontrol framework (vendored in lib/qontrol)
+add_subdirectory(lib/qontrol)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

@@ -4,14 +4,9 @@ echo "OFFLINE=$OFFLINE"
 
 set -e
 
-# Create ./lib if not existing
-if ! [ -d "./lib" ]; then
-    mkdir lib
-else
-    # Cleanup lib
-    rm -fRd ./lib/*
-fi
-
+# Cleanup lib (preserve vendored qontrol)
+rm -f ./lib/libtemplar.*
+rm -rf ./lib/include
 mkdir -p ./lib/include
 
 # Build templar Rust crate

@@ -20,14 +20,14 @@
 namespace screen {
 
 InputW::InputW(const RustCoin &coin) {
-    auto *outpointLabel = new QLabel(QString(coin.outpoint.c_str()));
+    auto *outpointLabel = new QLabel(QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size()));
     outpointLabel->setFixedWidth(300);
 
     auto *valueLabel = new QLabel(toBitcoin(coin.value, false));
     valueLabel->setFixedWidth(95);
     valueLabel->setAlignment(Qt::AlignRight);
 
-    auto *labelLabel = new QLabel(QString(coin.label.c_str()));
+    auto *labelLabel = new QLabel(QString::fromUtf8(coin.label.data(), coin.label.size()));
     labelLabel->setFixedWidth(2 * INPUT_WIDTH);
 
     auto *row = (new qontrol::Row)
@@ -434,7 +434,7 @@ void Send::onCoinsSelected(const QList<RustCoin> &coins) {
     uint64_t totalValue = 0;
     for (const auto &coin : coins) {
         totalValue += coin.value;
-        qDebug() << "  Selected coin:" << QString(coin.outpoint.c_str())
+        qDebug() << "  Selected coin:" << QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size())
                  << "Value:" << coin.value;
     }
 
@@ -510,7 +510,7 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
 
     // Add selected coins as input outpoints
     for (const auto &coin : m_selected_coins) {
-        txTemplate.input_outpoints.push_back(rust::String(coin.outpoint.c_str()));
+        txTemplate.input_outpoints.push_back(rust::String(std::string(coin.outpoint)));
     }
 
     return txTemplate;

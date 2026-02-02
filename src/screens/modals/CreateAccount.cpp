@@ -12,7 +12,8 @@
 #include <random>
 #include <sstream>
 
-CreateAccount::CreateAccount(QWidget *parent) : qontrol::Modal(parent) {
+CreateAccount::CreateAccount(QWidget *parent) : qontrol::Modal() {
+    Q_UNUSED(parent);
     setWindowTitle("Create Account");
     resize(600, 650);
     initUI();
