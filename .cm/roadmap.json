@@ -509,22 +509,22 @@
         {
           "id": "phase-8-item-1",
           "name": "End-to-end integration testing",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-8-item-1.sub-0",
               "name": "Send/receive SP flow on regtest",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-8-item-1.sub-1",
               "name": "SP address generation and sync on signet",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-8-item-1.sub-2",
               "name": "Wallet restore from mnemonic",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [
@@ -534,22 +534,22 @@
         {
           "id": "phase-8-item-2",
           "name": "Multi-account and error handling",
-          "completed": false,
+          "completed": true,
           "sub_items": [
             {
               "id": "phase-8-item-2.sub-0",
               "name": "Multiple accounts with independent state",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-8-item-2.sub-1",
               "name": "Invalid BlindBit URL, mnemonic, SP address handling",
-              "completed": false
+              "completed": true
             },
             {
               "id": "phase-8-item-2.sub-2",
               "name": "Edge cases: zero balance, dust outputs",
-              "completed": false
+              "completed": true
             }
           ],
           "linked_task_ids": [

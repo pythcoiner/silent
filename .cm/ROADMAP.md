@@ -123,16 +123,16 @@ Status: **Complete** (3/3)
 
 ## Phase 8: Integration & Testing
 
-Status: **Not Started** (0/2)
+Status: **Complete** (2/2)
 
-- [ ] End-to-end integration testing
-  - [ ] Send/receive SP flow on regtest
-  - [ ] SP address generation and sync on signet
-  - [ ] Wallet restore from mnemonic
-- [ ] Multi-account and error handling
-  - [ ] Multiple accounts with independent state
-  - [ ] Invalid BlindBit URL, mnemonic, SP address handling
-  - [ ] Edge cases: zero balance, dust outputs
+- [x] End-to-end integration testing
+  - [x] Send/receive SP flow on regtest
+  - [x] SP address generation and sync on signet
+  - [x] Wallet restore from mnemonic
+- [x] Multi-account and error handling
+  - [x] Multiple accounts with independent state
+  - [x] Invalid BlindBit URL, mnemonic, SP address handling
+  - [x] Edge cases: zero balance, dust outputs
 
 ---
 
@@ -147,5 +147,5 @@ Status: **Not Started** (0/2)
 | Phase 5: Coin Selection, Signing & Broadcast | Complete | 8/8 |
 | Phase 6: GUI Controllers | Complete | 11/11 |
 | Phase 7: Wallet Screens | Complete | 9/9 |
-| Phase 8: Integration & Testing | Not Started | 0/8 |
-| **Total** | | **70/78** |
+| Phase 8: Integration & Testing | Complete | 8/8 |
+| **Total** | | **78/78** |
