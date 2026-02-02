@@ -22,6 +22,7 @@ private slots:
     void onGenerate();
     void onCreate();
     void onModeChanged();
+    void onNetworkChanged();
 
 private:
     QLineEdit *m_name_input = nullptr;

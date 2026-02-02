@@ -9,8 +9,6 @@
 #include <qtextedit.h>
 #include <qcombobox.h>
 #include <qmessagebox.h>
-#include <random>
-#include <sstream>
 
 CreateAccount::CreateAccount(QWidget *parent) : qontrol::Modal() {
     Q_UNUSED(parent);
@@ -38,6 +36,8 @@ void CreateAccount::initUI() {
 
     connect(m_generate_radio, &QRadioButton::toggled,
             this, &CreateAccount::onModeChanged);
+    connect(m_restore_radio, &QRadioButton::toggled,
+            this, &CreateAccount::onModeChanged);
 
     // Mnemonic field
     m_mnemonic_input = new QTextEdit();
@@ -46,22 +46,11 @@ void CreateAccount::initUI() {
     m_mnemonic_input->setMaximumHeight(80);
     layout->addRow("Mnemonic:", m_mnemonic_input);
 
-    // Generate button (disabled - proper BIP39 implementation needed)
+    // Generate button
     m_generate_btn = new QPushButton("Generate");
-    m_generate_btn->setEnabled(false);
-    m_generate_btn->setToolTip("Mnemonic generation requires proper BIP39 implementation");
     connect(m_generate_btn, &QPushButton::clicked,
             this, &CreateAccount::onGenerate);
     layout->addRow("", m_generate_btn);
-
-    // Warning label for mnemonic security
-    auto *warning_label = new QLabel(
-        "<b>WARNING:</b> Proper BIP39 mnemonic generation not yet implemented. "
-        "Please use an external tool to generate a secure mnemonic for now."
-    );
-    warning_label->setWordWrap(true);
-    warning_label->setStyleSheet("QLabel { color: red; }");
-    layout->addRow("", warning_label);
 
     // Network selector
     m_network_combo = new QComboBox();
@@ -70,6 +59,8 @@ void CreateAccount::initUI() {
     m_network_combo->addItem("Testnet", static_cast<int>(Network::Testnet));
     m_network_combo->addItem("Bitcoin", static_cast<int>(Network::Bitcoin));
     m_network_combo->setCurrentIndex(0); // Default to Regtest
+    connect(m_network_combo, &QComboBox::currentIndexChanged,
+            this, &CreateAccount::onNetworkChanged);
     layout->addRow("Network:", m_network_combo);
 
     // BlindBit URL
@@ -145,11 +136,12 @@ void CreateAccount::onCreate() {
 }
 
 void CreateAccount::onModeChanged() {
+    bool is_mainnet = static_cast<Network>(m_network_combo->currentData().toInt()) == Network::Bitcoin;
+
     if (m_generate_radio->isChecked()) {
-        // Generate mode: mnemonic is readonly, but generate button stays disabled
-        // until proper BIP39 implementation is added
+        // Generate mode: mnemonic is readonly, generate button enabled (unless mainnet)
         m_mnemonic_input->setReadOnly(true);
-        m_generate_btn->setEnabled(false); // Keep disabled for security
+        m_generate_btn->setEnabled(!is_mainnet);
     } else {
         // Restore mode: mnemonic is editable, generate button disabled
         m_mnemonic_input->setReadOnly(false);
@@ -158,28 +150,19 @@ void CreateAccount::onModeChanged() {
     }
 }
 
-auto CreateAccount::generateMnemonic() -> QString {
-    // TODO: This should call a Rust function to generate a proper BIP39 mnemonic
-    // For now, we'll generate a placeholder. The Rust side needs to export:
-    // rust::String generate_mnemonic() or similar
+void CreateAccount::onNetworkChanged() {
+    bool is_mainnet = static_cast<Network>(m_network_combo->currentData().toInt()) == Network::Bitcoin;
 
-    // Placeholder: generate 12 random words from a minimal wordlist
-    // In production, this MUST use proper BIP39 wordlist and entropy
-    QStringList words = {
-        "abandon", "ability", "able", "about", "above", "absent",
-        "absorb", "abstract", "absurd", "abuse", "access", "accident",
-        "account", "accuse", "achieve", "acid", "acoustic", "acquire",
-        "across", "act", "action", "actor", "actress", "actual"
-    };
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, words.size() - 1);
-
-    QStringList mnemonic_words;
-    for (int i = 0; i < 12; i++) {
-        mnemonic_words.append(words[dis(gen)]);
+    if (is_mainnet && m_generate_radio->isChecked()) {
+        // Switch to restore mode on mainnet
+        m_restore_radio->setChecked(true);
+        m_generate_radio->setEnabled(false);
+    } else {
+        m_generate_radio->setEnabled(true);
     }
+}
 
-    return mnemonic_words.join(" ");
+auto CreateAccount::generateMnemonic() -> QString {
+    auto mnemonic = ::generate_mnemonic();
+    return QString::fromStdString(std::string(mnemonic));
 }
