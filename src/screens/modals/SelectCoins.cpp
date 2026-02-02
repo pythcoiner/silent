@@ -242,8 +242,8 @@ auto CoinWidget::outpoint() -> QLineEdit * {
 CoinWidget::CoinWidget(const RustCoin &coin, SelectCoins *modal) {
     m_coin = coin;
     m_checkbox = new QCheckBox();
-    connect(m_checkbox, &QCheckBox::checkStateChanged, modal,
-            &SelectCoins::checked, qontrol::UNIQUE);
+    connect(m_checkbox, &QCheckBox::stateChanged, modal,
+            [modal]() { modal->checked(); }, qontrol::UNIQUE);
 
     m_outpoint = new QLineEdit();
     auto op = m_coin.outpoint;

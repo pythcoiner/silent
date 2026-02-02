@@ -110,7 +110,7 @@ OutputW::OutputW(Send *screen, int id) {
 
     QObject::connect(m_delete, &QPushButton::clicked, screen,
                      [screen, id]() { screen->deleteOutput(id); });
-    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen,
+    QObject::connect(m_max, &QCheckBox::stateChanged, screen,
                      [screen, id]() { screen->outputSetMax(id); });
 
     m_widget = col;

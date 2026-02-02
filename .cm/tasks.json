@@ -526,6 +526,70 @@
         }
       ],
       "review_cycles_completed": 0
+    },
+    {
+      "id": "phase-9",
+      "name": "Nix Build System",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-9.feat-nix.impl-1",
+          "name": "Create flake.nix with Linux build derivation",
+          "type": "implement",
+          "status": "done",
+          "depends_on": [],
+          "context": {
+            "files_to_read": [
+              "build.sh",
+              "CMakeLists.txt",
+              "templar/Cargo.toml"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-9.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-9-item-1",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-9.feat-nix.impl-2",
+          "name": "Add Windows and macOS cross-compilation targets",
+          "type": "implement",
+          "status": "done",
+          "depends_on": [
+            "phase-9.feat-nix.impl-1"
+          ],
+          "context": {
+            "files_to_read": [
+              "flake.nix"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-9.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-9-item-2",
+          "review_cycles_completed": 0
+        },
+        {
+          "id": "phase-9.feat-nix.review",
+          "name": "Review and test Nix build pipeline",
+          "type": "review",
+          "status": "pending",
+          "depends_on": [
+            "phase-9.feat-nix.impl-1",
+            "phase-9.feat-nix.impl-2"
+          ],
+          "context": {
+            "files_to_read": [
+              "flake.nix"
+            ]
+          },
+          "plan_file": ".cm/plans/plan-9.md",
+          "attempts": [],
+          "roadmap_item_id": "phase-9-item-3",
+          "review_cycles_completed": 0
+        }
+      ],
+      "review_cycles_completed": 0
     }
   ],
   "agent_history": [

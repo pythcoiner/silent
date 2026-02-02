@@ -136,6 +136,26 @@ Status: **Complete** (2/2)
 
 ---
 
+## Phase 9: Nix Build System
+
+Status: **Not Started** (0/3)
+
+- [ ] Create flake.nix with Linux build derivation
+  - [ ] Flake inputs: nixpkgs, qt_static (6.6.3), bwk (master), spdk (blindbit_backend_non_async), qontrol
+  - [ ] Rust crate build with path dependencies resolved
+  - [ ] C++ GUI build with static Qt6 via CMAKE_PREFIX_PATH
+  - [ ] nix build .#linux produces working binary
+- [ ] Add Windows and macOS cross-compilation targets
+  - [ ] Windows target via MinGW cross-compilation
+  - [ ] macOS ARM and x86_64 targets
+  - [ ] Rust cross-compile toolchains configured
+- [ ] Review and test Nix build pipeline
+  - [ ] nix flake check passes
+  - [ ] All targets build successfully
+  - [ ] Build documentation updated
+
+---
+
 ## Summary
 
 | Phase | Status | Progress |
@@ -148,4 +168,5 @@ Status: **Complete** (2/2)
 | Phase 6: GUI Controllers | Complete | 11/11 |
 | Phase 7: Wallet Screens | Complete | 9/9 |
 | Phase 8: Integration & Testing | Complete | 8/8 |
-| **Total** | | **78/78** |
+| Phase 9: Nix Build System | Not Started | 0/13 |
+| **Total** | | **78/91** |

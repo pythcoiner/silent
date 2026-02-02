@@ -245,6 +245,49 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 - Robust error handling (no panics on any error path)
 - Multi-account isolation verified
 
+### Phase 9: Nix Build System
+
+**Goal:** Add reproducible Nix-based builds from Linux for Linux, Windows, and macOS using statically linked Qt6 from `pythcoiner/qt_static`
+
+**Tasks:**
+- Create `flake.nix` with flake inputs (nixpkgs, qt_static/6.6.3, bwk/master, spdk/blindbit_backend_non_async, qontrol), Linux build derivation resolving Cargo path dependencies, and static Qt6 integration via CMAKE_PREFIX_PATH
+- Add Windows (MinGW) and macOS (ARM + x86_64) cross-compilation targets with matching Rust cross-compile toolchains
+- Review and test full build pipeline, update build documentation
+
+**Deliverables:**
+- `flake.nix` producing self-contained binaries for all 3 platforms
+- `nix build .#linux`, `nix build .#windows`, `nix build .#aarch64-apple-darwin`, `nix build .#x86_64-apple-darwin` all work
+- Build documentation updated in CLAUDE.md
+
+### Nix Build System
+
+**Purpose:** Reproducible builds from Linux targeting Linux, Windows, and macOS using Nix flakes with statically linked Qt6.
+
+**Key files:**
+- `flake.nix` — Main flake definition with inputs, build derivations for all targets, and dev shell
+
+**Flake inputs:**
+- `nixpkgs` — Nix packages
+- `pythcoiner/qt_static` (branch `6.6.3`) — Statically linked Qt6 libraries for Linux, Windows, macOS
+- `pythcoiner/bwk` (branch `master`) — Bitcoin Wallet Kit (Rust backend dependency)
+- `pythcoiner/spdk` (branch `blindbit_backend_non_async`) — Silent Payments Development Kit (transitive dependency via bwk-sp)
+- `pythcoiner/qontrol` — Qt6 widget framework (C++ dependency)
+
+**Build targets:**
+- `nix build .#linux` — Linux x86_64 binary
+- `nix build .#windows` — Windows binary (MinGW cross-compilation)
+- `nix build .#aarch64-apple-darwin` — macOS ARM binary
+- `nix build .#x86_64-apple-darwin` — macOS Intel binary
+
+**Requirements:**
+- Path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`) must be resolved by laying out flake inputs at expected relative paths in the Nix sandbox
+- Rust and C++ cross-compilation toolchains for all targets
+- `qt_static` outputs used as `CMAKE_PREFIX_PATH` for CMake
+
+**Implementation notes:**
+- The build pipeline mirrors `build.sh`: Rust crate first, then copy CXX bridge headers/lib, then CMake build
+- For cross-compilation, both Rust targets and C++ toolchains must match the platform
+
 ## Technical Decisions
 
 ### Silent Payments Only

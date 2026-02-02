@@ -557,6 +557,83 @@
           ]
         }
       ]
+    },
+    {
+      "id": "phase-9",
+      "number": "9",
+      "name": "Nix Build System",
+      "items": [
+        {
+          "id": "phase-9-item-1",
+          "name": "Create flake.nix with Linux build derivation",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Flake inputs: nixpkgs, qt_static (6.6.3), bwk (master), spdk (blindbit_backend_non_async), qontrol",
+              "completed": false
+            },
+            {
+              "name": "Rust crate build with path dependencies resolved",
+              "completed": false
+            },
+            {
+              "name": "C++ GUI build with static Qt6 via CMAKE_PREFIX_PATH",
+              "completed": false
+            },
+            {
+              "name": "nix build .#linux produces working binary",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-9.feat-nix.impl-1"
+          ]
+        },
+        {
+          "id": "phase-9-item-2",
+          "name": "Add Windows and macOS cross-compilation targets",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "Windows target via MinGW cross-compilation",
+              "completed": false
+            },
+            {
+              "name": "macOS ARM and x86_64 targets",
+              "completed": false
+            },
+            {
+              "name": "Rust cross-compile toolchains configured",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-9.feat-nix.impl-2"
+          ]
+        },
+        {
+          "id": "phase-9-item-3",
+          "name": "Review and test Nix build pipeline",
+          "completed": false,
+          "sub_items": [
+            {
+              "name": "nix flake check passes",
+              "completed": false
+            },
+            {
+              "name": "All targets build successfully",
+              "completed": false
+            },
+            {
+              "name": "Build documentation updated",
+              "completed": false
+            }
+          ],
+          "linked_task_ids": [
+            "phase-9.feat-nix.review"
+          ]
+        }
+      ]
     }
   ]
 }

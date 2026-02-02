@@ -75,6 +75,37 @@ Qt6 GUI (C++)  ──CXX FFI──>  Account (Rust, wraps bwk-sp)
 
 `build.sh` compiles the Rust crate, then copies generated CXX bridge headers (`templar.h`, `cxx.h`) and static library (`libtemplar.a`) into `lib/`. CMake then links against these when building the C++ GUI. The Rust `build.rs` uses `cxx_build` to generate the C++ bridge code.
 
+## Nix Build System
+
+Reproducible builds via Nix flakes with statically linked Qt6.
+
+**Linux build:**
+```bash
+nix build .#linux
+```
+
+**Windows cross-build (MinGW):**
+```bash
+nix build .#windows
+```
+
+**macOS ARM cross-build:**
+```bash
+nix build .#aarch64-apple-darwin
+```
+
+**macOS x86_64 cross-build:**
+```bash
+nix build .#x86_64-apple-darwin
+```
+
+**Development shell** (provides Rust toolchain, CMake, Qt6):
+```bash
+nix develop
+```
+
+The flake resolves Cargo path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`) by laying out `bwk`, `spdk`, and `templar` as sibling directories in the Nix sandbox. Git dependencies are vendored via `importCargoLock` with pinned hashes.
+
 ## Testing
 
 Tests are in `templar/tests/` using standard Rust `#[test]`:

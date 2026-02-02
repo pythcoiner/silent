@@ -49,7 +49,7 @@ auto MainWindow::accountExists(const QString &name) -> bool {
 
 void MainWindow::insertAccount(AccountWidget *account, const QString &name) {
     if (!accountExists(name)) {
-        m_tabs.append(QPair(name, account));
+        m_tabs.append(QPair<QString, AccountWidget *>(name, account));
         updateTabs();
     } else {
         qCritical() << "Tab for account" << name << "already exists!";

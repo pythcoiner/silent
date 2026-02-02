@@ -1,0 +1,137 @@
+{
+  "nodes": {
+    "bwk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769958815,
+        "narHash": "sha256-6D0mcFgtbucENe0f+qgNVhi+jGqQUpc8tB+O1UwwLfc=",
+        "owner": "pythcoiner",
+        "repo": "bwk",
+        "rev": "f82fae93c4ce6ce66cb85b6e1017749c4d64a5cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pythcoiner",
+        "ref": "master",
+        "repo": "bwk",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1767313136,
+        "narHash": "sha256-16KkgfdYqjaeRGBaYsNrhPRRENs0qzkQVUooNHtoy2w=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ac62194c3917d5f474c1a844b6fd6da2db95077d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "qontrol": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769086476,
+        "narHash": "sha256-OH0JamopFo3GnGYYgshJiHSmcO52jDZnZdWH3/X2lEU=",
+        "owner": "pythcoiner",
+        "repo": "qontrol",
+        "rev": "0475eee642841da567d291bbc196a567380eefcc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pythcoiner",
+        "repo": "qontrol",
+        "type": "github"
+      }
+    },
+    "qt_src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1710754297,
+        "narHash": "sha256-VRGCmuFCqGQgb5wR4/q8nv1uLmfvNoVOqSYz83bCo3U=",
+        "owner": "qt",
+        "repo": "qtbase",
+        "rev": "afdec885058c92e24604f398a926297222da06f3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "qt",
+        "ref": "v6.6.3",
+        "repo": "qtbase",
+        "type": "github"
+      }
+    },
+    "qt_static": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767166924,
+        "narHash": "sha256-ywN3LpracT4gcdyD89lt8JYRHC7s6vM49Ro1+zPStbM=",
+        "owner": "pythcoiner",
+        "repo": "qt_static",
+        "rev": "90d74b76b25ef472418d1c9fd2e4a617778937c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pythcoiner",
+        "ref": "6.6.3",
+        "repo": "qt_static",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "bwk": "bwk",
+        "nixpkgs": "nixpkgs",
+        "qontrol": "qontrol",
+        "qt_src": "qt_src",
+        "qt_static": "qt_static",
+        "rust-overlay": "rust-overlay",
+        "spdk": "spdk"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770001842,
+        "narHash": "sha256-ZAyTeILfdWwDp1nuF0RK3McBduMi49qnJvrS+3Ezpac=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "5018343419ea808f8a413241381976b7e60951f2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "spdk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769955621,
+        "narHash": "sha256-7VdG9JOYT0nRTqe+dM2wtJbq+TwuvBwxTh+eRNa07SQ=",
+        "owner": "pythcoiner",
+        "repo": "spdk",
+        "rev": "072cc669a5fe85991f0e82e3cdcbd7c307084552",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pythcoiner",
+        "ref": "blindbit_backend_non_async",
+        "repo": "spdk",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
