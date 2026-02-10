@@ -30,7 +30,6 @@ void AccountWidget::initUI() {
     m_menu->push(send_btn);
     m_menu->push(recv_btn);
     m_menu->push(settings_btn);
-    m_menu->pushSpacer();
 
     connect(coins_btn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked);
     connect(send_btn, &QPushButton::clicked, m_controller, &AccountController::sendClicked);
