@@ -20,10 +20,11 @@ auto AppController::get() -> AppController * {
 }
 
 void AppController::initState() {
-    // No logger initialization needed for silent (unlike qoinstr)
-    listAccounts();
+    connect(this, &AppController::accountList, this,
+            &AppController::onAccountList, qontrol::UNIQUE);
     connect(this, &AppController::accountCreated, this,
             &AppController::onAccountCreated, qontrol::UNIQUE);
+    listAccounts();
 }
 
 void AppController::addAccount(const QString &name) {
@@ -86,6 +87,12 @@ void AppController::createAccount(const QString &name, const QString &mnemonic,
 void AppController::onAccountCreated(const QString &name) {
     qDebug() << "AppController::onAccountCreated()";
     addAccount(name);
+}
+
+void AppController::onAccountList(const QList<QString> &accounts) {
+    for (const auto &name : accounts) {
+        addAccount(name);
+    }
 }
 
 auto AppController::accounts() -> int {
