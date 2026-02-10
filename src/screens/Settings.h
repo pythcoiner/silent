@@ -22,8 +22,8 @@ signals:
 
 public slots:
     void actionSave();
-    void actionConnect();
-    void actionDisconnect();
+    void actionToggle();
+    void updateToggleButton(bool running);
 
 protected:
     void init() override;
@@ -37,8 +37,7 @@ private:
     QLineEdit *m_blindbit_url = nullptr;
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_btn_save = nullptr;
-    QPushButton *m_btn_connect = nullptr;
-    QPushButton *m_btn_disconnect = nullptr;
+    QPushButton *m_btn_toggle = nullptr;
     QString m_current_url;
     Network m_current_network = Network::Signet;
 };

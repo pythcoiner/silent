@@ -31,6 +31,7 @@ signals:
     void newAddress(rust::String addr);
     void scanProgress(uint32_t height, uint32_t tip);
     void scanError(rust::String error);
+    void scannerStateChanged(bool running);
 
 public slots:
     void loadPanel(const QString &name);
@@ -48,6 +49,8 @@ public slots:
     void receiveClicked();
     void settingsClicked();
 
+    bool isScannerRunning() const { return m_scanner_running; }
+
 private:
     QPointer<qontrol::Panel> m_current_panel;
     QHash<QString, qontrol::Panel *> m_panels;
@@ -56,4 +59,5 @@ private:
     QTimer *m_notif_timer = nullptr;
     QTimer *m_coins_timer = nullptr;
     bool m_init = false;
+    bool m_scanner_running = true;
 };

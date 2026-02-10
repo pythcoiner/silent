@@ -113,11 +113,15 @@ void AccountController::pollNotifications() {
             emit scanError(error);
         } else if (flag == NotificationFlag::ScanStarted) {
             qDebug() << "AccountController: Scan started";
+            m_scanner_running = true;
+            emit scannerStateChanged(true);
         } else if (flag == NotificationFlag::ScanCompleted) {
             qDebug() << "AccountController: Scan completed";
             pollCoins();
         } else if (flag == NotificationFlag::Stopped) {
             qDebug() << "AccountController: Scanner stopped";
+            m_scanner_running = false;
+            emit scannerStateChanged(false);
         } else {
             qDebug() << "AccountController: Unknown notification type";
         }

@@ -3,3 +3,4 @@ build/
 lib/
 silent/target/
 result
+.cache/
