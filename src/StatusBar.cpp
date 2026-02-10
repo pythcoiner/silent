@@ -2,7 +2,9 @@
 #include "AccountController.h"
 #include "screens/common.h"
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QBrush>
+#include <QFrame>
 
 StatusBar::StatusBar(AccountController *controller, QWidget *parent)
     : QWidget(parent), m_controller(controller) {
@@ -19,19 +21,32 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
 }
 
 void StatusBar::initUI() {
-    setFixedHeight(30);
+    setFixedHeight(32);
+
+    // Top separator line
+    auto *separator = new QFrame(this);
+    separator->setFrameShape(QFrame::HLine);
+    separator->setFrameShadow(QFrame::Sunken);
 
     m_toggle = new qontrol::widgets::ToggleSwitch(this);
     m_toggle->setFixedSize(40, 20);
 
     m_status_text = new QLabel(this);
 
-    auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(10, 2, 10, 2);
-    layout->setSpacing(H_SPACER);
-    layout->addWidget(m_toggle);
-    layout->addWidget(m_status_text);
-    layout->addStretch();
+    // Horizontal row for toggle + status
+    auto *row = new QHBoxLayout;
+    row->setContentsMargins(10, 2, 10, 2);
+    row->setSpacing(H_SPACER);
+    row->addWidget(m_toggle);
+    row->addWidget(m_status_text);
+    row->addStretch();
+
+    // Vertical layout: separator on top, content below
+    auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(separator);
+    layout->addLayout(row);
 
     setLayout(layout);
 }
