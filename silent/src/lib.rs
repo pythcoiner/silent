@@ -282,7 +282,7 @@ mod ffi {
 pub fn generate_mnemonic() -> String {
     let mut entropy = [0u8; 16]; // 128 bits = 12 words
     getrandom::getrandom(&mut entropy).expect("failed to generate random entropy");
-    spdk_core::bip39::Mnemonic::from_entropy(&entropy)
+    bwk_sp::spdk_core::bip39::Mnemonic::from_entropy(&entropy)
         .expect("mnemonic generation from 128-bit entropy should not fail")
         .to_string()
 }

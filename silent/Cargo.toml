@@ -8,11 +8,9 @@ crate-type = ["rlib", "staticlib"]
 doctest = false
 
 [dependencies]
-# NOTE: Path dependency required because bwk-sp depends on workspace crates with external path dependencies
-# (spdk/*) that are not available in the git repository. Git dependency would fail to resolve.
-# Build environment requires: bwk repo at ../../bwk/ and spdk repo at ../../spdk/
-bwk-sp = { path = "../../bwk/sp" }
-spdk-core = { path = "../../spdk/spdk-core", default-features = false, features = ["sync", "bitcoin_32"] }
+# When changing rev, also update flake.lock:
+#   nix --extra-experimental-features 'nix-command flakes' flake update bwk
+bwk-sp = { git = "https://github.com/pythcoiner/bwk.git", rev = "c3ddb10"}
 bitcoin = "0.32"
 cxx = "1.0"
 serde = { version = "1.0", features = ["derive"] }

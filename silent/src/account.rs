@@ -4,11 +4,16 @@
 
 use std::sync::mpsc;
 
+use bwk_sp::spdk_core::{
+    self, bip39, RecipientAddress, SilentPaymentUnsignedTransaction, SpClient,
+};
 use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification};
-use spdk_core::{RecipientAddress, SilentPaymentUnsignedTransaction, SpClient};
 
 use crate::config::Config;
-use crate::ffi::{CoinState, Notification, NotificationFlag, RustCoin, RustTx, TransactionSimulation, TransactionTemplate};
+use crate::ffi::{
+    CoinState, Notification, NotificationFlag, RustCoin, RustTx, TransactionSimulation,
+    TransactionTemplate,
+};
 
 /// Account wrapping bwk-sp::Account.
 pub struct Account {
@@ -28,7 +33,7 @@ impl Account {
         let receiver = inner.receiver();
 
         // Create SpClient from mnemonic for manual transaction creation
-        let mnemonic = spdk_core::bip39::Mnemonic::parse(&config.mnemonic)
+        let mnemonic = bip39::Mnemonic::parse(&config.mnemonic)
             .map_err(|e| AccountError::Config(format!("Invalid mnemonic: {e}")))?;
         let network = match config.network {
             crate::ffi::Network::Regtest => bitcoin::Network::Regtest,
@@ -40,7 +45,11 @@ impl Account {
         let client = SpClient::new_from_mnemonic(mnemonic, network)
             .map_err(|e| AccountError::Config(format!("Failed to create SpClient: {e}")))?;
 
-        Ok(Account { inner, receiver, client })
+        Ok(Account {
+            inner,
+            receiver,
+            client,
+        })
     }
 
     /// Start the scanner.
@@ -169,24 +178,24 @@ impl Account {
         fee_rate: spdk_core::FeeRate,
     ) -> Result<SilentPaymentUnsignedTransaction, AccountError> {
         use bitcoin::OutPoint;
-        use spdk_core::OwnedOutput;
+        use bwk_sp::spdk_core::OwnedOutput;
 
         // Parse the input outpoints from "txid:vout" format
         let mut selected_outpoints = Vec::new();
         for outpoint_str in &input_outpoints {
             let parts: Vec<&str> = outpoint_str.split(':').collect();
             if parts.len() != 2 {
-                return Err(AccountError::Transaction(
-                    format!("Invalid outpoint format '{outpoint_str}', expected 'txid:vout'")
-                ));
+                return Err(AccountError::Transaction(format!(
+                    "Invalid outpoint format '{outpoint_str}', expected 'txid:vout'"
+                )));
             }
 
-            let txid = parts[0]
-                .parse::<bitcoin::Txid>()
-                .map_err(|e| AccountError::Transaction(format!("Invalid txid in '{outpoint_str}': {e}")))?;
-            let vout = parts[1]
-                .parse::<u32>()
-                .map_err(|e| AccountError::Transaction(format!("Invalid vout in '{outpoint_str}': {e}")))?;
+            let txid = parts[0].parse::<bitcoin::Txid>().map_err(|e| {
+                AccountError::Transaction(format!("Invalid txid in '{outpoint_str}': {e}"))
+            })?;
+            let vout = parts[1].parse::<u32>().map_err(|e| {
+                AccountError::Transaction(format!("Invalid vout in '{outpoint_str}': {e}"))
+            })?;
 
             selected_outpoints.push(OutPoint { txid, vout });
         }
@@ -202,21 +211,23 @@ impl Account {
                     available_utxos.push((outpoint, entry.owned_output().clone()));
                 }
                 Some(_) => {
-                    return Err(AccountError::Transaction(
-                        format!("Coin {}:{} is not spendable", outpoint.txid, outpoint.vout)
-                    ));
+                    return Err(AccountError::Transaction(format!(
+                        "Coin {}:{} is not spendable",
+                        outpoint.txid, outpoint.vout
+                    )));
                 }
                 None => {
-                    return Err(AccountError::Transaction(
-                        format!("Coin {}:{} not found in wallet", outpoint.txid, outpoint.vout)
-                    ));
+                    return Err(AccountError::Transaction(format!(
+                        "Coin {}:{} not found in wallet",
+                        outpoint.txid, outpoint.vout
+                    )));
                 }
             }
         }
 
         if available_utxos.is_empty() {
             return Err(AccountError::Transaction(
-                "No valid spendable coins selected".to_string()
+                "No valid spendable coins selected".to_string(),
             ));
         }
 
@@ -224,7 +235,7 @@ impl Account {
         if has_max {
             if !recipients.is_empty() {
                 return Err(AccountError::Transaction(
-                    "max cannot be combined with other outputs".to_string()
+                    "max cannot be combined with other outputs".to_string(),
                 ));
             }
             self.client
@@ -236,19 +247,14 @@ impl Account {
                 )
                 .map_err(|e| AccountError::Transaction(e.to_string()))
         } else {
-            use spdk_core::Recipient;
+            use bwk_sp::spdk_core::Recipient;
             let recipients: Vec<Recipient> = recipients
                 .into_iter()
                 .map(|(address, amount)| Recipient { address, amount })
                 .collect();
 
             self.client
-                .create_new_transaction(
-                    available_utxos,
-                    recipients,
-                    fee_rate,
-                    self.inner.network(),
-                )
+                .create_new_transaction(available_utxos, recipients, fee_rate, self.inner.network())
                 .map_err(|e| AccountError::Transaction(e.to_string()))
         }
     }
@@ -256,7 +262,7 @@ impl Account {
     /// Simulate a transaction without actually creating it.
     pub fn simulate_transaction(&self, tx_template: TransactionTemplate) -> TransactionSimulation {
         use bitcoin::Amount;
-        use spdk_core::FeeRate;
+        use bwk_sp::spdk_core::FeeRate;
 
         // Parse outputs and check for max flag
         let mut recipients = Vec::new();
@@ -326,7 +332,8 @@ impl Account {
                         error: String::from("max cannot be combined with other outputs"),
                     };
                 }
-                self.inner.create_drain_transaction(max_addr.unwrap(), fee_rate)
+                self.inner
+                    .create_drain_transaction(max_addr.unwrap(), fee_rate)
             } else {
                 self.inner.create_transaction(recipients, fee_rate)
             }
@@ -335,10 +342,14 @@ impl Account {
         // Extract simulation data
         match unsigned_tx_result {
             Ok(unsigned_tx) => {
-                let input_total: u64 = unsigned_tx.selected_utxos.iter()
+                let input_total: u64 = unsigned_tx
+                    .selected_utxos
+                    .iter()
                     .map(|(_, owned)| owned.amount.to_sat())
                     .sum();
-                let output_total: u64 = unsigned_tx.recipients.iter()
+                let output_total: u64 = unsigned_tx
+                    .recipients
+                    .iter()
                     .map(|r| r.amount.to_sat())
                     .sum();
                 let fee = input_total.saturating_sub(output_total);
@@ -363,17 +374,15 @@ impl Account {
                     error: String::new(),
                 }
             }
-            Err(e) => {
-                TransactionSimulation {
-                    is_valid: false,
-                    fee: 0,
-                    weight: 0,
-                    input_total: 0,
-                    output_total: 0,
-                    input_count: 0,
-                    error: e.to_string(),
-                }
-            }
+            Err(e) => TransactionSimulation {
+                is_valid: false,
+                fee: 0,
+                weight: 0,
+                input_total: 0,
+                output_total: 0,
+                input_count: 0,
+                error: e.to_string(),
+            },
         }
     }
 
@@ -385,7 +394,7 @@ impl Account {
     /// 3. Returns a PsbtResult that can be signed and broadcast
     pub fn prepare_transaction(&self, tx_template: TransactionTemplate) -> Box<PsbtResult> {
         use bitcoin::Amount;
-        use spdk_core::FeeRate;
+        use bwk_sp::spdk_core::FeeRate;
 
         // Parse outputs and check for max flag (same logic as simulate_transaction)
         let mut recipients = Vec::new();
@@ -436,16 +445,16 @@ impl Account {
                         inner: Err(String::from("max cannot be combined with other outputs")),
                     });
                 }
-                self.inner.create_drain_transaction(max_addr.unwrap(), fee_rate)
+                self.inner
+                    .create_drain_transaction(max_addr.unwrap(), fee_rate)
             } else {
                 self.inner.create_transaction(recipients, fee_rate)
             }
         };
 
         // Finalize the transaction
-        let finalized_result = unsigned_tx_result.and_then(|unsigned_tx| {
-            self.inner.finalize_transaction(unsigned_tx)
-        });
+        let finalized_result =
+            unsigned_tx_result.and_then(|unsigned_tx| self.inner.finalize_transaction(unsigned_tx));
 
         // Return PsbtResult
         Box::new(PsbtResult {
@@ -468,7 +477,8 @@ impl Account {
         };
 
         // Sign the transaction using the inner account
-        let signed_tx = self.inner
+        let signed_tx = self
+            .inner
             .sign_transaction(unsigned_tx)
             .map_err(|e| format!("Signing failed: {e}"))?;
 
@@ -487,11 +497,12 @@ impl Account {
         use bitcoin::Transaction;
 
         // Deserialize the hex transaction
-        let tx: Transaction = deserialize_hex(&signed_tx_hex)
-            .map_err(|e| format!("Invalid transaction hex: {e}"))?;
+        let tx: Transaction =
+            deserialize_hex(&signed_tx_hex).map_err(|e| format!("Invalid transaction hex: {e}"))?;
 
         // Broadcast using the inner account
-        let txid = self.inner
+        let txid = self
+            .inner
             .broadcast(&tx)
             .map_err(|e| format!("Broadcast failed: {e}"))?;
 
@@ -509,7 +520,8 @@ impl Account {
         };
 
         // Sign and broadcast using the inner account's convenience method
-        let txid = self.inner
+        let txid = self
+            .inner
             .sign_and_broadcast(unsigned_tx)
             .map_err(|e| format!("Sign and broadcast failed: {e}"))?;
 
@@ -561,12 +573,10 @@ pub fn new_account(account_name: String) -> Result<Box<Account>, String> {
     let config = crate::config::Config::from_file(account_name)
         .map_err(|e| format!("failed to load config: {e}"))?;
 
-    Account::new(config)
-        .map(Box::new)
-        .map_err(|e| {
-            log::error!("Failed to create account: {e}");
-            format!("Failed to create account: {e}")
-        })
+    Account::new(config).map(Box::new).map_err(|e| {
+        log::error!("Failed to create account: {e}");
+        format!("Failed to create account: {e}")
+    })
 }
 
 /// Poll result wrapper for CXX.
