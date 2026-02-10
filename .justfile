@@ -1,5 +1,5 @@
 qontrol_repo := "https://github.com/pythcoiner/qontrol.git"
-qontrol_commit := "4444fc3"
+qontrol_commit := "0475eee"
 
 nix := env("NIX", "nix")
 nix_flags := "--extra-experimental-features 'nix-command flakes'"

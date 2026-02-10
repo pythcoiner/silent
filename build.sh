@@ -29,5 +29,4 @@ cp -L ./silent/target/cxxbridge/rust/cxx.h ./lib/include/cxx.h
 # Copy static library into ./lib/
 cp ./silent/target/release/libsilent.a ./lib/libsilent.a
 cp ./silent/target/release/libsilent.rlib ./lib/libsilent.rlib
-cp ./silent/target/release/libsilent.so ./lib/libsilent.so
 cp ./silent/target/release/libsilent.d ./lib/libsilent.d
