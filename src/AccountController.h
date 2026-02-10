@@ -8,7 +8,7 @@
 #include <QPointer>
 #include <Qontrol>
 #include <optional>
-#include <templar.h>
+#include <silent.h>
 
 class AccountWidget;
 

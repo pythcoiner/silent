@@ -13,7 +13,7 @@ Complete the send flow: coin selection, SP transaction creation via bwk-sp, sign
 
 ### Task 1: Coin selection and SP transaction creation
 
-1. **Add to templar/src/account.rs**
+1. **Add to silent/src/account.rs**
    - prepare_transaction(&mut self, template: TransactionTemplate) -> Box<TxResult>
    - Map template inputs to OutPoints for coin selection
    - Use bwk-sp's SilentPaymentUnsignedTransaction for SP output construction
@@ -22,7 +22,7 @@ Complete the send flow: coin selection, SP transaction creation via bwk-sp, sign
 
 ### Task 2: Signing and broadcast
 
-1. **Add to templar/src/account.rs**
+1. **Add to silent/src/account.rs**
    - sign_and_broadcast(&mut self, template: TransactionTemplate) -> Box<TxResult>
    - Or: prepare → sign → broadcast as separate steps
    - Signing via bwk-sp (uses spdk-core internally)
@@ -33,8 +33,8 @@ Complete the send flow: coin selection, SP transaction creation via bwk-sp, sign
 
 ## Files to Modify
 
-- `templar/src/account.rs` - Add transaction methods
-- `templar/src/lib.rs` - Expose send methods via CXX
+- `silent/src/account.rs` - Add transaction methods
+- `silent/src/lib.rs` - Expose send methods via CXX
 
 ## Verification
 

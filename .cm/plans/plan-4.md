@@ -13,7 +13,7 @@ Define CXX-exposed transaction data types and implement transaction simulation f
 
 ### Task 1: CXX transaction type definitions
 
-1. **Add to templar/src/lib.rs** (CXX bridge shared types)
+1. **Add to silent/src/lib.rs** (CXX bridge shared types)
    - TransactionTemplate: inputs (Vec<String> outpoints), outputs (Vec<Output>), fee_rate (f64 sats/vB)
    - Output: address (String, SP address), amount (u64), label (String), max (bool)
    - TransactionSimulation: is_valid (bool), fee (u64), weight (usize), error (String)
@@ -21,7 +21,7 @@ Define CXX-exposed transaction data types and implement transaction simulation f
 
 ### Task 2: Simulation method and result wrappers
 
-1. **Add to templar/src/account.rs**
+1. **Add to silent/src/account.rs**
    - simulate_transaction(&self, template: TransactionTemplate) -> TransactionSimulation
    - Validate inputs exist and are spendable
    - Calculate fee based on weight estimation
@@ -32,8 +32,8 @@ Define CXX-exposed transaction data types and implement transaction simulation f
 
 ## Files to Modify
 
-- `templar/src/lib.rs` - Add transaction types to CXX bridge
-- `templar/src/account.rs` - Add simulate_transaction method
+- `silent/src/lib.rs` - Add transaction types to CXX bridge
+- `silent/src/account.rs` - Add simulate_transaction method
 
 ## Verification
 

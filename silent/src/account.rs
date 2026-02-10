@@ -1,4 +1,4 @@
-//! Account module for Templar.
+//! Account module for Silent.
 //!
 //! Wraps bwk-sp::Account with CXX-compatible interface for C++ bindings.
 
@@ -517,7 +517,7 @@ impl Account {
     }
 }
 
-/// Convert bwk-sp::Notification to Templar Notification.
+/// Convert bwk-sp::Notification to Silent Notification.
 fn convert_notification(sp_notif: SpNotification) -> Notification {
     match sp_notif {
         SpNotification::ScanStarted => Notification {

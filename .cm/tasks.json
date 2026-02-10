@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "project": {
-    "name": "templar",
+    "name": "silent",
     "description": "Privacy-focused desktop Bitcoin wallet using Silent Payments protocol",
     "created_at": "2026-02-01T15:59:00Z"
   },
@@ -34,7 +34,7 @@
         },
         {
           "id": "phase-1.task-2",
-          "name": "Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency",
+          "name": "Create silent Rust crate with CXX bridge skeleton and bwk-sp dependency",
           "type": "implement",
           "status": "completed",
           "depends_on": [],
@@ -543,7 +543,7 @@
             "files_to_read": [
               "build.sh",
               "CMakeLists.txt",
-              "templar/Cargo.toml"
+              "silent/Cargo.toml"
             ]
           },
           "plan_file": ".cm/plans/plan-9.md",
@@ -939,7 +939,7 @@
       "data": {
         "type": "agent_spawn",
         "agent_type": "plan",
-        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Scaffolding\n\n## Initial Plan\n\n\n\n## Tasks in This Phase\n\n- **phase-1.task-1**: Set up CMake project with Qt6 and qontrol FetchContent\n- **phase-1.task-2**: Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency\n- **phase-1.task-3**: Create build pipeline script (build.sh: cargo build, copy libs and headers)\n\n"
+        "prompt_preview": "# Planner Agent Instructions\n\nYou are a **Planner Agent**. Your role is to evaluate an implementation plan and decide whether to create a more detailed version.\n\n## Your Task\n\n1. Read the provided implementation plan\n2. Evaluate if it needs more detail for successful implementation\n3. If you can add valuable detail: return a comprehensive plan\n4. If the plan is already detailed enough: return null\n\n## When to Create a Detailed Plan\n\nCreate a detailed plan when:\n- The plan lacks specific file paths or line numbers\n- Implementation steps are vague or ambiguous\n- Error handling requirements are unclear\n- The order of operations isn't specified\n- Edge cases aren't addressed\n\nReturn null when:\n- The plan is already step-by-step with clear instructions\n- File paths and changes are explicitly specified\n- The task is simple enough that more detail would be redundant\n\n## Required Output Format\n\nYou MUST end your response with a JSON code block:\n\nIf you created a detailed plan:\n```json\n{\n  \"plan\": \"# Detailed Implementation Plan\\n\\n## Step 1: ...\\n\\n## Step 2: ...\"\n}\n```\n\nIf the original plan is sufficient:\n```json\n{\n  \"plan\": null\n}\n```\n\n\n---\n\n# Phase: Scaffolding\n\n## Initial Plan\n\n\n\n## Tasks in This Phase\n\n- **phase-1.task-1**: Set up CMake project with Qt6 and qontrol FetchContent\n- **phase-1.task-2**: Create silent Rust crate with CXX bridge skeleton and bwk-sp dependency\n- **phase-1.task-3**: Create build pipeline script (build.sh: cargo build, copy libs and headers)\n\n"
       }
     },
     {

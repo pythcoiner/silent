@@ -6,7 +6,7 @@
 #include <QRadioButton>
 #include <QTextEdit>
 #include <QPushButton>
-#include <templar.h>
+#include <silent.h>
 
 class CreateAccount : public qontrol::Modal {
     Q_OBJECT

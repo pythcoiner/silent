@@ -1,9 +1,9 @@
-//! End-to-end integration tests for Templar wallet.
+//! End-to-end integration tests for Silent wallet.
 //!
 //! These tests cover wallet creation, config management, SP address generation,
 //! BlindBit connection, send/receive flows, and wallet restore functionality.
 
-use templar::{Account, Config, Network, NotificationFlag};
+use silent::{Account, Config, Network, NotificationFlag};
 use std::thread;
 use std::time::Duration;
 
@@ -27,7 +27,7 @@ fn create_test_config(account_name: String) -> Config {
 
 /// Cleanup test account directory.
 fn cleanup_test_account(account_name: &str) {
-    use templar::config::Config;
+    use silent::config::Config;
     let config = Config::from_file(account_name.to_string()).ok();
     if let Some(cfg) = config {
         let _ = std::fs::remove_dir_all(cfg.account_dir());
@@ -193,7 +193,7 @@ fn test_send_receive_sp_flow() {
     }
 
     if received_output {
-        use templar::{TransactionTemplate, Output};
+        use silent::{TransactionTemplate, Output};
 
         // Verify balance increased
         let new_balance = account.balance();

@@ -1,4 +1,4 @@
-//! Configuration module for Templar accounts.
+//! Configuration module for Silent accounts.
 //!
 //! Wraps bwk-sp::Config with CXX-compatible interface for C++ bindings.
 
@@ -46,7 +46,7 @@ impl From<NetworkInternal> for Network {
     }
 }
 
-/// Configuration for a Templar account.
+/// Configuration for a Silent account.
 ///
 /// Wraps bwk-sp::Config with simplified interface for CXX FFI.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,22 +204,22 @@ impl Config {
     }
 }
 
-/// Returns the base data directory for Templar.
+/// Returns the base data directory for Silent.
 ///
-/// On Linux: ~/.templar
-/// On other systems: {config_dir}/Templar
+/// On Linux: ~/.silent
+/// On other systems: {config_dir}/Silent
 pub fn datadir() -> PathBuf {
     #[cfg(target_os = "linux")]
     let dir = {
         let mut dir = dirs::home_dir().expect("home directory not found");
-        dir.push(".templar");
+        dir.push(".silent");
         dir
     };
 
     #[cfg(not(target_os = "linux"))]
     let dir = {
         let mut dir = dirs::config_dir().expect("config directory not found");
-        dir.push("Templar");
+        dir.push("Silent");
         dir
     };
 

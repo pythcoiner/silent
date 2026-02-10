@@ -1,4 +1,4 @@
-# templar - Tasks
+# silent - Tasks
 
 This document shows phase plans and task status. Generated from tasks.json.
 
@@ -9,7 +9,7 @@ This document shows phase plans and task status. Generated from tasks.json.
 ### Tasks
 
 - [x] **phase-1.task-1**: Set up CMake project with Qt6 and qontrol FetchContent - # Phase 1: Scaffolding
-- [x] **phase-1.task-2**: Create templar Rust crate with CXX bridge skeleton and bwk-sp dependency - # Phase 1: Scaffolding
+- [x] **phase-1.task-2**: Create silent Rust crate with CXX bridge skeleton and bwk-sp dependency - # Phase 1: Scaffolding
 - [x] **phase-1.task-3**: Create build pipeline script (build.sh: cargo build, copy libs and headers) - # Phase 1: Scaffolding
 
 ---

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(BIN templar)
+set(BIN silent)
 project(${BIN} VERSION 0.1.0 LANGUAGES CXX)
 
-# Build templar Rust crate before main project
+# Build silent Rust crate before main project
 add_custom_target(
     RunBeforeBuild ALL
     COMMAND bash build.sh
@@ -17,9 +17,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Import Rust static library
-add_library(templar_rust STATIC IMPORTED)
-set_target_properties(templar_rust PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libtemplar.a
+add_library(silent_rust STATIC IMPORTED)
+set_target_properties(silent_rust PROPERTIES
+    IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libsilent.a
 )
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
@@ -81,7 +81,7 @@ target_link_libraries(${BIN}
     Qt6::Core
     Qt6::Widgets
     qontrol
-    templar_rust
+    silent_rust
     ssl
     crypto
     pthread

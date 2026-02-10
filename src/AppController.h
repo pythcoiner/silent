@@ -5,7 +5,7 @@
 #include <QHash>
 #include <QString>
 #include <Qontrol>
-#include <templar.h>
+#include <silent.h>
 
 class AccountWidget;
 

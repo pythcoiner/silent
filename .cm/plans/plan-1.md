@@ -18,42 +18,42 @@ Set up the project skeleton: CMake build system with Qt6 and qontrol, a Rust cra
 ### Task 1: Set up CMake project with Qt6 and qontrol FetchContent
 
 1. **Create CMakeLists.txt** (project root)
-   - cmake_minimum_required 3.22, project templar, CMAKE_CXX_STANDARD 20
+   - cmake_minimum_required 3.22, project silent, CMAKE_CXX_STANDARD 20
    - Find Qt6 (Widgets, Gui, Core)
    - FetchContent_Declare qontrol from `https://github.com/pythcoiner/qontrol.git`
    - Custom target "RunBeforeBuild" that runs `./build.sh`
    - Add executable with `src/main.cpp`
    - Include `lib/include/` for generated CXX headers
-   - Link against Qt6, qontrol, and `lib/libtemplar.a`
+   - Link against Qt6, qontrol, and `lib/libsilent.a`
    - Link system libs: ssl, crypto, pthread, dl
 
 2. **Create src/main.cpp** — Minimal Qt6 app entry point with placeholder QMainWindow
 
-### Task 2: Create templar Rust crate with CXX bridge skeleton
+### Task 2: Create silent Rust crate with CXX bridge skeleton
 
-1. **Create templar/Cargo.toml**
-   - Package: templar, edition 2021
+1. **Create silent/Cargo.toml**
+   - Package: silent, edition 2021
    - crate-type: ["rlib", "cdylib", "staticlib"]
    - Dependencies: bwk-sp (git = "https://github.com/pythcoiner/bwk.git"), cxx = "1.0", serde, serde_json, log, env_logger, dirs
 
-2. **Create templar/build.rs** — cxx_build::bridge("src/lib.rs"), C++20 standard
+2. **Create silent/build.rs** — cxx_build::bridge("src/lib.rs"), C++20 standard
 
-3. **Create templar/src/lib.rs** — Minimal `#[cxx::bridge]` module with placeholder Account opaque type
+3. **Create silent/src/lib.rs** — Minimal `#[cxx::bridge]` module with placeholder Account opaque type
 
 ### Task 3: Create build pipeline script (build.sh)
 
-1. **Create build.sh** — cargo build --release, copy libtemplar.a and headers to lib/
+1. **Create build.sh** — cargo build --release, copy libsilent.a and headers to lib/
 2. **Update .gitignore** — Add build/, lib/, target/
 
 ## Files to Create
 
 - `CMakeLists.txt`, `src/main.cpp`
-- `templar/Cargo.toml`, `templar/build.rs`, `templar/src/lib.rs`
+- `silent/Cargo.toml`, `silent/build.rs`, `silent/src/lib.rs`
 - `build.sh`
 
 ## Verification
 
-- [ ] `cd templar && cargo build --release` succeeds
+- [ ] `cd silent && cargo build --release` succeeds
 - [ ] `./build.sh` completes without errors
 - [ ] `cmake -B build && cmake --build build` succeeds
 - [ ] Application launches and shows empty window

@@ -1,4 +1,4 @@
 .cm/logs/
 build/
 lib/
-templar/target/
+silent/target/

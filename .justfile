@@ -43,9 +43,9 @@ binding:
 build-local: binding
     cmake -B build . && cmake --build build
 
-# Run templar
+# Run silent
 run:
-    ./build/templar
+    ./build/silent
 
 # Build locally + run
 br: build-local

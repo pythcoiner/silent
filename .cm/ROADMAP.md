@@ -1,4 +1,4 @@
-# Templar - Roadmap
+# Silent - Roadmap
 
 This document tracks implementation progress. Check off items as they are completed.
 
@@ -10,7 +10,7 @@ Status: **Complete** (3/3)
   - [x] CMakeLists.txt with Qt6 Widgets dependency
   - [x] qontrol fetched via FetchContent
   - [x] Empty Qt window compiles and runs
-- [x] Create templar Rust crate with CXX bridge skeleton
+- [x] Create silent Rust crate with CXX bridge skeleton
   - [x] Cargo.toml with bwk-sp and cxx dependencies
   - [x] lib.rs with cxx::bridge module skeleton
   - [x] build.rs with cxx_build
@@ -27,7 +27,7 @@ Status: **Complete** (4/4)
 
 - [x] Config module wrapping bwk-sp::Config
   - [x] Config struct with mnemonic, network, BlindBit URL
-  - [x] JSON file persistence (~/.templar/<account>/)
+  - [x] JSON file persistence (~/.silent/<account>/)
   - [x] CXX-exposed config creation and loading
 - [x] Account struct wrapping bwk-sp::Account
   - [x] Account struct with bwk-sp::Account inner

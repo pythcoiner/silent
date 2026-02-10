@@ -16,7 +16,7 @@ Expose Silent Payment address generation, BlindBit scanner control, coin trackin
 
 ### Task 1: SP address generation and display
 
-1. **Add to templar/src/account.rs**
+1. **Add to silent/src/account.rs**
    - sp_address(&self) -> String — returns the wallet's static SP receive address
    - Expose via CXX bridge in lib.rs
 
@@ -44,8 +44,8 @@ Expose Silent Payment address generation, BlindBit scanner control, coin trackin
 
 ## Files to Modify
 
-- `templar/src/account.rs` - Add address, coin, tx methods
-- `templar/src/lib.rs` - Add RustCoin, CoinState, RustTx types, expose methods
+- `silent/src/account.rs` - Add address, coin, tx methods
+- `silent/src/lib.rs` - Add RustCoin, CoinState, RustTx types, expose methods
 
 ## Verification
 

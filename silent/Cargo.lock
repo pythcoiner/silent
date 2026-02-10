@@ -936,6 +936,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "silent"
+version = "0.1.0"
+dependencies = [
+ "bitcoin 0.32.8",
+ "bwk-sp",
+ "cxx",
+ "cxx-build",
+ "dirs",
+ "env_logger",
+ "getrandom",
+ "log",
+ "serde",
+ "serde_json",
+ "spdk-core",
+ "thiserror",
+]
+
+[[package]]
 name = "silentpayments"
 version = "0.4.1"
 source = "git+https://github.com/pythcoiner/rust-silentpayments.git?branch=secp_29#e4646854a8585875faa7a501a1b622d68238d7bd"
@@ -1008,24 +1026,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "templar"
-version = "0.1.0"
-dependencies = [
- "bitcoin 0.32.8",
- "bwk-sp",
- "cxx",
- "cxx-build",
- "dirs",
- "env_logger",
- "getrandom",
- "log",
- "serde",
- "serde_json",
- "spdk-core",
- "thiserror",
 ]
 
 [[package]]

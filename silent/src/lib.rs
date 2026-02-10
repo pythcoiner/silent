@@ -1,4 +1,4 @@
-//! Templar - Bitcoin Silent Payment wallet backed by BlindBit
+//! Silent - Bitcoin Silent Payment wallet backed by BlindBit
 //!
 //! This library provides C++ bindings for the bwk-sp Silent Payment implementation.
 
@@ -125,7 +125,7 @@ mod ffi {
     // ===== Opaque Rust Types =====
 
     extern "Rust" {
-        /// Configuration for a Templar account.
+        /// Configuration for a Silent account.
         type Config;
 
         /// Account instance.

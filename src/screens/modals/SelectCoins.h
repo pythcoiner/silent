@@ -12,7 +12,7 @@
 #include <qpushbutton.h>
 #include <qstyle.h>
 #include <qtmetamacros.h>
-#include <templar.h>
+#include <silent.h>
 
 namespace modal {
 

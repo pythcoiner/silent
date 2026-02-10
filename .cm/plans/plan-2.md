@@ -16,16 +16,16 @@ Implement the foundational Rust backend: Config wrapping bwk-sp::Config, Account
 
 ### Task 1: Config module
 
-1. **Create templar/src/config.rs**
+1. **Create silent/src/config.rs**
    - Wrap bwk-sp::Config with CXX-compatible interface
    - Fields: mnemonic (String), network (Network), blindbit_url (String), dust_limit (Option<u64>)
-   - File persistence: save/load JSON at ~/.templar/<account>/config.json
+   - File persistence: save/load JSON at ~/.silent/<account>/config.json
    - CXX functions: new_config(), config_from_file(), getters/setters
    - list_configs() -> Vec<String> to enumerate existing accounts
 
 ### Task 2: Account struct
 
-1. **Create templar/src/account.rs**
+1. **Create silent/src/account.rs**
    - Wrap bwk-sp::Account
    - Constructor: new_account(name) -> Box<Account> (loads config, creates bwk-sp::Account)
    - Lifecycle: start_scanner(), stop_scanner()
@@ -41,7 +41,7 @@ Implement the foundational Rust backend: Config wrapping bwk-sp::Config, Account
 
 ### Task 4: CXX bridge expansion
 
-1. **Update templar/src/lib.rs**
+1. **Update silent/src/lib.rs**
    - Add Config as opaque Rust type with extern methods
    - Add Account as opaque Rust type with extern methods
    - Add shared enums: Network (Regtest, Signet, Testnet, Bitcoin), LogLevel, NotificationFlag
@@ -50,12 +50,12 @@ Implement the foundational Rust backend: Config wrapping bwk-sp::Config, Account
 
 ## Files to Create
 
-- `templar/src/config.rs`
-- `templar/src/account.rs`
+- `silent/src/config.rs`
+- `silent/src/account.rs`
 
 ## Files to Modify
 
-- `templar/src/lib.rs` - Expand CXX bridge
+- `silent/src/lib.rs` - Expand CXX bridge
 
 ## Verification
 

@@ -6,15 +6,15 @@ End-to-end testing on regtest/signet, multi-account testing, error handling, and
 
 ## Files to Read
 
-- `templar/src/account.rs` - Account implementation
-- `templar/src/config.rs` - Config implementation
-- `templar/src/lib.rs` - CXX bridge types
+- `silent/src/account.rs` - Account implementation
+- `silent/src/config.rs` - Config implementation
+- `silent/src/lib.rs` - CXX bridge types
 
 ## Implementation Steps
 
 ### Task 1: End-to-end integration testing
 
-1. **Create templar/tests/integration.rs**
+1. **Create silent/tests/integration.rs**
    - Test wallet creation from mnemonic
    - Test config save/load round-trip
    - Test SP address generation (verify format)
@@ -26,7 +26,7 @@ End-to-end testing on regtest/signet, multi-account testing, error handling, and
 
 ### Task 2: Multi-account and error handling
 
-1. **Create templar/tests/multi_account.rs**
+1. **Create silent/tests/multi_account.rs**
    - Multiple accounts with different mnemonics
    - Independent state, different networks
    - Config files in separate directories
@@ -45,8 +45,8 @@ End-to-end testing on regtest/signet, multi-account testing, error handling, and
 
 ## Files to Create
 
-- `templar/tests/integration.rs`
-- `templar/tests/multi_account.rs`
+- `silent/tests/integration.rs`
+- `silent/tests/multi_account.rs`
 
 ## Verification
 

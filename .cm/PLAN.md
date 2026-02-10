@@ -1,10 +1,10 @@
-# Templar
+# Silent
 
 > Privacy-focused desktop Bitcoin wallet using Silent Payments protocol
 
 ## Overview
 
-Templar is a desktop Bitcoin wallet that provides financial privacy through the Silent Payments protocol. It is modeled on the qoinstr architecture — a C++ Qt6 GUI frontend communicating with a Rust backend via CXX FFI — but replaces qoinstr's CoinJoin/Nostr privacy model with Silent Payments via the bwk (Bitcoin Wallet Kit) crate.
+Silent is a desktop Bitcoin wallet that provides financial privacy through the Silent Payments protocol. It is modeled on the qoinstr architecture — a C++ Qt6 GUI frontend communicating with a Rust backend via CXX FFI — but replaces qoinstr's CoinJoin/Nostr privacy model with Silent Payments via the bwk (Bitcoin Wallet Kit) crate.
 
 The wallet supports all Bitcoin networks (Regtest, Signet, Testnet, Mainnet) and operates exclusively with Silent Payment addresses for both sending and receiving. The GUI is built with the qontrol framework (a Qt6 widget abstraction layer), and the backend leverages the bwk-sp crate — a self-contained Silent Payments wallet implementation using BlindBit as its blockchain backend.
 
@@ -43,7 +43,7 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 
 ### Components
 
-1. **`templar/` Rust crate** - CXX FFI bridge wrapping bwk-sp. Exposes Account, Config, CoinState, transaction types, and Notification polling system to C++.
+1. **`silent/` Rust crate** - CXX FFI bridge wrapping bwk-sp. Exposes Account, Config, CoinState, transaction types, and Notification polling system to C++.
 2. **`src/` C++ GUI** - Qt6 application using qontrol framework. Contains AppController, MainWindow, AccountController, and screen implementations (Coins, Send, Receive, Settings).
 3. **CMake build system** - Fetches qontrol via FetchContent, links against prebuilt Rust static library, manages the two-language build pipeline.
 
@@ -63,7 +63,7 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 **Purpose:** Wallet configuration persistence (mnemonic, network, BlindBit URL)
 
 **Key files:**
-- `templar/src/config.rs` - Config struct, file I/O, validation
+- `silent/src/config.rs` - Config struct, file I/O, validation
 
 **Dependencies:** bwk-sp::Config, serde_json, dirs
 
@@ -72,8 +72,8 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 **Purpose:** Main wallet state machine wrapping bwk-sp::Account with CXX-exposed interface
 
 **Key files:**
-- `templar/src/account.rs` - Account struct, try_recv polling, CXX methods
-- `templar/src/lib.rs` - CXX bridge definitions
+- `silent/src/account.rs` - Account struct, try_recv polling, CXX methods
+- `silent/src/lib.rs` - CXX bridge definitions
 
 **Dependencies:** bwk-sp::Account, SpCoinStore, SpTxStore, SpLabelStore
 
@@ -120,12 +120,12 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 
 **Tasks:**
 - Set up CMake project with Qt6 and qontrol FetchContent
-- Create `templar/` Rust crate with CXX bridge skeleton and bwk dependency
+- Create `silent/` Rust crate with CXX bridge skeleton and bwk dependency
 - Create build pipeline script (build.sh)
 
 **Deliverables:**
 - CMakeLists.txt that builds an empty Qt6 window
-- templar/ Rust crate that compiles with CXX bridge
+- silent/ Rust crate that compiles with CXX bridge
 - build.sh that compiles Rust and copies artifacts
 
 ### Phase 2: Config & Account
@@ -133,7 +133,7 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 **Goal:** Implement the foundational Rust backend — configuration persistence and Account state machine with CXX FFI bridge
 
 **Tasks:**
-- Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence (~/.templar/<account>/config.json)
+- Config module wrapping bwk-sp::Config with mnemonic, network, BlindBit URL, file persistence (~/.silent/<account>/config.json)
 - Account struct wrapping bwk-sp::Account with CXX-exposed lifecycle methods (new, start_scanner, stop_scanner)
 - Notification polling: wrap bwk-sp's mpsc Receiver into CXX-compatible try_recv returning Poll<Notification>
 - CXX bridge expansion: Config, Account, Network enum, LogLevel, Notification types
@@ -292,7 +292,7 @@ The bwk-sp Account uses a background scanner thread that polls the BlindBit serv
 
 ### Silent Payments Only
 
-**Context:** qoinstr used CoinJoin via Nostr for privacy. Templar needs a different privacy model.
+**Context:** qoinstr used CoinJoin via Nostr for privacy. Silent needs a different privacy model.
 **Decision:** Use Silent Payments protocol exclusively — no legacy address support.
 **Rationale:** SP provides receiver privacy without coordination. Simpler architecture (no Nostr dependency). bwk already implements SP via the sp crate.
 

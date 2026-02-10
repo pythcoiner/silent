@@ -1,9 +1,9 @@
-//! Multi-account, error handling, and edge case tests for Templar wallet.
+//! Multi-account, error handling, and edge case tests for Silent wallet.
 //!
 //! These tests verify multi-account isolation, comprehensive error handling,
 //! and edge cases like zero balance sends, dust detection, and max sends.
 
-use templar::{Account, Config, Network, NotificationFlag, TransactionTemplate, Output};
+use silent::{Account, Config, Network, NotificationFlag, TransactionTemplate, Output};
 use std::thread;
 use std::time::Duration;
 
@@ -27,7 +27,7 @@ fn create_test_config(account_name: String) -> Config {
 
 /// Cleanup test account directory.
 fn cleanup_test_account(account_name: &str) {
-    use templar::config::Config;
+    use silent::config::Config;
     let config = Config::from_file(account_name.to_string()).ok();
     if let Some(cfg) = config {
         let _ = std::fs::remove_dir_all(cfg.account_dir());

@@ -20,7 +20,7 @@ auto AppController::get() -> AppController * {
 }
 
 void AppController::initState() {
-    // No logger initialization needed for templar (unlike qoinstr)
+    // No logger initialization needed for silent (unlike qoinstr)
     listAccounts();
     connect(this, &AppController::accountCreated, this,
             &AppController::onAccountCreated, qontrol::UNIQUE);

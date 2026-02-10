@@ -2,11 +2,11 @@
 
 ## Objective
 
-Add a Nix flake-based build system that reproducibly builds Templar from Linux, targeting Linux, Windows, and macOS. Use `pythcoiner/qt_static` (branch `6.6.3`) for statically linked Qt6 libraries to produce self-contained binaries.
+Add a Nix flake-based build system that reproducibly builds Silent from Linux, targeting Linux, Windows, and macOS. Use `pythcoiner/qt_static` (branch `6.6.3`) for statically linked Qt6 libraries to produce self-contained binaries.
 
 ## Background
 
-Templar currently builds via `build.sh` (Rust) + CMake (C++), requiring manual setup of Qt6, Rust toolchain, and path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`). A Nix flake makes this reproducible and enables cross-compilation to Windows and macOS from a Linux host.
+Silent currently builds via `build.sh` (Rust) + CMake (C++), requiring manual setup of Qt6, Rust toolchain, and path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`). A Nix flake makes this reproducible and enables cross-compilation to Windows and macOS from a Linux host.
 
 The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as static libraries for Linux, Windows (MinGW), macOS ARM, and macOS x86_64. Its outputs are consumed via `CMAKE_PREFIX_PATH`.
 
@@ -14,8 +14,8 @@ The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as sta
 
 - `build.sh` — Current build pipeline to replicate in Nix
 - `CMakeLists.txt` — C++ build config, Qt6 dependencies, linked libraries
-- `templar/Cargo.toml` — Rust dependencies, path deps to bwk and spdk
-- `templar/build.rs` — CXX bridge build script (if exists)
+- `silent/Cargo.toml` — Rust dependencies, path deps to bwk and spdk
+- `silent/build.rs` — CXX bridge build script (if exists)
 - `lib/qontrol/CMakeLists.txt` — qontrol build config
 
 ## Implementation Steps
@@ -34,15 +34,15 @@ The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as sta
 2. **Resolve Cargo path dependencies in Nix sandbox**
    - The Cargo.toml references `../../bwk/sp` and `../../spdk/spdk-core`
    - In the derivation, create a source layout that places:
-     - `bwk` input at `../../bwk/` relative to the templar crate
-     - `spdk` input at `../../spdk/` relative to the templar crate
+     - `bwk` input at `../../bwk/` relative to the silent crate
+     - `spdk` input at `../../spdk/` relative to the silent crate
    - Use `symlinkJoin` or copy sources into a build directory with the correct relative layout
    - Alternative: patch Cargo.toml in the derivation to use absolute paths
 
 3. **Build Rust crate**
    - Use `rustPlatform.buildRustPackage` or manual `cargo build --release`
    - Ensure CXX bridge headers are generated (`target/cxxbridge/`)
-   - Copy `libtemplar.a`, `templar.h`, `cxx.h` to `lib/` (replicating build.sh)
+   - Copy `libsilent.a`, `silent.h`, `cxx.h` to `lib/` (replicating build.sh)
 
 4. **Build C++ GUI with static Qt6**
    - Use `qt_static` Linux output as `CMAKE_PREFIX_PATH`
@@ -51,7 +51,7 @@ The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as sta
    - The CMakeLists.txt `RunBeforeBuild` target runs build.sh — either skip it (Rust already built) or set a flag to bypass
 
 5. **Package the output**
-   - Install the `templar` binary to `$out/bin/`
+   - Install the `silent` binary to `$out/bin/`
    - Add a `devShells.default` with Rust toolchain, Qt6, cmake, ninja for development
 
 6. **Add `nix develop` shell**
@@ -66,20 +66,20 @@ The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as sta
    - Configure Rust cross-compilation target `x86_64-pc-windows-gnu`
    - Build Rust with `--target x86_64-pc-windows-gnu`
    - Build C++ with MinGW CMake toolchain + qt_static Windows CMAKE_PREFIX_PATH
-   - Output: `templar.exe`
+   - Output: `silent.exe`
 
 2. **macOS ARM target (aarch64-apple-darwin)**
    - Use `qt_static`'s macOS ARM output (`packages.x86_64-linux.aarch64-apple-darwin`)
    - Set up macOS cross-compilation toolchain (clang + lld, Xcode SDK)
    - Configure Rust target `aarch64-apple-darwin`
    - Build C++ with macOS cross toolchain + qt_static macOS ARM CMAKE_PREFIX_PATH
-   - Output: `templar` (macOS ARM binary)
+   - Output: `silent` (macOS ARM binary)
 
 3. **macOS x86_64 target**
    - Use `qt_static`'s macOS x86 output (`packages.x86_64-linux.x86_64-apple-darwin`)
    - Configure Rust target `x86_64-apple-darwin`
    - Build C++ with macOS cross toolchain + qt_static macOS x86 CMAKE_PREFIX_PATH
-   - Output: `templar` (macOS x86 binary)
+   - Output: `silent` (macOS x86 binary)
 
 4. **Expose all targets as flake packages**
    - `packages.x86_64-linux.linux` — Linux build
@@ -110,8 +110,8 @@ The `pythcoiner/qt_static` repo provides a Nix flake that builds Qt 6.6.3 as sta
 ## Verification
 
 - [ ] `nix flake check` passes
-- [ ] `nix build .#linux` produces a binary at `result/bin/templar`
-- [ ] `nix build .#windows` produces `result/bin/templar.exe`
+- [ ] `nix build .#linux` produces a binary at `result/bin/silent`
+- [ ] `nix build .#windows` produces `result/bin/silent.exe`
 - [ ] `nix build .#aarch64-apple-darwin` produces a macOS ARM binary
 - [ ] `nix build .#x86_64-apple-darwin` produces a macOS x86 binary
 - [ ] `nix develop` provides a working development shell

@@ -1,4 +1,4 @@
-# Templar
+# Silent
 
 Privacy-focused desktop Bitcoin wallet using the Silent Payments protocol.
 
@@ -59,13 +59,13 @@ Output binaries are in `./result/bin/`.
 ### Tests
 
 ```sh
-cargo test --manifest-path templar/Cargo.toml
+cargo test --manifest-path silent/Cargo.toml
 ```
 
 ### Lint
 
 ```sh
-cargo clippy --manifest-path templar/Cargo.toml
+cargo clippy --manifest-path silent/Cargo.toml
 ```
 
 ## License

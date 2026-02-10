@@ -16,7 +16,7 @@ void MenuTab::initUI() {
     layout->addStretch();
 
     // Add title label
-    auto *title = new QLabel("Templar - Silent Payments Wallet");
+    auto *title = new QLabel("Silent - Silent Payments Wallet");
     auto title_font = title->font();
     title_font.setPointSize(24);
     title_font.setBold(true);

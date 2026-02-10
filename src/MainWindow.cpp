@@ -7,7 +7,7 @@
 #include <qwidget.h>
 
 MainWindow::MainWindow(QWidget *parent) : Window(parent) {
-    setWindowTitle("Templar - Silent Payments Wallet");
+    setWindowTitle("Silent - Silent Payments Wallet");
     resize(1024, 768);
     initWindow();
 }

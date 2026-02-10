@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Templar is a privacy-focused desktop Bitcoin wallet using the Silent Payments protocol. It has a two-language architecture: C++ (Qt6 GUI) and Rust (backend via CXX FFI).
+Silent is a privacy-focused desktop Bitcoin wallet using the Silent Payments protocol. It has a two-language architecture: C++ (Qt6 GUI) and Rust (backend via CXX FFI).
 
 ## Build Commands
 
 **Rust backend only:**
 ```bash
-cargo build --release --manifest-path templar/Cargo.toml
+cargo build --release --manifest-path silent/Cargo.toml
 ```
 
 **Full build pipeline** (builds Rust, copies libs/headers to `lib/`):
@@ -25,17 +25,17 @@ cmake -B build . && cmake --build build
 
 **Lint:**
 ```bash
-cargo clippy --manifest-path templar/Cargo.toml
+cargo clippy --manifest-path silent/Cargo.toml
 ```
 
 **Tests:**
 ```bash
-cargo test --manifest-path templar/Cargo.toml
+cargo test --manifest-path silent/Cargo.toml
 ```
 
 Run a single test:
 ```bash
-cargo test --manifest-path templar/Cargo.toml <test_name>
+cargo test --manifest-path silent/Cargo.toml <test_name>
 ```
 
 ## Architecture
@@ -50,9 +50,9 @@ Qt6 GUI (C++)  ──CXX FFI──>  Account (Rust, wraps bwk-sp)
                               BlindBit Server (HTTP/ureq)
 ```
 
-**Rust crate (`templar/src/`):** CXX bridge wrapping `bwk-sp` (Bitcoin Wallet Kit - Silent Payments).
+**Rust crate (`silent/src/`):** CXX bridge wrapping `bwk-sp` (Bitcoin Wallet Kit - Silent Payments).
 - `lib.rs` — CXX bridge definition, all FFI types and exported methods
-- `config.rs` — Wallet config persistence (`~/.templar/<account>/`), network settings, mnemonic storage
+- `config.rs` — Wallet config persistence (`~/.silent/<account>/`), network settings, mnemonic storage
 - `account.rs` — Account wrapper around `bwk-sp::Account`, notification polling via mpsc, transaction lifecycle (simulate → prepare → sign → broadcast)
 
 **C++ GUI (`src/`):** Qt6 app using the `qontrol` framework (fetched via CMake FetchContent).
@@ -73,7 +73,7 @@ Qt6 GUI (C++)  ──CXX FFI──>  Account (Rust, wraps bwk-sp)
 
 ## Build Pipeline
 
-`build.sh` compiles the Rust crate, then copies generated CXX bridge headers (`templar.h`, `cxx.h`) and static library (`libtemplar.a`) into `lib/`. CMake then links against these when building the C++ GUI. The Rust `build.rs` uses `cxx_build` to generate the C++ bridge code.
+`build.sh` compiles the Rust crate, then copies generated CXX bridge headers (`silent.h`, `cxx.h`) and static library (`libsilent.a`) into `lib/`. CMake then links against these when building the C++ GUI. The Rust `build.rs` uses `cxx_build` to generate the C++ bridge code.
 
 ## Nix Build System
 
@@ -104,11 +104,11 @@ nix build .#x86_64-apple-darwin
 nix develop
 ```
 
-The flake resolves Cargo path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`) by laying out `bwk`, `spdk`, and `templar` as sibling directories in the Nix sandbox. Git dependencies are vendored via `importCargoLock` with pinned hashes.
+The flake resolves Cargo path dependencies (`../../bwk/sp`, `../../spdk/spdk-core`) by laying out `bwk`, `spdk`, and `silent` as sibling directories in the Nix sandbox. Git dependencies are vendored via `importCargoLock` with pinned hashes.
 
 ## Testing
 
-Tests are in `templar/tests/` using standard Rust `#[test]`:
+Tests are in `silent/tests/` using standard Rust `#[test]`:
 - `integration.rs` — End-to-end wallet operations (creation, config roundtrip, SP addresses)
 - `multi_account.rs` — Multi-account isolation and edge cases
 

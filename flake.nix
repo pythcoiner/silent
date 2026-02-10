@@ -1,5 +1,5 @@
 {
-  description = "Templar - Privacy-focused desktop Bitcoin wallet using Silent Payments";
+  description = "Silent - Privacy-focused desktop Bitcoin wallet using Silent Payments";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -57,7 +57,7 @@
 
       # Vendor Cargo dependencies (handles git deps via outputHashes)
       cargoVendorDir = pkgs.rustPlatform.importCargoLock {
-        lockFile = ./templar/Cargo.lock;
+        lockFile = ./silent/Cargo.lock;
         outputHashes = {
           # Update these on first build — nix will report the correct hashes
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
@@ -80,10 +80,10 @@
       depsOnlySource = pkgs.lib.fileset.toSource {
         root = ./.;
         fileset = pkgs.lib.fileset.unions [
-          ./templar/Cargo.toml
-          ./templar/Cargo.lock
-          ./templar/build.rs
-          ./templar/src/lib.rs
+          ./silent/Cargo.toml
+          ./silent/Cargo.lock
+          ./silent/build.rs
+          ./silent/src/lib.rs
         ];
       };
 
@@ -109,12 +109,12 @@ directory = "${cargoVendorDir}"
 CARGO_EOF
       '';
 
-      # Shared source layout: bwk/spdk/templar as siblings under /build/src/
-      sourceLayout = templarSrc: ''
-        mkdir -p /build/src/{bwk,spdk,templar}
+      # Shared source layout: bwk/spdk/silent as siblings under /build/src/
+      sourceLayout = silentSrc: ''
+        mkdir -p /build/src/{bwk,spdk,silent}
         cp -r ${bwk}/. /build/src/bwk/
         cp -r ${spdk}/. /build/src/spdk/
-        cp -r ${templarSrc}/. /build/src/templar/
+        cp -r ${silentSrc}/. /build/src/silent/
         chmod -R u+w /build/src
       '';
 
@@ -129,7 +129,7 @@ CARGO_EOF
           targetArg = if rustTarget != null then "--target ${rustTarget}" else "";
         in
         pkgs.stdenv.mkDerivation {
-          pname = "templar-rust-deps";
+          pname = "silent-rust-deps";
           version = "0.1.0";
 
           dontUnpack = true;
@@ -153,26 +153,26 @@ CARGO_EOF
             ${cargoConfig}
 
             # Create stub modules so deps compile without the real implementation
-            mkdir -p /build/src/templar/templar/src
-            touch /build/src/templar/templar/src/account.rs
-            touch /build/src/templar/templar/src/config.rs
+            mkdir -p /build/src/silent/silent/src
+            touch /build/src/silent/silent/src/account.rs
+            touch /build/src/silent/silent/src/config.rs
 
             ${preBuildSetup}
 
-            cd /build/src/templar/templar
+            cd /build/src/silent/silent
             cargo build --release ${targetArg} || true
           '';
 
           installPhase = ''
-            cd /build/src/templar/templar
+            cd /build/src/silent/silent
             # Save the target directory with all compiled deps
             mkdir -p $out
             cp -r target $out/target
-            # Remove only templar crate fingerprints so it recompiles with real source
-            find $out/target -name "libtemplar*" -delete
-            find $out/target -name "templar-*" -path "*/fingerprint/*" -exec rm -rf {} + 2>/dev/null || true
-            find $out/target -name "templar-*" -path "*/deps/*" -delete 2>/dev/null || true
-            find $out/target -name "templar-*" -path "*/build/*" -exec rm -rf {} + 2>/dev/null || true
+            # Remove only silent crate fingerprints so it recompiles with real source
+            find $out/target -name "libsilent*" -delete
+            find $out/target -name "silent-*" -path "*/fingerprint/*" -exec rm -rf {} + 2>/dev/null || true
+            find $out/target -name "silent-*" -path "*/deps/*" -delete 2>/dev/null || true
+            find $out/target -name "silent-*" -path "*/build/*" -exec rm -rf {} + 2>/dev/null || true
           '';
 
           dontFixup = true;
@@ -195,7 +195,7 @@ CARGO_EOF
           };
         in
         pkgs.stdenv.mkDerivation {
-          pname = "templar-rust";
+          pname = "silent-rust";
           version = "0.1.0";
 
           dontUnpack = true;
@@ -219,26 +219,26 @@ CARGO_EOF
             ${cargoConfig}
 
             # Restore cached dependency artifacts
-            cp -r ${deps}/target /build/src/templar/templar/target
-            chmod -R u+w /build/src/templar/templar/target
+            cp -r ${deps}/target /build/src/silent/silent/target
+            chmod -R u+w /build/src/silent/silent/target
 
             ${preBuildSetup}
 
-            cd /build/src/templar/templar
+            cd /build/src/silent/silent
             cargo build --release ${targetArg}
           '';
 
           installPhase = ''
-            cd /build/src/templar/templar
+            cd /build/src/silent/silent
             mkdir -p $out/lib $out/include
-            cp ${releaseDir}/libtemplar.a $out/lib/
+            cp ${releaseDir}/libsilent.a $out/lib/
 
             # CXX bridge headers may be under target/cxxbridge/ or target/<triple>/cxxbridge/
-            if [ -f target/cxxbridge/templar/src/lib.rs.h ]; then
-              cp target/cxxbridge/templar/src/lib.rs.h $out/include/templar.h
+            if [ -f target/cxxbridge/silent/src/lib.rs.h ]; then
+              cp target/cxxbridge/silent/src/lib.rs.h $out/include/silent.h
               cp target/cxxbridge/rust/cxx.h $out/include/cxx.h
             else
-              find target -name 'lib.rs.h' -path '*/cxxbridge/templar/src/*' | head -1 | xargs -I{} cp {} $out/include/templar.h
+              find target -name 'lib.rs.h' -path '*/cxxbridge/silent/src/*' | head -1 | xargs -I{} cp {} $out/include/silent.h
               find target -name 'cxx.h' -path '*/cxxbridge/rust/*' | head -1 | xargs -I{} cp {} $out/include/cxx.h
             fi
           '';
@@ -256,7 +256,7 @@ CARGO_EOF
                  , preConfigureExtra ? ""
                  }:
         stdenvOverride.mkDerivation {
-          pname = "templar";
+          pname = "silent";
           version = "0.1.0";
 
           src = self;
@@ -278,8 +278,8 @@ CARGO_EOF
 
             # Place pre-built Rust artifacts
             mkdir -p lib/include
-            cp ${rustLib}/lib/libtemplar.a lib/
-            cp ${rustLib}/include/templar.h lib/include/
+            cp ${rustLib}/lib/libsilent.a lib/
+            cp ${rustLib}/include/silent.h lib/include/
             cp ${rustLib}/include/cxx.h lib/include/
 
             # Replace lib/qontrol with the flake input version
@@ -309,16 +309,16 @@ CARGO_EOF
 
           installPhase = ''
             mkdir -p $out/bin
-            if [ -f templar ]; then
-              cp templar $out/bin/
-            elif [ -f templar.exe ]; then
-              cp templar.exe $out/bin/
-            elif [ -f templar.app/Contents/MacOS/templar ]; then
-              cp -r templar.app $out/
-              ln -s $out/templar.app/Contents/MacOS/templar $out/bin/templar
+            if [ -f silent ]; then
+              cp silent $out/bin/
+            elif [ -f silent.exe ]; then
+              cp silent.exe $out/bin/
+            elif [ -f silent.app/Contents/MacOS/silent ]; then
+              cp -r silent.app $out/
+              ln -s $out/silent.app/Contents/MacOS/silent $out/bin/silent
             else
-              echo "ERROR: templar binary not found"
-              find . -name "templar*" -type f || true
+              echo "ERROR: silent binary not found"
+              find . -name "silent*" -type f || true
               exit 1
             fi
           '';
@@ -379,8 +379,8 @@ CARGO_EOF
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
-          # Add Windows system libraries after the templar_rust line in target_link_libraries
-          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)templar_rust$/\1templar_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32/; }' CMakeLists.txt
+          # Add Windows system libraries after the silent_rust line in target_link_libraries
+          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32/; }' CMakeLists.txt
         '';
       };
 
@@ -606,7 +606,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
-          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)templar_rust$/\1templar_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
+          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
 
@@ -642,7 +642,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
-          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)templar_rust$/\1templar_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
+          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
 
@@ -672,7 +672,7 @@ TOOLCHAIN
         shellHook = ''
           export CMAKE_PREFIX_PATH="${linuxQt6}"
           export QT_DIR="${linuxQt6}"
-          echo "Templar dev shell"
+          echo "Silent dev shell"
           echo "  CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
         '';
       };

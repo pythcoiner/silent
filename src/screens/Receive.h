@@ -7,7 +7,7 @@
 #include <qpushbutton.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <templar.h>
+#include <silent.h>
 
 class AccountController;
 

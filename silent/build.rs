@@ -3,7 +3,7 @@ use std::fs;
 fn main() {
     cxx_build::bridge("src/lib.rs")
         .flag_if_supported("-std=c++20")
-        .compile("templar");
+        .compile("silent");
 
     // Manually list all .rs files under src/
     for entry in fs::read_dir("src").unwrap() {

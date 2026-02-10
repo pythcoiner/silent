@@ -14,4 +14,4 @@
 
 # Build commands to run for verification
 # If empty or not specified, build verification is skipped entirely
-build_commands = ["cargo build --release --manifest-path templar/Cargo.toml", "cargo clippy --manifest-path templar/Cargo.toml"]
+build_commands = ["cargo build --release --manifest-path silent/Cargo.toml", "cargo clippy --manifest-path silent/Cargo.toml"]

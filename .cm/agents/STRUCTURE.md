@@ -1,4 +1,4 @@
-# Templar Project Structure
+# Silent Project Structure
 
 ## Directory Layout
 
@@ -21,17 +21,17 @@
 │   │       ├── CreateAccount.h/cpp
 │   │       └── SelectCoins.h/cpp
 │   └── widgets/               - Custom widgets (if needed)
-├── templar/              - Rust backend crate (CXX FFI bridge to bwk-sp)
+├── silent/              - Rust backend crate (CXX FFI bridge to bwk-sp)
 │   ├── Cargo.toml        - Rust dependencies (bwk-sp, cxx, serde)
 │   ├── build.rs          - CXX build script
 │   └── src/
 │       ├── lib.rs         - CXX bridge definitions (all exported types)
 │       ├── account.rs     - Account state machine wrapping bwk-sp::Account
-│       └── config.rs      - Config persistence (~/.templar/<account>/)
+│       └── config.rs      - Config persistence (~/.silent/<account>/)
 ├── lib/                  - Built Rust library outputs
-│   ├── libtemplar.a      - Static library
+│   ├── libsilent.a      - Static library
 │   └── include/
-│       ├── templar.h      - Generated CXX C++ bindings
+│       ├── silent.h      - Generated CXX C++ bindings
 │       └── cxx.h          - CXX runtime support header
 ├── CMakeLists.txt        - Build configuration (Qt6, qontrol, Rust linking)
 ├── build.sh              - Build pipeline (cargo build → copy artifacts)
@@ -40,15 +40,15 @@
 
 ## Module Organization
 
-- **templar (Rust)**: CXX FFI wrapper around bwk-sp, exposed to C++
+- **silent (Rust)**: CXX FFI wrapper around bwk-sp, exposed to C++
 - **src (C++)**: Qt6 GUI using qontrol framework, polls Rust backend via timers
 
 ## Key Components
 
-### Rust Backend (templar/)
+### Rust Backend (silent/)
 
 - **Purpose**: Wallet logic — wraps bwk-sp::Account for config, scanning, SP addresses, transactions
-- **Location**: `templar/src/`
+- **Location**: `silent/src/`
 - **Dependencies**: bwk-sp (Silent Payments wallet), cxx, serde
 - **Key files**: `lib.rs` (CXX bridge), `account.rs` (bwk-sp wrapper), `config.rs` (persistence)
 
@@ -76,9 +76,9 @@
 
 ## Configuration
 
-- **~/.templar/<account>/config.json**: Per-account wallet config (mnemonic, network, BlindBit URL)
+- **~/.silent/<account>/config.json**: Per-account wallet config (mnemonic, network, BlindBit URL)
 - **CMakeLists.txt**: Build configuration
-- **templar/Cargo.toml**: Rust dependencies
+- **silent/Cargo.toml**: Rust dependencies
 
 ## External Dependencies
 
@@ -91,9 +91,9 @@
 
 ## Build Artifacts
 
-- **lib/libtemplar.a**: Compiled Rust static library
-- **lib/include/templar.h**: Generated C++ header from CXX bridge
-- **build/templar**: Final linked executable
+- **lib/libsilent.a**: Compiled Rust static library
+- **lib/include/silent.h**: Generated C++ header from CXX bridge
+- **build/silent**: Final linked executable
 
 ## Important Patterns
 
@@ -122,4 +122,4 @@
 - No CoinJoin, no Nostr, no Electrum — those are from qoinstr and not used here
 - Backend is bwk-sp with BlindBit, NOT bwk with Electrum
 - Reference qoinstr code for GUI/CXX patterns but replace all backend logic with bwk-sp
-- The Rust crate is named "templar", not "cpp_joinstr"
+- The Rust crate is named "silent", not "cpp_joinstr"
