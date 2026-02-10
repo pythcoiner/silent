@@ -31,7 +31,7 @@ public slots:
     void createAccount(const QString &name, const QString &mnemonic,
                       Network network, const QString &blindbit_url);
     void onAccountCreated(const QString &name);
-    void onAccountList(const QList<QString> &accounts);
+    void openAccount(const QString &name);
 
 private:
     QHash<QString, AccountController *> m_accounts;

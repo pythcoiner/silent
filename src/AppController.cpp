@@ -20,8 +20,6 @@ auto AppController::get() -> AppController * {
 }
 
 void AppController::initState() {
-    connect(this, &AppController::accountList, this,
-            &AppController::onAccountList, qontrol::UNIQUE);
     connect(this, &AppController::accountCreated, this,
             &AppController::onAccountCreated, qontrol::UNIQUE);
     listAccounts();
@@ -89,10 +87,8 @@ void AppController::onAccountCreated(const QString &name) {
     addAccount(name);
 }
 
-void AppController::onAccountList(const QList<QString> &accounts) {
-    for (const auto &name : accounts) {
-        addAccount(name);
-    }
+void AppController::openAccount(const QString &name) {
+    addAccount(name);
 }
 
 auto AppController::accounts() -> int {
