@@ -50,3 +50,10 @@ run:
 # Build locally + run
 br: build-local
     just run
+
+# Clean all build artifacts (Rust + C++)
+clean:
+    cargo clean --manifest-path silent/Cargo.toml
+    rm -rf build
+    rm -f lib/libsilent.* lib/libtemplar.*
+    rm -rf lib/include
