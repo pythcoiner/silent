@@ -1,5 +1,6 @@
 #include "AccountWidget.h"
 #include "AccountController.h"
+#include "StatusBar.h"
 #include <qboxlayout.h>
 #include <qpushbutton.h>
 #include <qsizepolicy.h>
@@ -42,11 +43,31 @@ void AccountWidget::initUI() {
     auto *container_layout = new QVBoxLayout(m_screen_container);
     container_layout->setContentsMargins(0, 0, 0, 0);
 
-    // Create main layout
-    auto *main_layout = new QHBoxLayout(this);
+    // Wrap menu + screen container in horizontal layout
+    auto *content_widget = new QWidget(this);
+    auto *content_layout = new QHBoxLayout(content_widget);
+    content_layout->setContentsMargins(0, 0, 0, 0);
+    content_layout->setSpacing(0);
+    content_layout->addWidget(m_menu);
+    content_layout->addWidget(m_screen_container, 1);
+
+    // Create status bar
+    m_status_bar = new StatusBar(m_controller, this);
+
+    // Connect status bar signals
+    connect(m_controller, &AccountController::scannerStateChanged,
+            m_status_bar, &StatusBar::updateConnectionState);
+    connect(m_controller, &AccountController::scanProgress,
+            m_status_bar, &StatusBar::updateScanProgress);
+    connect(m_controller, &AccountController::scanError,
+            m_status_bar, &StatusBar::updateScanError);
+
+    // Create main vertical layout with content + status bar
+    auto *main_layout = new QVBoxLayout(this);
     main_layout->setContentsMargins(0, 0, 0, 0);
-    main_layout->addWidget(m_menu);
-    main_layout->addWidget(m_screen_container, 1);
+    main_layout->setSpacing(0);
+    main_layout->addWidget(content_widget, 1);
+    main_layout->addWidget(m_status_bar);
     setLayout(main_layout);
 }
 

@@ -143,6 +143,7 @@ mod ffi {
     extern "Rust" {
         /// Generate a new 12-word BIP39 mnemonic.
         fn generate_mnemonic() -> String;
+        fn notification_to_string(notif: &Notification) -> String;
     }
 
     // ===== Config Methods =====
@@ -230,12 +231,16 @@ mod ffi {
 
         /// Simulate a transaction to check feasibility and estimate fees.
         /// Returns simulation result with fee, weight, and validity info.
-        fn simulate_transaction(self: &Account, tx_template: TransactionTemplate) -> TransactionSimulation;
+        fn simulate_transaction(
+            self: &Account,
+            tx_template: TransactionTemplate,
+        ) -> TransactionSimulation;
 
         /// Prepare a transaction for signing.
         /// Creates an unsigned transaction from the template and returns a PsbtResult.
         /// The transaction will be finalized and ready to sign.
-        fn prepare_transaction(self: &Account, tx_template: TransactionTemplate) -> Box<PsbtResult>;
+        fn prepare_transaction(self: &Account, tx_template: TransactionTemplate)
+            -> Box<PsbtResult>;
 
         /// Sign a prepared transaction.
         /// Takes a PsbtResult from prepare_transaction() and returns the signed
@@ -287,7 +292,14 @@ pub fn generate_mnemonic() -> String {
         .to_string()
 }
 
+pub fn notification_to_string(notif: &Notification) -> String {
+    format!("{notif:?}")
+}
+
 // Re-export main types
 pub use account::{new_account, Account, Poll, PsbtResult};
 pub use config::{config_from_file, list_configs, new_config, Config};
-pub use ffi::{LogLevel, Network, Notification, NotificationFlag, Output, TransactionTemplate, TransactionSimulation};
+pub use ffi::{
+    LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,
+    TransactionTemplate,
+};

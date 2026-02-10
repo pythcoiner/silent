@@ -40,6 +40,8 @@ set(SOURCES
     src/AccountController.cpp
     src/AccountWidget.h
     src/AccountWidget.cpp
+    src/StatusBar.h
+    src/StatusBar.cpp
     src/screens/MenuTab.h
     src/screens/MenuTab.cpp
     src/screens/modals/CreateAccount.h

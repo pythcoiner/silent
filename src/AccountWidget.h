@@ -5,6 +5,7 @@
 #include <Qontrol>
 
 class AccountController;
+class StatusBar;
 
 class AccountWidget : public QWidget {
     Q_OBJECT
@@ -21,6 +22,7 @@ private:
     qontrol::Column *m_menu = nullptr;
     QWidget *m_screen_container = nullptr;
     QPointer<qontrol::Panel> m_current_panel;
+    StatusBar *m_status_bar = nullptr;
 
     void initUI();
 };
