@@ -32,13 +32,15 @@ mod ffi {
     /// Notification types from the scanner.
     #[derive(Debug, Clone, Copy)]
     pub enum NotificationFlag {
-        ScanStarted,
+        StartingScan,
+        FailStartScanning,
+        FailScan,
+        StoppingScan,
+        ScanStopped,
         ScanProgress,
         ScanCompleted,
-        ScanError,
         NewOutput,
         OutputSpent,
-        Stopped,
     }
 
     // ===== Shared Structs =====

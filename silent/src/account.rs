@@ -532,24 +532,33 @@ impl Account {
 /// Convert bwk-sp::Notification to Silent Notification.
 fn convert_notification(sp_notif: SpNotification) -> Notification {
     match sp_notif {
-        SpNotification::ScanStarted => Notification {
-            flag: NotificationFlag::ScanStarted,
+        SpNotification::StartingScan => Notification {
+            flag: NotificationFlag::StartingScan,
+            payload: String::new(),
+        },
+        SpNotification::FailStartScanning { message } => Notification {
+            flag: NotificationFlag::FailStartScanning,
+            payload: message,
+        },
+        SpNotification::FailScan { message } => Notification {
+            flag: NotificationFlag::FailScan,
+            payload: message,
+        },
+        SpNotification::StoppingScan => Notification {
+            flag: NotificationFlag::StoppingScan,
+            payload: String::new(),
+        },
+        SpNotification::ScanStopped => Notification {
+            flag: NotificationFlag::ScanStopped,
             payload: String::new(),
         },
         SpNotification::ScanProgress { current, end } => Notification {
             flag: NotificationFlag::ScanProgress,
-            payload: format!("{current}/{end}"),
+            payload: format!("{current},{end}"),
         },
         SpNotification::ScanCompleted => Notification {
             flag: NotificationFlag::ScanCompleted,
             payload: String::new(),
-        },
-        SpNotification::ScanError {
-            message,
-            retries_attempted,
-        } => Notification {
-            flag: NotificationFlag::ScanError,
-            payload: format!("{message} (retries: {retries_attempted})"),
         },
         SpNotification::NewOutput(outpoint) => Notification {
             flag: NotificationFlag::NewOutput,
@@ -558,10 +567,6 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
         SpNotification::OutputSpent(outpoint) => Notification {
             flag: NotificationFlag::OutputSpent,
             payload: outpoint.to_string(),
-        },
-        SpNotification::Stopped => Notification {
-            flag: NotificationFlag::Stopped,
-            payload: String::new(),
         },
     }
 }
@@ -601,7 +606,7 @@ impl Poll {
         Poll {
             is_some: false,
             notification: Notification {
-                flag: NotificationFlag::Stopped,
+                flag: NotificationFlag::ScanStopped,
                 payload: String::new(),
             },
             error: String::new(),
@@ -613,7 +618,7 @@ impl Poll {
         Poll {
             is_some: false,
             notification: Notification {
-                flag: NotificationFlag::ScanError,
+                flag: NotificationFlag::FailScan,
                 payload: String::new(),
             },
             error: error.to_string(),

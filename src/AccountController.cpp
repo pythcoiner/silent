@@ -112,17 +112,24 @@ void AccountController::pollNotifications() {
     } else if (flag == NotificationFlag::OutputSpent) {
       // Output spent, update coins
       pollCoins();
-    } else if (flag == NotificationFlag::ScanError) {
-      auto error = poll->get_error();
-      emit scanError(error);
-    } else if (flag == NotificationFlag::ScanStarted) {
-      qDebug() << "AccountController: Scan started";
+    } else if (flag == NotificationFlag::FailStartScanning) {
+      auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+      qWarning() << "AccountController: Failed to start scanning:" << payload;
+      emit scanError(notif.payload);
+    } else if (flag == NotificationFlag::FailScan) {
+      auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+      qWarning() << "AccountController: Scan failed:" << payload;
+      emit scanError(notif.payload);
+    } else if (flag == NotificationFlag::StartingScan) {
+      qDebug() << "AccountController: Starting scan";
       m_scanner_running = true;
       emit scannerStateChanged(true);
+    } else if (flag == NotificationFlag::StoppingScan) {
+      qDebug() << "AccountController: Stopping scan";
     } else if (flag == NotificationFlag::ScanCompleted) {
       qDebug() << "AccountController: Scan completed";
       pollCoins();
-    } else if (flag == NotificationFlag::Stopped) {
+    } else if (flag == NotificationFlag::ScanStopped) {
       qDebug() << "AccountController: Scanner stopped";
       m_scanner_running = false;
       emit scannerStateChanged(false);

@@ -124,26 +124,26 @@ fn test_blindbit_connection_regtest() {
     let start_result = account.start_scanner();
     assert!(start_result.is_ok(), "Scanner should start successfully: {:?}", start_result.err());
 
-    // Wait for ScanStarted notification
+    // Wait for StartingScan notification
     thread::sleep(Duration::from_millis(500));
     let poll = account.try_recv();
 
     if poll.is_some() {
         let notif = poll.get_notification();
-        // Should receive ScanStarted or ScanProgress
-        assert!(matches!(notif.flag, NotificationFlag::ScanStarted | NotificationFlag::ScanProgress),
-                "Expected ScanStarted or ScanProgress, got {:?}", notif.flag);
+        // Should receive StartingScan or ScanProgress
+        assert!(matches!(notif.flag, NotificationFlag::StartingScan | NotificationFlag::ScanProgress),
+                "Expected StartingScan or ScanProgress, got {:?}", notif.flag);
     }
 
     // Stop scanner
     account.stop_scanner();
 
-    // Wait for Stopped notification
+    // Wait for ScanStopped notification
     thread::sleep(Duration::from_millis(500));
     let poll = account.try_recv();
     if poll.is_some() {
         let notif = poll.get_notification();
-        assert_eq!(notif.flag, NotificationFlag::Stopped, "Expected Stopped notification");
+        assert_eq!(notif.flag, NotificationFlag::ScanStopped, "Expected ScanStopped notification");
     }
 
     cleanup_test_account(&account_name);

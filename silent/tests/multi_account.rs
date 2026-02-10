@@ -144,7 +144,7 @@ fn test_invalid_blindbit_url_error() {
     let start_result = account.start_scanner();
     assert!(start_result.is_ok(), "Scanner start should not fail immediately");
 
-    // Wait for ScanError notification
+    // Wait for FailStartScanning or FailScan notification
     thread::sleep(Duration::from_secs(2));
     let mut got_error = false;
 
@@ -152,8 +152,8 @@ fn test_invalid_blindbit_url_error() {
         let poll = account.try_recv();
         if poll.is_some() {
             let notif = poll.get_notification();
-            if matches!(notif.flag, NotificationFlag::ScanError) {
-                println!("Got expected ScanError: {}", notif.payload);
+            if matches!(notif.flag, NotificationFlag::FailStartScanning | NotificationFlag::FailScan) {
+                println!("Got expected error: {}", notif.payload);
                 got_error = true;
                 break;
             }
@@ -161,7 +161,7 @@ fn test_invalid_blindbit_url_error() {
         thread::sleep(Duration::from_millis(200));
     }
 
-    assert!(got_error, "Should receive ScanError notification for invalid URL");
+    assert!(got_error, "Should receive FailStartScanning or FailScan notification for invalid URL");
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
@@ -272,22 +272,21 @@ fn test_connection_loss_retry() {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
 
-    // Wait for ScanError notifications with retry attempts
+    // Wait for FailScan notification
     let mut error_count = 0;
     for _ in 0..30 {
         let poll = account.try_recv();
         if poll.is_some() {
             let notif = poll.get_notification();
-            if matches!(notif.flag, NotificationFlag::ScanError) {
-                println!("ScanError: {}", notif.payload);
-                assert!(notif.payload.contains("retries"), "Error should mention retry attempts");
+            if matches!(notif.flag, NotificationFlag::FailScan) {
+                println!("FailScan: {}", notif.payload);
                 error_count += 1;
             }
         }
         thread::sleep(Duration::from_millis(500));
     }
 
-    assert!(error_count > 0, "Should receive at least one ScanError");
+    assert!(error_count > 0, "Should receive at least one FailScan");
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
