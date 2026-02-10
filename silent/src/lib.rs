@@ -143,6 +143,10 @@ mod ffi {
     // ===== Utility Functions =====
 
     extern "Rust" {
+        /// Initialize logging with the specified level.
+        /// Call this once at application startup.
+        fn init_logging(level: LogLevel);
+
         /// Generate a new 12-word BIP39 mnemonic.
         fn generate_mnemonic() -> String;
         fn notification_to_string(notif: &Notification) -> String;
@@ -283,6 +287,20 @@ mod ffi {
         /// Get transaction ID preview (only valid if is_ok()).
         fn get_txid_preview(self: &PsbtResult) -> String;
     }
+}
+
+/// Initialize logging with the specified level.
+pub fn init_logging(level: LogLevel) {
+    let filter = match level {
+        LogLevel::Off => log::LevelFilter::Off,
+        LogLevel::Error => log::LevelFilter::Error,
+        LogLevel::Warn => log::LevelFilter::Warn,
+        LogLevel::Info => log::LevelFilter::Info,
+        LogLevel::Debug => log::LevelFilter::Debug,
+        LogLevel::Trace => log::LevelFilter::Trace,
+        _ => log::LevelFilter::Info,
+    };
+    env_logger::Builder::new().filter_level(filter).init();
 }
 
 /// Generate a new 12-word BIP39 mnemonic.
