@@ -153,14 +153,15 @@ impl Config {
 
     /// Convert to bwk-sp::Config.
     pub fn to_sp_config(&self) -> SpConfig {
-        SpConfig::new(
+        let mut config = SpConfig::new(
             self.account_name.clone(),
             self.network.into(),
             self.mnemonic.clone(),
             self.blindbit_url.clone(),
             self.account_dir(),
-        )
-        .enable_persist(true)
+        );
+        config.set_dust_limit(self.dust_limit);
+        config.enable_persist(true)
     }
 
     /// Get mnemonic.
