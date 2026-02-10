@@ -89,6 +89,10 @@ void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
     }
 }
 
+void StatusBar::updateWaitingForBlocks(uint32_t tipHeight) {
+    m_status_text->setText(QString("Synced at block %1 • Watching...").arg(tipHeight));
+}
+
 void StatusBar::updateScanError(rust::String error) {
     QString errorStr = QString::fromStdString(std::string(error.c_str()));
     m_status_text->setText(QString("Error: %1").arg(errorStr));

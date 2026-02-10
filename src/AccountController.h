@@ -30,6 +30,7 @@ signals:
     void updateBalance(uint64_t balance);
     void newAddress(rust::String addr);
     void scanProgress(uint32_t height, uint32_t tip);
+    void waitingForBlocks(uint32_t tipHeight);
     void scanError(rust::String error);
     void scannerStateChanged(bool running);
 

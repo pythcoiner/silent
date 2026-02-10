@@ -7,7 +7,7 @@ use std::sync::mpsc;
 use bwk_sp::spdk_core::{
     self, bip39, RecipientAddress, SilentPaymentUnsignedTransaction, SpClient,
 };
-use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification};
+use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification, ScanMode};
 
 use crate::config::Config;
 use crate::ffi::{
@@ -52,16 +52,16 @@ impl Account {
         })
     }
 
-    /// Start the scanner.
+    /// Start the scanner in continuous mode.
     pub fn start_scanner(&mut self) -> Result<(), String> {
         self.inner
-            .start_scanner()
+            .start_scan(ScanMode::Continuous)
             .map_err(|e| format!("scanner error: {e}"))
     }
 
     /// Stop the scanner.
     pub fn stop_scanner(&mut self) {
-        self.inner.stop_scanner()
+        self.inner.stop_scan()
     }
 
     /// Try to receive a notification (non-blocking).
@@ -536,6 +536,10 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
             flag: NotificationFlag::StartingScan,
             payload: String::new(),
         },
+        SpNotification::ScanStarted { start, end } => Notification {
+            flag: NotificationFlag::ScanStarted,
+            payload: format!("{start},{end}"),
+        },
         SpNotification::FailStartScanning { message } => Notification {
             flag: NotificationFlag::FailStartScanning,
             payload: message,
@@ -567,6 +571,17 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
         SpNotification::OutputSpent(outpoint) => Notification {
             flag: NotificationFlag::OutputSpent,
             payload: outpoint.to_string(),
+        },
+        SpNotification::WaitingForBlocks { tip_height } => Notification {
+            flag: NotificationFlag::WaitingForBlocks,
+            payload: tip_height.to_string(),
+        },
+        SpNotification::NewBlocksDetected {
+            from_height,
+            to_height,
+        } => Notification {
+            flag: NotificationFlag::NewBlocksDetected,
+            payload: format!("{from_height},{to_height}"),
         },
     }
 }

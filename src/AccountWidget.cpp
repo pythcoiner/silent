@@ -59,6 +59,8 @@ void AccountWidget::initUI() {
             m_status_bar, &StatusBar::updateConnectionState);
     connect(m_controller, &AccountController::scanProgress,
             m_status_bar, &StatusBar::updateScanProgress);
+    connect(m_controller, &AccountController::waitingForBlocks,
+            m_status_bar, &StatusBar::updateWaitingForBlocks);
     connect(m_controller, &AccountController::scanError,
             m_status_bar, &StatusBar::updateScanError);
 

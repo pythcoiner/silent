@@ -161,6 +161,7 @@ impl Config {
             self.account_dir(),
         );
         config.set_dust_limit(self.dust_limit);
+        config.set_birthday_height(Some(1));
         config.enable_persist(true)
     }
 

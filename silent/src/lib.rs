@@ -33,6 +33,7 @@ mod ffi {
     #[derive(Debug, Clone, Copy)]
     pub enum NotificationFlag {
         StartingScan,
+        ScanStarted,
         FailStartScanning,
         FailScan,
         StoppingScan,
@@ -41,6 +42,8 @@ mod ffi {
         ScanCompleted,
         NewOutput,
         OutputSpent,
+        WaitingForBlocks,
+        NewBlocksDetected,
     }
 
     // ===== Shared Structs =====

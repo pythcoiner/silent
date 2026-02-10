@@ -85,7 +85,7 @@ void AccountController::pollNotifications() {
     auto flag = notif.flag;
     auto notifStr = std::string(notification_to_string(notif).c_str());
 
-    qDebug() << "Notif received: " << QString::fromStdString(notifStr);
+    // qDebug() << "Notif received: " << QString::fromStdString(notifStr);
 
     if (flag == NotificationFlag::ScanProgress) {
       // Parse payload for height and tip
@@ -124,6 +124,12 @@ void AccountController::pollNotifications() {
       qDebug() << "AccountController: Starting scan";
       m_scanner_running = true;
       emit scannerStateChanged(true);
+    } else if (flag == NotificationFlag::ScanStarted) {
+      // Scan actually started - update connection status
+      auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+      qDebug() << "AccountController: Scan started, range:" << payload;
+      m_scanner_running = true;
+      emit scannerStateChanged(true);
     } else if (flag == NotificationFlag::StoppingScan) {
       qDebug() << "AccountController: Stopping scan";
     } else if (flag == NotificationFlag::ScanCompleted) {
@@ -133,6 +139,21 @@ void AccountController::pollNotifications() {
       qDebug() << "AccountController: Scanner stopped";
       m_scanner_running = false;
       emit scannerStateChanged(false);
+    } else if (flag == NotificationFlag::WaitingForBlocks) {
+      auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+      bool ok = false;
+      uint32_t tipHeight = payload.toUInt(&ok);
+      if (ok) {
+        qDebug() << "AccountController: Waiting for blocks at tip" << tipHeight;
+        emit waitingForBlocks(tipHeight);
+      }
+    } else if (flag == NotificationFlag::NewBlocksDetected) {
+      auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+      auto parts = payload.split(",");
+      if (parts.size() == 2) {
+        qDebug() << "AccountController: New blocks" << parts[0] << "->"
+                 << parts[1];
+      }
     } else {
       qDebug() << "AccountController: Unknown notification type";
     }

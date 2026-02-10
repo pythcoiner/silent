@@ -16,6 +16,7 @@ public:
 public slots:
     void updateConnectionState(bool connected);
     void updateScanProgress(uint32_t height, uint32_t tip);
+    void updateWaitingForBlocks(uint32_t tipHeight);
     void updateScanError(rust::String error);
     void reloadUrl();
 
