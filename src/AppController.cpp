@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "AccountWidget.h"
 #include "screens/modals/CreateAccount.h"
+#include "screens/modals/ConfirmDelete.h"
 #include <qlogging.h>
 
 AppController::AppController() = default;
@@ -49,6 +50,7 @@ void AppController::removeAccount(const QString &account) {
     }
     win->removeAccount(account);
     m_accounts.remove(account);
+    listAccounts();
 }
 
 void AppController::listAccounts() {
@@ -89,8 +91,28 @@ void AppController::onAccountCreated(const QString &name) {
 
 void AppController::openAccount(const QString &name) {
     addAccount(name);
+    listAccounts();
+}
+
+void AppController::deleteAccount(const QString &name) {
+    auto *modal = new ConfirmDelete(name);
+    connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) {
+        try {
+            delete_config(rust::String(account.toStdString()));
+        } catch (const std::exception &e) {
+            qCritical() << "Failed to delete account:" << e.what();
+            return;
+        }
+        removeAccount(account);
+        listAccounts();
+    });
+    AppController::execModal(modal);
 }
 
 auto AppController::accounts() -> int {
     return m_accounts.size();
+}
+
+auto AppController::isAccountOpen(const QString &name) const -> bool {
+    return m_accounts.contains(name);
 }

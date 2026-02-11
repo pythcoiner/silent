@@ -4,6 +4,7 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 #include <qsizepolicy.h>
+#include <qstyle.h>
 
 MenuTab::MenuTab(QWidget *parent) : QWidget(parent) {
     initUI();
@@ -37,7 +38,7 @@ void MenuTab::initUI() {
 
     // Add create account button
     auto *create_btn = new QPushButton("+ Create New Wallet");
-    create_btn->setFixedWidth(300);
+    create_btn->setFixedWidth(354);
     create_btn->setFixedHeight(50);
     auto btn_font = create_btn->font();
     btn_font.setPointSize(14);
@@ -62,11 +63,11 @@ void MenuTab::initUI() {
 }
 
 void MenuTab::clearAccountButtons() {
-    for (auto *btn : m_accountButtons) {
-        m_accountListLayout->removeWidget(btn);
-        btn->deleteLater();
+    for (auto *row : m_accountRows) {
+        m_accountListLayout->removeWidget(row);
+        row->deleteLater();
     }
-    m_accountButtons.clear();
+    m_accountRows.clear();
 }
 
 void MenuTab::onAccountList(const QList<QString> &accounts) {
@@ -77,18 +78,38 @@ void MenuTab::onAccountList(const QList<QString> &accounts) {
     }
 
     for (const auto &name : accounts) {
+        auto *row = new QWidget();
+        auto *row_layout = new QHBoxLayout(row);
+        row_layout->setContentsMargins(0, 0, 0, 0);
+        row_layout->setSpacing(4);
+
         auto *btn = new QPushButton(name);
         btn->setFixedWidth(300);
         btn->setFixedHeight(50);
-        auto font = btn->font();
-        font.setPointSize(14);
-        btn->setFont(font);
+        auto btn_font = btn->font();
+        btn_font.setPointSize(14);
+        btn->setFont(btn_font);
+
+        auto *trash_btn = new QPushButton();
+        trash_btn->setFixedSize(50, 50);
+        trash_btn->setIcon(trash_btn->style()->standardIcon(QStyle::SP_TrashIcon));
+        trash_btn->setToolTip("Delete wallet");
+
+        row_layout->addWidget(btn);
+        row_layout->addWidget(trash_btn);
 
         connect(btn, &QPushButton::clicked, this, [name]() {
             AppController::get()->openAccount(name);
         });
+        connect(trash_btn, &QPushButton::clicked, this, [name]() {
+            AppController::get()->deleteAccount(name);
+        });
 
-        m_accountListLayout->addWidget(btn, 0, Qt::AlignHCenter);
-        m_accountButtons.append(btn);
+        if (AppController::get()->isAccountOpen(name)) {
+            row->setEnabled(false);
+        }
+
+        m_accountListLayout->addWidget(row, 0, Qt::AlignHCenter);
+        m_accountRows.append(row);
     }
 }

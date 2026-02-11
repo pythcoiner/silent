@@ -283,6 +283,13 @@ pub fn new_config(
     ))
 }
 
+/// Delete an account's data from disk.
+pub fn delete_config(account_name: String) -> Result<(), String> {
+    let data_dir = datadir();
+    SpConfig::delete_account_dir(&data_dir, &account_name)
+        .map_err(|e| format!("failed to delete account '{account_name}': {e}"))
+}
+
 /// Load config from file.
 pub fn config_from_file(account_name: String) -> Box<Config> {
     match Config::from_file(account_name.clone()) {

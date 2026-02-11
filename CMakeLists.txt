@@ -58,6 +58,8 @@ set(SOURCES
     src/screens/Settings.cpp
     src/screens/modals/SelectCoins.h
     src/screens/modals/SelectCoins.cpp
+    src/screens/modals/ConfirmDelete.h
+    src/screens/modals/ConfirmDelete.cpp
 )
 
 qt_add_executable(${BIN}

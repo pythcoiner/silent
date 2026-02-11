@@ -173,6 +173,9 @@ mod ffi {
         /// List all existing configs.
         fn list_configs() -> Vec<String>;
 
+        /// Delete an account's data from disk.
+        fn delete_config(account_name: String) -> Result<()>;
+
         /// Save config to file.
         fn to_file(self: &Config);
 
@@ -321,7 +324,7 @@ pub fn notification_to_string(notif: &Notification) -> String {
 
 // Re-export main types
 pub use account::{new_account, Account, Poll, PsbtResult};
-pub use config::{config_from_file, list_configs, new_config, Config};
+pub use config::{config_from_file, delete_config, list_configs, new_config, Config};
 pub use ffi::{
     LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,
     TransactionTemplate,

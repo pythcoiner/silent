@@ -234,7 +234,7 @@ checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 [[package]]
 name = "bwk-sp"
 version = "0.1.0"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=633d330#633d330da2da22bd24cf520b53c1d46a5268d395"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=1ee4c3e#1ee4c3e6b393d973acfe5dcefeaa35237a8bf3dd"
 dependencies = [
  "backend-blindbit-native-non-async",
  "bitcoin 0.32.8",

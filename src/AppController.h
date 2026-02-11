@@ -17,6 +17,7 @@ public:
     static void init();
     static auto get() -> AppController *;
     auto accounts() -> int;
+    auto isAccountOpen(const QString &name) const -> bool;
 
 signals:
     void accountList(QList<QString>);
@@ -32,6 +33,7 @@ public slots:
                       Network network, const QString &blindbit_url);
     void onAccountCreated(const QString &name);
     void openAccount(const QString &name);
+    void deleteAccount(const QString &name);
 
 private:
     QHash<QString, AccountController *> m_accounts;

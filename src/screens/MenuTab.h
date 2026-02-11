@@ -22,5 +22,5 @@ private:
     void clearAccountButtons();
 
     QVBoxLayout *m_accountListLayout = nullptr;
-    QList<QPushButton *> m_accountButtons;
+    QList<QWidget *> m_accountRows;
 };
