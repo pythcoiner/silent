@@ -127,6 +127,27 @@ mod ffi {
         pub error: String,
     }
 
+    /// Backend server information result.
+    #[derive(Debug, Clone)]
+    pub struct BackendInfo {
+        /// Whether the request succeeded.
+        pub is_ok: bool,
+        /// Error message (empty if is_ok is true).
+        pub error: String,
+        /// Network reported by the backend.
+        pub network: Network,
+        /// Current block height.
+        pub height: u32,
+        /// Backend supports tweaks-only mode.
+        pub tweaks_only: bool,
+        /// Backend supports full basic tweaks.
+        pub tweaks_full_basic: bool,
+        /// Backend supports full tweaks with dust filter.
+        pub tweaks_full_with_dust_filter: bool,
+        /// Backend supports cut-through with dust filter.
+        pub tweaks_cut_through_with_dust_filter: bool,
+    }
+
     // ===== Opaque Rust Types =====
 
     extern "Rust" {
@@ -153,6 +174,10 @@ mod ffi {
         /// Generate a new 12-word BIP39 mnemonic.
         fn generate_mnemonic() -> String;
         fn notification_to_string(notif: &Notification) -> String;
+
+        /// Query backend server info (network, height, capabilities).
+        /// Blocking HTTP call - may take up to 30s on timeout.
+        fn get_backend_info(blindbit_url: String) -> BackendInfo;
     }
 
     // ===== Config Methods =====
@@ -322,10 +347,36 @@ pub fn notification_to_string(notif: &Notification) -> String {
     format!("{notif:?}")
 }
 
+/// Query backend info. Returns a BackendInfo with is_ok=false on error.
+pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
+    match bwk_sp::backend_info(blindbit_url) {
+        Ok(info) => BackendInfo {
+            is_ok: true,
+            error: String::new(),
+            network: info.network.into(),
+            height: info.height.to_consensus_u32(),
+            tweaks_only: info.tweaks_only,
+            tweaks_full_basic: info.tweaks_full_basic,
+            tweaks_full_with_dust_filter: info.tweaks_full_with_dust_filter,
+            tweaks_cut_through_with_dust_filter: info.tweaks_cut_through_with_dust_filter,
+        },
+        Err(e) => BackendInfo {
+            is_ok: false,
+            error: e.to_string(),
+            network: Network::Regtest,
+            height: 0,
+            tweaks_only: false,
+            tweaks_full_basic: false,
+            tweaks_full_with_dust_filter: false,
+            tweaks_cut_through_with_dust_filter: false,
+        },
+    }
+}
+
 // Re-export main types
 pub use account::{new_account, Account, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, Config};
 pub use ffi::{
-    LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,
-    TransactionTemplate,
+    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output,
+    TransactionSimulation, TransactionTemplate,
 };

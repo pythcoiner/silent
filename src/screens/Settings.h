@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Qontrol>
+#include <qlabel.h>
 #include <qcombobox.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
@@ -23,6 +24,7 @@ signals:
 public slots:
     void actionSave();
     void actionToggle();
+    void actionRefreshInfo();
     void updateToggleButton(bool running);
 
 protected:
@@ -31,6 +33,8 @@ protected:
     void view() override;
 
 private:
+    void onBackendInfoReady(BackendInfo info);
+
     AccountController *m_controller = nullptr;
     bool m_view_init = false;
     QWidget *m_main_widget = nullptr;
@@ -38,6 +42,11 @@ private:
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_btn_save = nullptr;
     QPushButton *m_btn_toggle = nullptr;
+    QPushButton *m_btn_refresh = nullptr;
+    QLabel *m_info_network = nullptr;
+    QLabel *m_info_height = nullptr;
+    QLabel *m_info_tweaks = nullptr;
+    bool m_info_fetched = false;
     QString m_current_url;
     Network m_current_network = Network::Signet;
 };

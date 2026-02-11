@@ -23,8 +23,14 @@ private slots:
     void onCreate();
     void onModeChanged();
     void onNetworkChanged();
+    void onTestBackend();
 
 private:
+    void initUI();
+    void invalidateBackendTest();
+    void onBackendInfoReady(BackendInfo info);
+    auto generateMnemonic() -> QString;
+
     QLineEdit *m_name_input = nullptr;
     QRadioButton *m_generate_radio = nullptr;
     QRadioButton *m_restore_radio = nullptr;
@@ -32,9 +38,8 @@ private:
     QPushButton *m_generate_btn = nullptr;
     QComboBox *m_network_combo = nullptr;
     QLineEdit *m_blindbit_input = nullptr;
+    QPushButton *m_test_btn = nullptr;
     QPushButton *m_create_btn = nullptr;
     QPushButton *m_cancel_btn = nullptr;
-
-    void initUI();
-    auto generateMnemonic() -> QString;
+    bool m_backend_verified = false;
 };
