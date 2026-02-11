@@ -28,6 +28,7 @@ private slots:
 private:
     void initUI();
     void invalidateBackendTest();
+    void updateCreateButton();
     void onBackendInfoReady(BackendInfo info);
     auto generateMnemonic() -> QString;
 

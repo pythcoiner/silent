@@ -178,6 +178,9 @@ mod ffi {
         /// Query backend server info (network, height, capabilities).
         /// Blocking HTTP call - may take up to 30s on timeout.
         fn get_backend_info(blindbit_url: String) -> BackendInfo;
+
+        /// Validate a BIP39 mnemonic string.
+        fn validate_mnemonic(mnemonic: String) -> bool;
     }
 
     // ===== Config Methods =====
@@ -371,6 +374,11 @@ pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
             tweaks_cut_through_with_dust_filter: false,
         },
     }
+}
+
+/// Validate a BIP39 mnemonic string.
+pub fn validate_mnemonic(mnemonic: String) -> bool {
+    bwk_sp::spdk_core::bip39::Mnemonic::parse(&mnemonic).is_ok()
 }
 
 // Re-export main types

@@ -22,6 +22,8 @@ void CreateAccount::initUI() {
   // Account name field
   m_name_input = new QLineEdit();
   m_name_input->setPlaceholderText("Enter account name");
+  connect(m_name_input, &QLineEdit::textChanged, this,
+          [this]() { updateCreateButton(); });
   layout->addRow("Account Name:", m_name_input);
 
   // Mode selection
@@ -43,6 +45,8 @@ void CreateAccount::initUI() {
   m_mnemonic_input->setPlaceholderText("12 or 24 word mnemonic");
   m_mnemonic_input->setReadOnly(true); // Start in generate mode
   m_mnemonic_input->setMaximumHeight(80);
+  connect(m_mnemonic_input, &QTextEdit::textChanged, this,
+          [this]() { updateCreateButton(); });
   layout->addRow("Mnemonic:", m_mnemonic_input);
 
   // Generate button
@@ -107,36 +111,12 @@ void CreateAccount::onGenerate() {
 }
 
 void CreateAccount::onCreate() {
-  // Validate inputs
-  QString name = m_name_input->text().trimmed();
-  QString mnemonic = m_mnemonic_input->toPlainText().trimmed();
-  QString blindbit_url = m_blindbit_input->text().trimmed();
-
-  if (name.isEmpty()) {
-    AppController::execModal(
-        new qontrol::Modal("Invalid Input", "Account name cannot be empty."));
-    return;
-  }
-
-  if (name.contains(" ")) {
-    AppController::execModal(new qontrol::Modal(
-        "Invalid Input", "Account name cannot contain spaces."));
-    return;
-  }
-
-  if (mnemonic.isEmpty()) {
-    AppController::execModal(
-        new qontrol::Modal("Invalid Input", "Mnemonic cannot be empty."));
-    return;
-  }
-
-  // Get network (backend test already verified URL and network match)
+  auto name = m_name_input->text().trimmed();
+  auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
+  auto blindbit_url = m_blindbit_input->text().trimmed();
   auto network = static_cast<Network>(m_network_combo->currentData().toInt());
 
-  // Emit signal to create account
   emit createAccount(name, mnemonic, network, blindbit_url);
-
-  // Close dialog
   accept();
 }
 
@@ -201,7 +181,7 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
 
   if (!info.is_ok) {
     m_backend_verified = false;
-    m_create_btn->setEnabled(false);
+    updateCreateButton();
     AppController::execModal(new qontrol::Modal(
         "Connection Failed",
         QString("Failed to connect to backend:\n%1")
@@ -230,7 +210,7 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
   bool network_match = (info.network == selected_network);
 
   m_backend_verified = network_match;
-  m_create_btn->setEnabled(network_match);
+  updateCreateButton();
 
   auto yn = [](bool v) { return v ? "Yes" : "No"; };
   QString msg =
@@ -257,10 +237,35 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
 }
 
 void CreateAccount::invalidateBackendTest() {
-  if (m_backend_verified) {
-    m_backend_verified = false;
+  m_backend_verified = false;
+  updateCreateButton();
+}
+
+void CreateAccount::updateCreateButton() {
+  auto name = m_name_input->text().trimmed();
+  auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
+
+  if (name.isEmpty() || name.contains(" ")) {
     m_create_btn->setEnabled(false);
+    return;
   }
+
+  // Check if account name already exists
+  auto configs = ::list_configs();
+  for (const auto &existing : configs) {
+    if (QString::fromStdString(std::string(existing)) == name) {
+      m_create_btn->setEnabled(false);
+      return;
+    }
+  }
+
+  if (mnemonic.isEmpty() ||
+      !::validate_mnemonic(rust::String(mnemonic.toStdString()))) {
+    m_create_btn->setEnabled(false);
+    return;
+  }
+
+  m_create_btn->setEnabled(m_backend_verified);
 }
 
 auto CreateAccount::generateMnemonic() -> QString {
