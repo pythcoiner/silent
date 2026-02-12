@@ -17,7 +17,7 @@ Settings::Settings(AccountController *ctrl) {
   this->init();
   this->view();
   this->doConnect();
-  actionRefreshInfo();
+  fetchBackendInfo();
 }
 
 void Settings::init() {
@@ -39,10 +39,14 @@ void Settings::doConnect() {
           qontrol::UNIQUE);
   connect(m_btn_toggle, &QPushButton::clicked, this, &Settings::actionToggle,
           qontrol::UNIQUE);
-  connect(m_btn_refresh, &QPushButton::clicked, this, &Settings::actionRefreshInfo,
+  connect(m_btn_test, &QPushButton::clicked, this, &Settings::actionTestBackend,
           qontrol::UNIQUE);
   connect(m_controller, &AccountController::scannerStateChanged, this,
           &Settings::updateToggleButton, qontrol::UNIQUE);
+  connect(m_controller, &AccountController::scanProgress, this,
+          &Settings::onScanProgress, qontrol::UNIQUE);
+  connect(m_blindbit_url, &QLineEdit::textChanged, this,
+          [this]() { invalidateBackendTest(); });
 }
 
 void Settings::actionSave() {
@@ -74,6 +78,8 @@ void Settings::actionSave() {
   // Save to file
   config->to_file();
 
+  m_current_url = m_blindbit_url->text();
+
   auto *modal = new qontrol::Modal("Settings", "Settings saved successfully");
   AppController::execModal(modal);
   emit configSaved();
@@ -91,17 +97,14 @@ void Settings::actionToggle() {
 
   if (m_controller->isScannerRunning()) {
     // Disconnect
+    m_btn_toggle->setEnabled(false);
     account_opt.value()->stop_scanner();
-    auto *modal =
-        new qontrol::Modal("Disconnect", "Disconnected from BlindBit server");
-    AppController::execModal(modal);
+    clearBackendInfo();
   } else {
     // Connect
     try {
       account_opt.value()->start_scanner();
-      auto *modal =
-          new qontrol::Modal("Connect", "Connected to BlindBit server");
-      AppController::execModal(modal);
+      fetchBackendInfo();
     } catch (const std::exception &e) {
       auto msg = QString("Failed to connect: %1").arg(e.what());
       auto *modal = new qontrol::Modal("Error", msg);
@@ -110,9 +113,7 @@ void Settings::actionToggle() {
   }
 }
 
-void Settings::actionRefreshInfo() {
-  qDebug() << "Settings::actionRefreshInfo()";
-
+void Settings::actionTestBackend() {
   auto url = m_blindbit_url->text().trimmed();
   if (url.isEmpty()) {
     auto *modal = new qontrol::Modal("Error", "BlindBit URL is empty");
@@ -120,8 +121,25 @@ void Settings::actionRefreshInfo() {
     return;
   }
 
-  m_btn_refresh->setEnabled(false);
-  m_btn_refresh->setText("Fetching...");
+  m_btn_test->setEnabled(false);
+  m_btn_test->setText("Testing...");
+
+  auto *thread = QThread::create([this, url = url.toStdString()]() {
+    auto info = ::get_backend_info(rust::String(url));
+    QMetaObject::invokeMethod(this, [this, info]() {
+      m_btn_test->setEnabled(true);
+      m_btn_test->setText("Test");
+      onBackendInfoReady(info);
+    });
+  });
+  connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+  thread->start();
+}
+
+void Settings::fetchBackendInfo() {
+  auto url = m_blindbit_url->text().trimmed();
+  if (url.isEmpty())
+    return;
 
   auto *thread = QThread::create([this, url = url.toStdString()]() {
     auto info = ::get_backend_info(rust::String(url));
@@ -134,34 +152,75 @@ void Settings::actionRefreshInfo() {
 }
 
 void Settings::onBackendInfoReady(BackendInfo info) {
-  m_btn_refresh->setEnabled(true);
-  m_btn_refresh->setText("Refresh Info");
+  if (!info.is_ok) {
+    m_backend_verified = false;
+    clearBackendInfo();
+    updateButtons();
+    AppController::execModal(new qontrol::Modal(
+        "Connection Failed",
+        QString("Failed to connect to backend:\n%1")
+            .arg(QString::fromStdString(std::string(info.error.c_str())))));
+    return;
+  }
 
-  if (info.is_ok) {
-    QString networkStr;
-    switch (info.network) {
-      case Network::Regtest: networkStr = "Regtest"; break;
-      case Network::Signet: networkStr = "Signet"; break;
-      case Network::Testnet: networkStr = "Testnet"; break;
-      case Network::Bitcoin: networkStr = "Bitcoin"; break;
-    }
+  QString networkStr;
+  switch (info.network) {
+    case Network::Regtest: networkStr = "Regtest"; break;
+    case Network::Signet: networkStr = "Signet"; break;
+    case Network::Testnet: networkStr = "Testnet"; break;
+    case Network::Bitcoin: networkStr = "Bitcoin"; break;
+  }
 
-    m_info_fetched = true;
-    m_info_network->setText(networkStr);
-    m_info_height->setText(QString::number(info.height));
+  bool network_match = (info.network == m_current_network);
+  m_backend_verified = network_match;
+  updateButtons();
 
-    auto yn = [](bool v) { return v ? "Yes" : "No"; };
-    m_info_tweaks->setText(
-        QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: %3\nCut-Through + Dust Filter: %4")
-            .arg(yn(info.tweaks_only))
-            .arg(yn(info.tweaks_full_basic))
-            .arg(yn(info.tweaks_full_with_dust_filter))
-            .arg(yn(info.tweaks_cut_through_with_dust_filter)));
-  } else {
-    m_info_network->setText("--");
-    m_info_height->setText("--");
-    m_info_tweaks->setText(
-        QString::fromStdString(std::string(info.error.c_str())));
+  m_info_network->setText(networkStr);
+  m_current_height = info.height;
+  m_info_height->setText(QString::number(info.height));
+
+  auto yn = [](bool v) { return v ? "Yes" : "No"; };
+  m_info_tweaks->setText(
+      QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: %3\nCut-Through + Dust Filter: %4")
+          .arg(yn(info.tweaks_only))
+          .arg(yn(info.tweaks_full_basic))
+          .arg(yn(info.tweaks_full_with_dust_filter))
+          .arg(yn(info.tweaks_cut_through_with_dust_filter)));
+
+  if (!network_match) {
+    AppController::execModal(new qontrol::Modal(
+        "Network Mismatch",
+        QString("Backend network is %1 but account network is %2")
+            .arg(networkStr)
+            .arg(m_network_selector->currentText())));
+  }
+}
+
+void Settings::invalidateBackendTest() {
+  m_backend_verified = false;
+  clearBackendInfo();
+  updateButtons();
+}
+
+void Settings::clearBackendInfo() {
+  m_info_network->setText("--");
+  m_info_height->setText("--");
+  m_info_tweaks->setText("--");
+  m_current_height = 0;
+}
+
+void Settings::updateButtons() {
+  bool connected = m_controller->isScannerRunning();
+  m_btn_save->setEnabled(m_backend_verified && !connected);
+  m_btn_toggle->setEnabled(m_backend_verified || connected);
+  m_blindbit_url->setEnabled(!connected);
+  m_btn_test->setEnabled(!connected);
+}
+
+void Settings::onScanProgress(uint32_t height, uint32_t tip) {
+  if (height > m_current_height) {
+    m_current_height = height;
+    m_info_height->setText(QString::number(height));
   }
 }
 
@@ -169,6 +228,7 @@ void Settings::updateToggleButton(bool running) {
   if (m_btn_toggle != nullptr) {
     m_btn_toggle->setText(running ? "Disconnect" : "Connect");
   }
+  updateButtons();
 }
 
 void Settings::view() {
@@ -182,9 +242,16 @@ void Settings::view() {
   m_blindbit_url->setFixedWidth(3 * INPUT_WIDTH);
   m_blindbit_url->setPlaceholderText("https://blindbit.example.com");
   m_blindbit_url->setText(m_current_url);
+  m_blindbit_url->setEnabled(!m_controller->isScannerRunning());
 
-  auto *url_row =
-      (new qontrol::Row)->push(url_label)->push(m_blindbit_url)->pushSpacer();
+  m_btn_test = new QPushButton("Test");
+
+  auto *url_row = (new qontrol::Row)
+                      ->push(url_label)
+                      ->push(m_blindbit_url)
+                      ->pushSpacer(H_SPACER)
+                      ->push(m_btn_test)
+                      ->pushSpacer();
 
   auto *network_label = new QLabel("Network:");
   network_label->setFixedWidth(LABEL_WIDTH);
@@ -238,12 +305,9 @@ void Settings::view() {
   m_btn_save = new QPushButton("Save Settings");
   m_btn_toggle = new QPushButton(m_controller->isScannerRunning() ? "Disconnect"
                                                                   : "Connect");
-  m_btn_refresh = new QPushButton("Refresh Info");
 
   auto *buttonRow = (new qontrol::Row)
                         ->pushSpacer()
-                        ->push(m_btn_refresh)
-                        ->pushSpacer(H_SPACER)
                         ->push(m_btn_toggle)
                         ->pushSpacer(H_SPACER)
                         ->push(m_btn_save)
