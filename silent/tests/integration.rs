@@ -3,35 +3,29 @@
 //! These tests cover wallet creation, config management, SP address generation,
 //! BlindBit connection, send/receive flows, and wallet restore functionality.
 
+mod common;
+
+use bwk_utils::test as bwk_test;
 use silent::{Account, Config, Network, NotificationFlag};
 use std::thread;
 use std::time::Duration;
 
-// ===== Test Helpers =====
+use common::{
+    cleanup_test_account, create_test_account, fund_sp_wallet, setup_blindbitd, test_account_name,
+    wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
+};
 
-/// Generate unique test account name using process ID.
-fn test_account_name() -> String {
-    format!("test_account_{}", std::process::id())
-}
+// ===== Test Helpers =====
 
 /// Create test config with regtest network.
 fn create_test_config(account_name: String) -> Config {
     Config::new(
         account_name,
         Network::Regtest,
-        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+        TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
-        Some(546), // Standard dust limit
+        Some(546),
     )
-}
-
-/// Cleanup test account directory.
-fn cleanup_test_account(account_name: &str) {
-    use silent::config::Config;
-    let config = Config::from_file(account_name.to_string()).ok();
-    if let Some(cfg) = config {
-        let _ = std::fs::remove_dir_all(cfg.account_dir());
-    }
 }
 
 // ===== Wallet Creation and Config Tests =====
@@ -41,18 +35,16 @@ fn test_wallet_creation_from_mnemonic() {
     let account_name = test_account_name();
     let config = create_test_config(account_name.clone());
 
-    // Verify config fields
     assert_eq!(config.account_name, account_name);
     assert_eq!(config.get_network(), Network::Regtest);
     assert!(!config.get_mnemonic().is_empty());
 
-    // Create account from config
     let account_result = Account::new(config.clone());
     assert!(account_result.is_ok(), "Account creation should succeed");
 
     let account = account_result.unwrap();
     assert_eq!(account.name(), account_name);
-    assert_eq!(account.balance(), 0); // New wallet should have zero balance
+    assert_eq!(account.balance(), 0);
 
     cleanup_test_account(&account_name);
 }
@@ -62,22 +54,23 @@ fn test_config_save_load_roundtrip() {
     let account_name = test_account_name();
     let original_config = create_test_config(account_name.clone());
 
-    // Save config to file
     original_config.to_file();
-
-    // Verify file exists
     assert!(original_config.config_path().exists());
 
-    // Load config from file
-    let loaded_config = Config::from_file(account_name.clone())
-        .expect("Config should load successfully");
+    let loaded_config =
+        Config::from_file(account_name.clone()).expect("Config should load successfully");
 
-    // Verify all fields match
     assert_eq!(loaded_config.account_name, original_config.account_name);
     assert_eq!(loaded_config.get_network(), original_config.get_network());
     assert_eq!(loaded_config.get_mnemonic(), original_config.get_mnemonic());
-    assert_eq!(loaded_config.get_blindbit_url(), original_config.get_blindbit_url());
-    assert_eq!(loaded_config.get_dust_limit(), original_config.get_dust_limit());
+    assert_eq!(
+        loaded_config.get_blindbit_url(),
+        original_config.get_blindbit_url()
+    );
+    assert_eq!(
+        loaded_config.get_dust_limit(),
+        original_config.get_dust_limit()
+    );
 
     cleanup_test_account(&account_name);
 }
@@ -92,20 +85,26 @@ fn test_sp_address_generation() {
 
     let sp_addr = account.sp_address();
 
-    // Verify SP address format
-    // SP addresses start with "sp1" (mainnet), "tsp1" (testnet/signet), or "sprt1" (regtest)
     assert!(!sp_addr.is_empty(), "SP address should not be empty");
-    assert!(sp_addr.starts_with("sp") || sp_addr.starts_with("tsp"),
-            "SP address should start with sp prefix");
+    assert!(
+        sp_addr.starts_with("sp") || sp_addr.starts_with("tsp"),
+        "SP address should start with sp prefix"
+    );
+    assert!(
+        sp_addr.len() >= 100,
+        "SP address should be at least 100 characters, got {}",
+        sp_addr.len()
+    );
 
-    // Verify address length (SP addresses are typically 118 characters)
-    assert!(sp_addr.len() >= 100, "SP address should be at least 100 characters, got {}", sp_addr.len());
-
-    // Verify address is deterministic (same mnemonic -> same address)
+    // Verify address is deterministic
     let account_name2 = format!("{}_2", account_name);
     let config2 = create_test_config(account_name2.clone());
     let account2 = Account::new(config2).expect("Account creation should succeed");
-    assert_eq!(account2.sp_address(), sp_addr, "Same mnemonic should produce same address");
+    assert_eq!(
+        account2.sp_address(),
+        sp_addr,
+        "Same mnemonic should produce same address"
+    );
 
     cleanup_test_account(&account_name);
     cleanup_test_account(&account_name2);
@@ -114,126 +113,140 @@ fn test_sp_address_generation() {
 // ===== BlindBit Connection Tests =====
 
 #[test]
-#[ignore] // Requires local BlindBit server on port 50001
 fn test_blindbit_connection_regtest() {
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    // Generate blocks for coinbase maturity
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
     let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
+    let mut account = create_test_account(&account_name, &url);
 
     // Start scanner
-    let start_result = account.start_scanner();
-    assert!(start_result.is_ok(), "Scanner should start successfully: {:?}", start_result.err());
+    assert!(account.start_scanner(), "Scanner should start successfully");
 
-    // Wait for StartingScan notification
-    thread::sleep(Duration::from_millis(500));
-    let poll = account.try_recv();
-
-    if poll.is_some() {
-        let notif = poll.get_notification();
-        // Should receive StartingScan or ScanProgress
-        assert!(matches!(notif.flag, NotificationFlag::StartingScan | NotificationFlag::ScanProgress),
-                "Expected StartingScan or ScanProgress, got {:?}", notif.flag);
-    }
+    // Wait for scanner to connect and start scanning
+    let got_started = wait_for_scan_complete(&mut account, 30);
+    assert!(
+        got_started,
+        "Scanner should complete scan or reach tip within 30s"
+    );
 
     // Stop scanner
     account.stop_scanner();
 
-    // Wait for ScanStopped notification
-    thread::sleep(Duration::from_millis(500));
-    let poll = account.try_recv();
-    if poll.is_some() {
-        let notif = poll.get_notification();
-        assert_eq!(notif.flag, NotificationFlag::ScanStopped, "Expected ScanStopped notification");
+    // Wait for ScanStopped
+    let mut got_stopped = false;
+    for _ in 0..50 {
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == NotificationFlag::ScanStopped {
+                got_stopped = true;
+                break;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
     }
+    assert!(got_stopped, "Should receive ScanStopped notification");
 
     cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 // ===== Send/Receive SP Flow Tests =====
 
 #[test]
-#[ignore] // Requires local regtest Bitcoin node and BlindBit server
 fn test_send_receive_sp_flow() {
-    // This test requires:
-    // 1. Local regtest Bitcoin node running
-    // 2. Local BlindBit server connected to regtest node
-    // 3. Initial funding of the test wallet
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    // Generate blocks for coinbase maturity
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
 
     let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
+    let mut account = create_test_account(&account_name, &url);
 
-    // Start scanner
-    account.start_scanner().expect("Scanner should start");
+    // Start scanner and wait for initial sync
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
 
-    // Wait for initial sync (adjust timeout as needed)
-    thread::sleep(Duration::from_secs(5));
-
-    // Check initial balance (should be 0 for new wallet)
     let initial_balance = account.balance();
-    println!("Initial balance: {} sats", initial_balance);
+    assert_eq!(initial_balance, 0, "New wallet should have zero balance");
 
-    // NOTE: Manual step required - fund this address before running test:
-    println!("Fund this address: {}", account.sp_address());
-    println!("Waiting 30 seconds for funding transaction...");
-    thread::sleep(Duration::from_secs(30));
+    // Fund the wallet with an SP transaction
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
 
-    // Check for NewOutput notification
+    // Wait for the scanner to detect the new output
     let mut received_output = false;
-    for _ in 0..10 {
+    for _ in 0..300 {
         let poll = account.try_recv();
         if poll.is_some() {
             let notif = poll.get_notification();
-            if matches!(notif.flag, NotificationFlag::NewOutput) {
-                println!("Received output: {}", notif.payload);
+            if notif.flag == NotificationFlag::NewOutput {
                 received_output = true;
+                break;
             }
         }
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(100));
     }
+    assert!(received_output, "Should receive NewOutput notification");
 
-    if received_output {
-        use silent::{TransactionTemplate, Output};
+    // Verify balance increased
+    let new_balance = account.balance();
+    assert!(
+        new_balance > 0,
+        "Balance should increase after receiving funds, got {}",
+        new_balance
+    );
 
-        // Verify balance increased
-        let new_balance = account.balance();
-        assert!(new_balance > initial_balance, "Balance should increase after receiving funds");
+    // Create send transaction (send back to same address)
+    use silent::{Output, TransactionTemplate};
 
-        // Create send transaction (send half back to same address for testing)
-        let send_amount = new_balance / 2;
-        let tx_template = TransactionTemplate {
-            outputs: vec![Output {
-                address: account.sp_address(),
-                amount: send_amount,
-                label: String::from("test send"),
-                max: false,
-            }],
-            fee_rate: 1.0,
-            input_outpoints: vec![],
-        };
+    let send_amount = new_balance / 2;
+    let tx_template = TransactionTemplate {
+        outputs: vec![Output {
+            address: account.sp_address(),
+            amount: send_amount,
+            label: String::from("test send"),
+            max: false,
+        }],
+        fee_rate: 1.0,
+        input_outpoints: vec![],
+    };
 
-        // Simulate transaction
-        let simulation = account.simulate_transaction(tx_template.clone());
-        assert!(simulation.is_valid, "Transaction simulation should succeed: {}", simulation.error);
-        println!("Simulation: fee={} sats, weight={} WU", simulation.fee, simulation.weight);
+    // Simulate transaction
+    let simulation = account.simulate_transaction(tx_template.clone());
+    assert!(
+        simulation.is_valid,
+        "Transaction simulation should succeed: {}",
+        simulation.error
+    );
+    assert!(simulation.fee > 0, "Fee should be non-zero");
 
-        // Prepare transaction
-        let psbt = account.prepare_transaction(tx_template);
-        assert!(psbt.is_ok(), "Transaction preparation should succeed: {}", psbt.get_psbt_error());
+    // Prepare transaction
+    let psbt = account.prepare_transaction(tx_template);
+    assert!(
+        psbt.is_ok(),
+        "Transaction preparation should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
-        // Sign and broadcast
-        let txid_result = account.sign_and_broadcast(&psbt);
-        assert!(txid_result.is_ok(), "Broadcast should succeed: {:?}", txid_result.err());
-
-        let txid = txid_result.unwrap();
-        println!("Broadcast txid: {}", txid);
-        assert_eq!(txid.len(), 64, "Txid should be 64 hex characters");
-    } else {
-        println!("WARNING: No funding received, skipping send test");
-    }
+    // Note: sign_and_broadcast requires a broadcast URL (Esplora-style HTTP endpoint)
+    // which isn't available on regtest. Transaction preparation is sufficient to verify
+    // the full SP transaction lifecycle up to signing.
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 // ===== Wallet Restore Tests =====
@@ -241,35 +254,33 @@ fn test_send_receive_sp_flow() {
 #[test]
 fn test_wallet_restore_from_mnemonic() {
     let account_name = test_account_name();
-    let mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
-    // Create first wallet
     let config1 = Config::new(
         account_name.clone(),
         Network::Regtest,
-        mnemonic.to_string(),
+        TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         Some(546),
     );
     let account1 = Account::new(config1).expect("First account creation should succeed");
     let addr1 = account1.sp_address();
 
-    // Delete wallet data
     cleanup_test_account(&account_name);
 
-    // Restore wallet with same mnemonic
     let config2 = Config::new(
         account_name.clone(),
         Network::Regtest,
-        mnemonic.to_string(),
+        TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         Some(546),
     );
     let account2 = Account::new(config2).expect("Restored account creation should succeed");
     let addr2 = account2.sp_address();
 
-    // Verify same address (proves key derivation is deterministic)
-    assert_eq!(addr1, addr2, "Restored wallet should have same SP address");
+    assert_eq!(
+        addr1, addr2,
+        "Restored wallet should have same SP address"
+    );
 
     cleanup_test_account(&account_name);
 }
@@ -277,45 +288,85 @@ fn test_wallet_restore_from_mnemonic() {
 // ===== Signet Testing =====
 
 #[test]
-#[ignore] // Manual test requiring signet BlindBit server
+#[ignore] // Requires real signet BlindBit server (BlindbitD is regtest only)
 fn test_signet_connection() {
     let account_name = test_account_name();
     let config = Config::new(
         account_name.clone(),
         Network::Signet,
-        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        "https://blindbit-signet.example.com".to_string(), // Replace with actual signet BlindBit URL
+        TEST_MNEMONIC.to_string(),
+        "https://blindbit-signet.example.com".to_string(),
         Some(546),
     );
 
     let mut account = Account::new(config).expect("Account creation should succeed");
 
-    // Start scanner
-    let start_result = account.start_scanner();
-    assert!(start_result.is_ok(), "Signet scanner should start: {:?}", start_result.err());
+    assert!(
+        account.start_scanner(),
+        "Signet scanner should start"
+    );
 
-    // Wait for sync to complete
-    println!("Syncing with signet BlindBit server...");
-    let mut scan_completed = false;
-    for _ in 0..60 { // Wait up to 30 seconds
-        thread::sleep(Duration::from_millis(500));
+    let scan_completed = wait_for_scan_complete(&mut account, 30);
+    assert!(scan_completed, "Scan should complete within timeout");
+
+    let addr = account.sp_address();
+    assert!(!addr.is_empty(), "Signet address should not be empty");
+    assert!(
+        addr.len() >= 100,
+        "Signet address should be at least 100 characters"
+    );
+
+    account.stop_scanner();
+    cleanup_test_account(&account_name);
+}
+
+// ===== Connection Loss Tests =====
+
+#[test]
+fn test_connection_loss_retry() {
+    let (mut bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account = create_test_account(&account_name, &url);
+
+    assert!(
+        account.start_scanner(),
+        "Initial start should succeed"
+    );
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+
+    // Kill BlindbitD to simulate connection loss
+    bbd.kill().expect("kill blindbitd");
+
+    // Wait for FailScan notification
+    let mut error_count = 0;
+    for _ in 0..100 {
         let poll = account.try_recv();
         if poll.is_some() {
             let notif = poll.get_notification();
-            println!("Notification: {:?} - {}", notif.flag, notif.payload);
-            if matches!(notif.flag, NotificationFlag::ScanCompleted) {
-                scan_completed = true;
+            if matches!(
+                notif.flag,
+                NotificationFlag::FailScan | NotificationFlag::FailStartScanning
+            ) {
+                error_count += 1;
                 break;
             }
         }
+        thread::sleep(Duration::from_millis(200));
     }
 
-    assert!(scan_completed, "Scan should complete within timeout");
-
-    // Verify address generation works on signet
-    let addr = account.sp_address();
-    assert!(!addr.is_empty(), "Signet address should not be empty");
-    assert!(addr.len() >= 100, "Signet address should be at least 100 characters");
+    assert!(
+        error_count > 0,
+        "Should receive at least one FailScan after connection loss"
+    );
 
     account.stop_scanner();
     cleanup_test_account(&account_name);

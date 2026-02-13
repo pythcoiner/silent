@@ -21,5 +21,11 @@ dirs = "6.0"
 thiserror = "2.0"
 getrandom = "0.2"
 
+[dev-dependencies]
+blindbitd = { git = "https://github.com/pythcoiner/blindbitd.git" }
+bwk-utils = { git = "https://github.com/pythcoiner/bwk.git", rev = "bb7b623", features = ["test"] }
+bwk-sign = { git = "https://github.com/pythcoiner/bwk.git", rev = "bb7b623" }
+temp-dir = "0.1"
+
 [build-dependencies]
 cxx-build = "1.0"

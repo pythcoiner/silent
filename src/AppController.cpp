@@ -58,7 +58,8 @@ auto AppController::listAccounts() -> void {
     auto raccounts = list_configs();
     auto accounts = QList<QString>();
     for (auto &acc : raccounts) {
-        accounts.append(QString::fromStdString(std::string(acc.c_str())));
+        auto a = QString::fromStdString(std::string(acc.c_str()));
+        accounts.append(a);
     }
     emit accountList(accounts);
 }
@@ -83,8 +84,8 @@ auto AppController::createAccount(const QString &name, const QString &mnemonic, 
 }
 
 auto AppController::onAccountCreated(const QString &name) -> void {
-    qDebug() << "AppController::onAccountCreated()";
     addAccount(name);
+    listAccounts();
 }
 
 auto AppController::openAccount(const QString &name) -> void {
@@ -94,17 +95,24 @@ auto AppController::openAccount(const QString &name) -> void {
 
 auto AppController::deleteAccount(const QString &name) -> void {
     auto *modal = new ConfirmDelete(name);
-    connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) -> void {
-        try {
-            delete_config(rust::String(account.toStdString()));
-        } catch (const std::exception &e) {
-            qCritical() << "Failed to delete account:" << e.what();
-            return;
-        }
-        removeAccount(account);
-        listAccounts();
-    });
+    connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
     AppController::execModal(modal);
+}
+
+auto AppController::onDeleteConfirmed(const QString &account) -> void {
+    // Stop and remove account instance if running
+    if (m_accounts.contains(account)) {
+        m_accounts.value(account)->stop();
+        auto *win = dynamic_cast<MainWindow *>(window());
+        if (win != nullptr) {
+            win->removeAccount(account);
+        }
+        m_accounts.remove(account);
+    }
+    if (!delete_config(rust::String(account.toStdString()))) {
+        qCritical() << "Failed to delete account:" << account;
+    }
+    listAccounts();
 }
 
 auto AppController::accounts() -> int {

@@ -127,6 +127,17 @@ mod ffi {
         pub error: String,
     }
 
+    /// Result of a transaction operation (sign, broadcast).
+    #[derive(Debug, Clone)]
+    pub struct TxResult {
+        /// Whether the operation succeeded.
+        pub is_ok: bool,
+        /// Error message (empty if is_ok is true).
+        pub error: String,
+        /// Result value: signed tx hex or txid (empty on error).
+        pub value: String,
+    }
+
     /// Backend server information result.
     #[derive(Debug, Clone)]
     pub struct BackendInfo {
@@ -204,7 +215,7 @@ mod ffi {
         fn list_configs() -> Vec<String>;
 
         /// Delete an account's data from disk.
-        fn delete_config(account_name: String) -> Result<()>;
+        fn delete_config(account_name: String) -> bool;
 
         /// Save config to file.
         fn to_file(self: &Config);
@@ -238,11 +249,17 @@ mod ffi {
 
     extern "Rust" {
         /// Create a new account from an account name (loads config from file).
-        /// Returns null on error (check logs for details).
-        fn new_account(account_name: String) -> Result<Box<Account>>;
+        /// Check is_ok() before use; get_error() for failure reason.
+        fn new_account(account_name: String) -> Box<Account>;
+
+        /// Check if the account was created successfully.
+        fn is_ok(self: &Account) -> bool;
+
+        /// Get error message (empty if is_ok).
+        fn get_error(self: &Account) -> String;
 
         /// Start the scanner.
-        fn start_scanner(self: &mut Account) -> Result<()>;
+        fn start_scanner(self: &mut Account) -> bool;
 
         /// Stop the scanner.
         fn stop_scanner(self: &mut Account);
@@ -266,7 +283,7 @@ mod ffi {
         fn spendable_coins(self: &Account) -> CoinState;
 
         /// Update a coin's label.
-        fn update_coin_label(self: &mut Account, outpoint: String, label: String) -> Result<()>;
+        fn update_coin_label(self: &mut Account, outpoint: String, label: String) -> bool;
 
         /// Get payment history.
         fn payment_history(self: &Account) -> Vec<RustTx>;
@@ -285,17 +302,16 @@ mod ffi {
             -> Box<PsbtResult>;
 
         /// Sign a prepared transaction.
-        /// Takes a PsbtResult from prepare_transaction() and returns the signed
-        /// transaction as a hex string, or an error message.
-        fn sign_transaction(self: &Account, psbt_result: &PsbtResult) -> Result<String>;
+        /// Returns TxResult with signed tx hex in value.
+        fn sign_transaction(self: &Account, psbt_result: &PsbtResult) -> TxResult;
 
         /// Broadcast a signed transaction (hex string) to the network.
-        /// Returns the txid on success.
-        fn broadcast_transaction(self: &Account, signed_tx_hex: String) -> Result<String>;
+        /// Returns TxResult with txid in value.
+        fn broadcast_transaction(self: &Account, signed_tx_hex: String) -> TxResult;
 
         /// Sign and broadcast a transaction in one step.
-        /// Takes a PsbtResult and returns the txid on success.
-        fn sign_and_broadcast(self: &Account, psbt_result: &PsbtResult) -> Result<String>;
+        /// Returns TxResult with txid in value.
+        fn sign_and_broadcast(self: &Account, psbt_result: &PsbtResult) -> TxResult;
     }
 
     // ===== Poll Methods =====
@@ -387,7 +403,7 @@ pub fn validate_mnemonic(mnemonic: String) -> bool {
 
 // Re-export main types
 pub use account::{new_account, Account, Poll, PsbtResult};
-pub use config::{config_from_file, delete_config, list_configs, new_config, Config};
+pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use ffi::{
     BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output,
     TransactionSimulation, TransactionTemplate,

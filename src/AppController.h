@@ -34,6 +34,7 @@ public slots:
     auto onAccountCreated(const QString &name) -> void;
     auto openAccount(const QString &name) -> void;
     auto deleteAccount(const QString &name) -> void;
+    auto onDeleteConfirmed(const QString &account) -> void;
 
 private:
     QHash<QString, AccountController *> m_accounts;

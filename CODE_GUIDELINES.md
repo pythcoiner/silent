@@ -50,7 +50,46 @@ pub fn set_dust_limit(&mut self, limit: u64) {
 
 ## Rust: Error Handling
 
-- FFI boundary methods return `Result<T, String>` — never panic across FFI.
+**Never return `Result` from Rust to C++ across the CXX FFI boundary.** CXX converts
+`Result::Err` into a C++ exception, which we do not want. Instead:
+
+- **Void operations:** return `bool` (`true` = success, `false` = failure). Log the
+  error on the Rust side with `log::error!()`.
+  ```rust
+  // FFI function
+  pub fn delete_config(account_name: String) -> bool {
+      match SpConfig::delete_account_dir(&data_dir, &account_name) {
+          Ok(()) => true,
+          Err(e) => { log::error!("failed to delete: {e}"); false }
+      }
+  }
+  ```
+
+- **Operations with response data:** return a specific shared struct with `is_ok: bool`,
+  `error: String`, and response fields. Do **not** create a generic `FfiResult` — each
+  return type should be purpose-built.
+  ```rust
+  // In #[cxx::bridge]
+  pub struct TxResult {
+      pub is_ok: bool,
+      pub error: String,
+      pub value: String,
+  }
+  ```
+
+- **Opaque types that can fail construction:** wrap an `Option<Inner>` and expose
+  `is_ok()` / `get_error()` methods. Always return the type (never `Result`).
+  ```rust
+  pub struct Account {
+      inner: Option<AccountInner>,
+      error: String,
+  }
+  // FFI: fn new_account(name: String) -> Box<Account>;
+  // C++: check account->is_ok() before use
+  ```
+
+- `Result` is fine for **internal Rust code** and tests — the restriction only applies
+  to functions declared in the `extern "Rust"` block of the CXX bridge.
 - File I/O never panics; log errors with `log::error!()` and return gracefully.
 - `unreachable!()` branches on CXX enum conversions include a safety comment:
   ```rust
@@ -239,6 +278,39 @@ Always use `qontrol::Modal`, never `QDialog`. Modals are displayed via
 connect(source, &Source::signal, dest, &Dest::slot, qontrol::UNIQUE);
 ```
 
+**Prefer named slots over lambdas in `connect()`.** Lambdas make signal-slot
+connections harder to read, test, and debug. Extract the callback logic into a named
+slot method instead:
+```cpp
+// good
+connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
+
+// bad
+connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) { ... });
+```
+
+**Chain signals to slots for state updates.** When an action (e.g. account deletion)
+needs to trigger a UI refresh, call the refresh from the slot that performs the work —
+never from the caller that showed the modal. This keeps the update in the signal-slot
+chain where Qt manages lifetime and ordering correctly:
+```cpp
+// good — slot does work then refreshes
+auto AppController::onDeleteConfirmed(const QString &account) -> void {
+    delete_config(rust::String(account.toStdString()));
+    listAccounts(); // refresh here
+}
+
+// bad — caller refreshes after modal returns
+auto AppController::deleteAccount(const QString &name) -> void {
+    auto *modal = new ConfirmDelete(name);
+    connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
+    AppController::execModal(modal);
+    listAccounts(); // wrong: bypasses signal-slot chain
+}
+```
+Never use `QTimer::singleShot(0, ...)` to work around signal-slot ordering issues —
+restructure the chain instead.
+
 **Clang-tidy NOLINT:** slots that clang-tidy suggests could be made static must be
 suppressed with `// NOLINT` — Qt slots must remain non-static member functions.
 
@@ -252,10 +324,14 @@ AppController::get();            // retrieve via dynamic_cast
 
 ## C++: Error Handling
 
-Never throw exceptions on the C++ side. Rust FFI calls that return `Result` will throw
-a CXX exception on error — always catch those with `try`/`catch` and handle them
-gracefully (e.g. display a `qontrol::Modal` with the error message, or log with
-`qWarning()`). The C++ layer should never propagate or originate exceptions itself.
+Never throw or catch exceptions. Rust FFI functions never return `Result` (see
+"Rust: Error Handling" above), so no CXX exceptions will be thrown. Check return
+values instead:
+- `bool` returns: check directly (`if (!delete_config(...)) { ... }`)
+- Struct returns: check `is_ok` field (`if (!result.is_ok) { ... }`)
+- Opaque types: check `is_ok()` method (`if (!account->is_ok()) { ... }`)
+
+Display errors via `qontrol::Modal` or log with `qWarning()` / `qCritical()`.
 
 ## C++: Rust FFI Integration
 

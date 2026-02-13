@@ -12,25 +12,38 @@ use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification,
 use crate::config::Config;
 use crate::ffi::{
     CoinState, Notification, NotificationFlag, RustCoin, RustTx, TransactionSimulation,
-    TransactionTemplate,
+    TransactionTemplate, TxResult,
 };
 
-/// Account wrapping bwk-sp::Account.
-pub struct Account {
-    /// Inner bwk-sp Account
-    inner: SpAccount,
-    /// Notification receiver
+/// Valid account state (created successfully).
+struct AccountInner {
+    account: SpAccount,
     receiver: Option<mpsc::Receiver<SpNotification>>,
-    /// SP client for manual transaction creation
     client: SpClient,
 }
 
+/// Account wrapping bwk-sp::Account.
+/// Always constructible; check is_ok() before use.
+pub struct Account {
+    inner: Option<AccountInner>,
+    error: String,
+}
+
 impl Account {
-    /// Create a new Account from config.
+    /// Create a new Account from config (for Rust-side use / tests).
     pub fn new(config: Config) -> Result<Self, AccountError> {
+        let inner = Self::new_inner(config)?;
+        Ok(Account {
+            inner: Some(inner),
+            error: String::new(),
+        })
+    }
+
+    /// Create a new AccountInner from config.
+    fn new_inner(config: Config) -> Result<AccountInner, AccountError> {
         let sp_config = config.to_sp_config();
-        let mut inner = SpAccount::new(sp_config)?;
-        let receiver = inner.receiver();
+        let mut account = SpAccount::new(sp_config)?;
+        let receiver = account.receiver();
 
         // Create SpClient from mnemonic for manual transaction creation
         let mnemonic = bip39::Mnemonic::parse(&config.mnemonic)
@@ -45,28 +58,50 @@ impl Account {
         let client = SpClient::new_from_mnemonic(mnemonic, network)
             .map_err(|e| AccountError::Config(format!("Failed to create SpClient: {e}")))?;
 
-        Ok(Account {
-            inner,
+        Ok(AccountInner {
+            account,
             receiver,
             client,
         })
     }
 
+    /// Check if the account was created successfully.
+    pub fn is_ok(&self) -> bool {
+        self.inner.is_some()
+    }
+
+    /// Get error message (empty if is_ok).
+    pub fn get_error(&self) -> String {
+        self.error.clone()
+    }
+
     /// Start the scanner in continuous mode.
-    pub fn start_scanner(&mut self) -> Result<(), String> {
-        self.inner
-            .start_scan(ScanMode::Continuous)
-            .map_err(|e| format!("scanner error: {e}"))
+    pub fn start_scanner(&mut self) -> bool {
+        let Some(inner) = &mut self.inner else {
+            return false;
+        };
+        match inner.account.start_scan(ScanMode::Continuous) {
+            Ok(()) => true,
+            Err(e) => {
+                log::error!("scanner error: {e}");
+                false
+            }
+        }
     }
 
     /// Stop the scanner.
     pub fn stop_scanner(&mut self) {
-        self.inner.stop_scan()
+        if let Some(inner) = &mut self.inner {
+            inner.account.stop_scan();
+        }
     }
 
     /// Try to receive a notification (non-blocking).
     pub fn try_recv(&mut self) -> Box<Poll> {
-        if let Some(ref receiver) = self.receiver {
+        let Some(inner) = &mut self.inner else {
+            return Box::new(Poll::err("Account not initialized"));
+        };
+        if let Some(ref receiver) = inner.receiver {
             match receiver.try_recv() {
                 Ok(notif) => {
                     let notification = convert_notification(notif);
@@ -84,29 +119,42 @@ impl Account {
 
     /// Get account name.
     pub fn name(&self) -> String {
-        self.inner.name().to_string()
+        match &self.inner {
+            Some(inner) => inner.account.name().to_string(),
+            None => String::new(),
+        }
     }
 
     /// Get balance in satoshis.
     pub fn balance(&self) -> u64 {
-        self.inner.balance()
+        match &self.inner {
+            Some(inner) => inner.account.balance(),
+            None => 0,
+        }
     }
 
     /// Get the Silent Payment address for this account.
     pub fn sp_address(&self) -> String {
-        self.inner.sp_address().to_string()
+        match &self.inner {
+            Some(inner) => inner.account.sp_address().to_string(),
+            None => String::new(),
+        }
     }
 
     /// Get all coins (both spent and unspent).
     pub fn coins(&self) -> Vec<RustCoin> {
-        self.inner
+        let Some(inner) = &self.inner else {
+            return vec![];
+        };
+        inner
+            .account
             .coins()
             .into_iter()
             .map(|(outpoint, entry)| RustCoin {
                 outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
                 value: entry.amount_sat(),
                 height: entry.height(),
-                label: self.inner.get_coin_label(&outpoint).unwrap_or_default(),
+                label: inner.account.get_coin_label(&outpoint).unwrap_or_default(),
                 spent: !entry.is_spendable(),
             })
             .collect()
@@ -114,38 +162,58 @@ impl Account {
 
     /// Get spendable coins summary.
     pub fn spendable_coins(&self) -> CoinState {
-        let coin_state = self.inner.spendable_coins();
-        CoinState {
-            confirmed_count: coin_state.confirmed_coins as u64,
-            confirmed_balance: coin_state.confirmed_balance,
-            unconfirmed_count: coin_state.unconfirmed_coins as u64,
-            unconfirmed_balance: coin_state.unconfirmed_balance,
+        match &self.inner {
+            Some(inner) => {
+                let coin_state = inner.account.spendable_coins();
+                CoinState {
+                    confirmed_count: coin_state.confirmed_coins as u64,
+                    confirmed_balance: coin_state.confirmed_balance,
+                    unconfirmed_count: coin_state.unconfirmed_coins as u64,
+                    unconfirmed_balance: coin_state.unconfirmed_balance,
+                }
+            }
+            None => CoinState {
+                confirmed_count: 0,
+                confirmed_balance: 0,
+                unconfirmed_count: 0,
+                unconfirmed_balance: 0,
+            },
         }
     }
 
     /// Update the label for a coin.
-    pub fn update_coin_label(&mut self, outpoint: String, label: String) -> Result<(), String> {
+    pub fn update_coin_label(&mut self, outpoint: String, label: String) -> bool {
+        let Some(inner) = &mut self.inner else {
+            return false;
+        };
         // Parse outpoint from "txid:vout" format
         let parts: Vec<&str> = outpoint.split(':').collect();
         if parts.len() != 2 {
-            return Err("Invalid outpoint format, expected 'txid:vout'".to_string());
+            log::error!("Invalid outpoint format, expected 'txid:vout'");
+            return false;
         }
 
-        let txid = parts[0]
-            .parse::<bitcoin::Txid>()
-            .map_err(|e| format!("Invalid txid: {e}"))?;
-        let vout = parts[1]
-            .parse::<u32>()
-            .map_err(|e| format!("Invalid vout: {e}"))?;
+        let Ok(txid) = parts[0].parse::<bitcoin::Txid>() else {
+            log::error!("Invalid txid: {}", parts[0]);
+            return false;
+        };
+        let Ok(vout) = parts[1].parse::<u32>() else {
+            log::error!("Invalid vout: {}", parts[1]);
+            return false;
+        };
 
         let outpoint = bitcoin::OutPoint { txid, vout };
-        self.inner.update_coin_label(outpoint, label);
-        Ok(())
+        inner.account.update_coin_label(outpoint, label);
+        true
     }
 
     /// Get payment history.
     pub fn payment_history(&self) -> Vec<RustTx> {
-        self.inner
+        let Some(inner) = &self.inner else {
+            return vec![];
+        };
+        inner
+            .account
             .payment_history()
             .into_iter()
             .map(|payment| {
@@ -158,19 +226,16 @@ impl Account {
                     txid: payment.txid,
                     direction: direction.to_string(),
                     amount: payment.amount,
-                    fee: 0, // Fee information is not available in Payment struct
-                    height: payment.height.unwrap_or(0), // 0 for unconfirmed
+                    fee: 0,
+                    height: payment.height.unwrap_or(0),
                 }
             })
             .collect()
     }
 
     /// Create transaction with manual coin selection.
-    ///
-    /// Filters wallet UTXOs to only use the specified outpoints, then creates
-    /// a transaction using the SpClient directly.
     fn create_transaction_with_manual_selection(
-        &self,
+        inner: &AccountInner,
         input_outpoints: Vec<String>,
         recipients: Vec<(RecipientAddress, bitcoin::Amount)>,
         max_addr: Option<RecipientAddress>,
@@ -180,7 +245,6 @@ impl Account {
         use bitcoin::OutPoint;
         use bwk_sp::spdk_core::OwnedOutput;
 
-        // Parse the input outpoints from "txid:vout" format
         let mut selected_outpoints = Vec::new();
         for outpoint_str in &input_outpoints {
             let parts: Vec<&str> = outpoint_str.split(':').collect();
@@ -200,10 +264,8 @@ impl Account {
             selected_outpoints.push(OutPoint { txid, vout });
         }
 
-        // Get all coins from the wallet
-        let all_coins = self.inner.coins();
+        let all_coins = inner.account.coins();
 
-        // Filter to only the specified outpoints
         let mut available_utxos: Vec<(OutPoint, OwnedOutput)> = Vec::new();
         for outpoint in selected_outpoints {
             match all_coins.get(&outpoint) {
@@ -231,19 +293,19 @@ impl Account {
             ));
         }
 
-        // Create transaction using the SpClient with filtered UTXOs
         if has_max {
             if !recipients.is_empty() {
                 return Err(AccountError::Transaction(
                     "max cannot be combined with other outputs".to_string(),
                 ));
             }
-            self.client
+            inner
+                .client
                 .create_drain_transaction(
                     available_utxos,
                     max_addr.unwrap(),
                     fee_rate,
-                    self.inner.network(),
+                    inner.account.network(),
                 )
                 .map_err(|e| AccountError::Transaction(e.to_string()))
         } else {
@@ -253,8 +315,14 @@ impl Account {
                 .map(|(address, amount)| Recipient { address, amount })
                 .collect();
 
-            self.client
-                .create_new_transaction(available_utxos, recipients, fee_rate, self.inner.network())
+            inner
+                .client
+                .create_new_transaction(
+                    available_utxos,
+                    recipients,
+                    fee_rate,
+                    inner.account.network(),
+                )
                 .map_err(|e| AccountError::Transaction(e.to_string()))
         }
     }
@@ -264,39 +332,33 @@ impl Account {
         use bitcoin::Amount;
         use bwk_sp::spdk_core::FeeRate;
 
-        // Parse outputs and check for max flag
+        let err_sim = |error: String| TransactionSimulation {
+            is_valid: false,
+            fee: 0,
+            weight: 0,
+            input_total: 0,
+            output_total: 0,
+            input_count: 0,
+            error,
+        };
+
+        let Some(inner) = &self.inner else {
+            return err_sim("Account not initialized".to_string());
+        };
+
         let mut recipients = Vec::new();
         let mut has_max = false;
         let mut max_addr = None;
 
         for output in tx_template.outputs {
-            // Parse address
             let addr = match RecipientAddress::try_from(output.address.clone()) {
                 Ok(a) => a,
-                Err(e) => {
-                    return TransactionSimulation {
-                        is_valid: false,
-                        fee: 0,
-                        weight: 0,
-                        input_total: 0,
-                        output_total: 0,
-                        input_count: 0,
-                        error: format!("Invalid address '{}': {}", output.address, e),
-                    };
-                }
+                Err(e) => return err_sim(format!("Invalid address '{}': {}", output.address, e)),
             };
 
             if output.max {
                 if has_max {
-                    return TransactionSimulation {
-                        is_valid: false,
-                        fee: 0,
-                        weight: 0,
-                        input_total: 0,
-                        output_total: 0,
-                        input_count: 0,
-                        error: String::from("Only one output can have max=true"),
-                    };
+                    return err_sim("Only one output can have max=true".to_string());
                 }
                 has_max = true;
                 max_addr = Some(addr);
@@ -305,41 +367,28 @@ impl Account {
             }
         }
 
-        // Convert fee rate (ensure it's at least 1.0 sat/vb)
         let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
 
-        // Create the unsigned transaction (with manual or automatic coin selection)
         let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
-            // Manual coin selection: use specified outpoints
-            self.create_transaction_with_manual_selection(
+            Self::create_transaction_with_manual_selection(
+                inner,
                 tx_template.input_outpoints,
                 recipients,
                 max_addr,
                 has_max,
                 fee_rate,
             )
-        } else {
-            // Automatic coin selection: use inner Account methods
-            if has_max {
-                if !recipients.is_empty() {
-                    return TransactionSimulation {
-                        is_valid: false,
-                        fee: 0,
-                        weight: 0,
-                        input_total: 0,
-                        output_total: 0,
-                        input_count: 0,
-                        error: String::from("max cannot be combined with other outputs"),
-                    };
-                }
-                self.inner
-                    .create_drain_transaction(max_addr.unwrap(), fee_rate)
-            } else {
-                self.inner.create_transaction(recipients, fee_rate)
+        } else if has_max {
+            if !recipients.is_empty() {
+                return err_sim("max cannot be combined with other outputs".to_string());
             }
+            inner
+                .account
+                .create_drain_transaction(max_addr.unwrap(), fee_rate)
+        } else {
+            inner.account.create_transaction(recipients, fee_rate)
         };
 
-        // Extract simulation data
         match unsigned_tx_result {
             Ok(unsigned_tx) => {
                 let input_total: u64 = unsigned_tx
@@ -354,12 +403,9 @@ impl Account {
                     .sum();
                 let fee = input_total.saturating_sub(output_total);
                 let input_count = unsigned_tx.selected_utxos.len() as u64;
-
-                // Estimate weight from unsigned_tx if available
                 let weight = if let Some(ref tx) = unsigned_tx.unsigned_tx {
                     tx.weight().to_wu()
                 } else {
-                    // Rough estimate: 4 * vsize, where vsize ≈ fee / fee_rate
                     let vbytes = (fee as f64 / tx_template.fee_rate).ceil() as u64;
                     vbytes * 4
                 };
@@ -374,29 +420,21 @@ impl Account {
                     error: String::new(),
                 }
             }
-            Err(e) => TransactionSimulation {
-                is_valid: false,
-                fee: 0,
-                weight: 0,
-                input_total: 0,
-                output_total: 0,
-                input_count: 0,
-                error: e.to_string(),
-            },
+            Err(e) => err_sim(e.to_string()),
         }
     }
 
     /// Prepare a transaction for signing.
-    ///
-    /// This method:
-    /// 1. Creates an unsigned transaction (with manual or automatic coin selection)
-    /// 2. Finalizes it (generates recipient public keys, builds outputs)
-    /// 3. Returns a PsbtResult that can be signed and broadcast
     pub fn prepare_transaction(&self, tx_template: TransactionTemplate) -> Box<PsbtResult> {
         use bitcoin::Amount;
         use bwk_sp::spdk_core::FeeRate;
 
-        // Parse outputs and check for max flag (same logic as simulate_transaction)
+        let err_psbt = |e: String| Box::new(PsbtResult { inner: Err(e) });
+
+        let Some(inner) = &self.inner else {
+            return err_psbt("Account not initialized".to_string());
+        };
+
         let mut recipients = Vec::new();
         let mut has_max = false;
         let mut max_addr = None;
@@ -405,17 +443,13 @@ impl Account {
             let addr = match RecipientAddress::try_from(output.address.clone()) {
                 Ok(a) => a,
                 Err(e) => {
-                    return Box::new(PsbtResult {
-                        inner: Err(format!("Invalid address '{}': {}", output.address, e)),
-                    });
+                    return err_psbt(format!("Invalid address '{}': {}", output.address, e));
                 }
             };
 
             if output.max {
                 if has_max {
-                    return Box::new(PsbtResult {
-                        inner: Err(String::from("Only one output can have max=true")),
-                    });
+                    return err_psbt("Only one output can have max=true".to_string());
                 }
                 has_max = true;
                 max_addr = Some(addr);
@@ -424,108 +458,144 @@ impl Account {
             }
         }
 
-        // Convert fee rate
         let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
 
-        // Create the unsigned transaction
         let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
-            // Manual coin selection
-            self.create_transaction_with_manual_selection(
+            Self::create_transaction_with_manual_selection(
+                inner,
                 tx_template.input_outpoints,
                 recipients,
                 max_addr,
                 has_max,
                 fee_rate,
             )
-        } else {
-            // Automatic coin selection
-            if has_max {
-                if !recipients.is_empty() {
-                    return Box::new(PsbtResult {
-                        inner: Err(String::from("max cannot be combined with other outputs")),
-                    });
-                }
-                self.inner
-                    .create_drain_transaction(max_addr.unwrap(), fee_rate)
-            } else {
-                self.inner.create_transaction(recipients, fee_rate)
+        } else if has_max {
+            if !recipients.is_empty() {
+                return err_psbt("max cannot be combined with other outputs".to_string());
             }
+            inner
+                .account
+                .create_drain_transaction(max_addr.unwrap(), fee_rate)
+        } else {
+            inner.account.create_transaction(recipients, fee_rate)
         };
 
-        // Finalize the transaction
-        let finalized_result =
-            unsigned_tx_result.and_then(|unsigned_tx| self.inner.finalize_transaction(unsigned_tx));
+        let finalized_result = unsigned_tx_result
+            .and_then(|unsigned_tx| inner.account.finalize_transaction(unsigned_tx));
 
-        // Return PsbtResult
         Box::new(PsbtResult {
             inner: finalized_result.map_err(|e| e.to_string()),
         })
     }
 
     /// Sign a prepared transaction.
-    ///
-    /// Takes a PsbtResult containing a finalized unsigned transaction,
-    /// signs it using the account's spend key, and returns the signed
-    /// transaction as a hex string.
-    pub fn sign_transaction(&self, psbt_result: &PsbtResult) -> Result<String, String> {
+    pub fn sign_transaction(&self, psbt_result: &PsbtResult) -> TxResult {
         use bitcoin::consensus::encode::serialize_hex;
 
-        // Extract the unsigned transaction from PsbtResult
-        let unsigned_tx = match &psbt_result.inner {
-            Ok(tx) => tx.clone(),
-            Err(e) => return Err(format!("Cannot sign invalid transaction: {e}")),
+        let Some(inner) = &self.inner else {
+            return TxResult {
+                is_ok: false,
+                error: "Account not initialized".to_string(),
+                value: String::new(),
+            };
         };
 
-        // Sign the transaction using the inner account
-        let signed_tx = self
-            .inner
-            .sign_transaction(unsigned_tx)
-            .map_err(|e| format!("Signing failed: {e}"))?;
+        let unsigned_tx = match &psbt_result.inner {
+            Ok(tx) => tx.clone(),
+            Err(e) => {
+                return TxResult {
+                    is_ok: false,
+                    error: format!("Cannot sign invalid transaction: {e}"),
+                    value: String::new(),
+                }
+            }
+        };
 
-        // Serialize to hex
-        let tx_hex = serialize_hex(&signed_tx);
-
-        Ok(tx_hex)
+        match inner.account.sign_transaction(unsigned_tx) {
+            Ok(signed_tx) => TxResult {
+                is_ok: true,
+                error: String::new(),
+                value: serialize_hex(&signed_tx),
+            },
+            Err(e) => TxResult {
+                is_ok: false,
+                error: format!("Signing failed: {e}"),
+                value: String::new(),
+            },
+        }
     }
 
     /// Broadcast a signed transaction to the network.
-    ///
-    /// Takes a hex-encoded signed transaction and broadcasts it via the
-    /// configured broadcast URL. Returns the txid on success.
-    pub fn broadcast_transaction(&self, signed_tx_hex: String) -> Result<String, String> {
+    pub fn broadcast_transaction(&self, signed_tx_hex: String) -> TxResult {
         use bitcoin::consensus::encode::deserialize_hex;
         use bitcoin::Transaction;
 
-        // Deserialize the hex transaction
-        let tx: Transaction =
-            deserialize_hex(&signed_tx_hex).map_err(|e| format!("Invalid transaction hex: {e}"))?;
+        let Some(inner) = &self.inner else {
+            return TxResult {
+                is_ok: false,
+                error: "Account not initialized".to_string(),
+                value: String::new(),
+            };
+        };
 
-        // Broadcast using the inner account
-        let txid = self
-            .inner
-            .broadcast(&tx)
-            .map_err(|e| format!("Broadcast failed: {e}"))?;
+        let tx: Transaction = match deserialize_hex(&signed_tx_hex) {
+            Ok(tx) => tx,
+            Err(e) => {
+                return TxResult {
+                    is_ok: false,
+                    error: format!("Invalid transaction hex: {e}"),
+                    value: String::new(),
+                }
+            }
+        };
 
-        Ok(txid.to_string())
+        match inner.account.broadcast(&tx) {
+            Ok(txid) => TxResult {
+                is_ok: true,
+                error: String::new(),
+                value: txid.to_string(),
+            },
+            Err(e) => TxResult {
+                is_ok: false,
+                error: format!("Broadcast failed: {e}"),
+                value: String::new(),
+            },
+        }
     }
 
     /// Sign and broadcast a transaction in one step.
-    ///
-    /// Convenience method that combines sign_transaction() and broadcast_transaction().
-    pub fn sign_and_broadcast(&self, psbt_result: &PsbtResult) -> Result<String, String> {
-        // Extract the unsigned transaction from PsbtResult
-        let unsigned_tx = match &psbt_result.inner {
-            Ok(tx) => tx.clone(),
-            Err(e) => return Err(format!("Cannot sign invalid transaction: {e}")),
+    pub fn sign_and_broadcast(&self, psbt_result: &PsbtResult) -> TxResult {
+        let Some(inner) = &self.inner else {
+            return TxResult {
+                is_ok: false,
+                error: "Account not initialized".to_string(),
+                value: String::new(),
+            };
         };
 
-        // Sign and broadcast using the inner account's convenience method
-        let txid = self
-            .inner
-            .sign_and_broadcast(unsigned_tx)
-            .map_err(|e| format!("Sign and broadcast failed: {e}"))?;
+        let unsigned_tx = match &psbt_result.inner {
+            Ok(tx) => tx.clone(),
+            Err(e) => {
+                return TxResult {
+                    is_ok: false,
+                    error: format!("Cannot sign invalid transaction: {e}"),
+                    value: String::new(),
+                }
+            }
+        };
 
-        Ok(txid.to_string())
+        match inner.account.sign_and_broadcast(unsigned_tx) {
+            Ok(txid) => TxResult {
+                is_ok: true,
+                error: String::new(),
+                value: txid.to_string(),
+            },
+            Err(e) => TxResult {
+                is_ok: false,
+                error: format!("Sign and broadcast failed: {e}"),
+                value: String::new(),
+            },
+        }
     }
 }
 
@@ -589,14 +659,32 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
 // CXX FFI functions
 
 /// Create a new account.
-pub fn new_account(account_name: String) -> Result<Box<Account>, String> {
-    let config = crate::config::Config::from_file(account_name)
-        .map_err(|e| format!("failed to load config: {e}"))?;
-
-    Account::new(config).map(Box::new).map_err(|e| {
-        log::error!("Failed to create account: {e}");
-        format!("Failed to create account: {e}")
-    })
+pub fn new_account(account_name: String) -> Box<Account> {
+    let config = match crate::config::Config::from_file(account_name) {
+        Ok(c) => c,
+        Err(e) => {
+            let error = format!("failed to load config: {e}");
+            log::error!("{error}");
+            return Box::new(Account {
+                inner: None,
+                error,
+            });
+        }
+    };
+    match Account::new_inner(config) {
+        Ok(inner) => Box::new(Account {
+            inner: Some(inner),
+            error: String::new(),
+        }),
+        Err(e) => {
+            let error = format!("Failed to create account: {e}");
+            log::error!("{error}");
+            Box::new(Account {
+                inner: None,
+                error,
+            })
+        }
+    }
 }
 
 /// Poll result wrapper for CXX.

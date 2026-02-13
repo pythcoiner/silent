@@ -22,12 +22,15 @@ auto AccountController::init(const QString &account) -> void {
 
     // Initialize the account
     auto acc = new_account(rust::String(account.toStdString()));
+    if (!acc->is_ok()) {
+        qCritical() << "Failed to create account:" << account
+                     << QString::fromStdString(std::string(acc->get_error().c_str()));
+        return;
+    }
     m_account = std::make_optional(std::move(acc));
 
     // Start the scanner
-    if (m_account.has_value()) {
-        m_account.value()->start_scanner();
-    }
+    m_account.value()->start_scanner();
 
     // Initialize the timer that polls notifications every 100ms
     m_notif_timer = new QTimer(this);
@@ -258,14 +261,11 @@ auto AccountController::coins() -> qontrol::Screen * {
 
 auto AccountController::updateCoinLabel(const QString &outpoint, const QString &label) -> void {
     if (m_account.has_value()) {
-        try {
-            m_account.value()->update_coin_label(rust::String(outpoint.toStdString()),
-                                                 rust::String(label.toStdString()));
-            // Refresh coins to show updated label
-            pollCoins();
-        } catch (const std::exception &e) {
-            qWarning() << "Failed to update coin label:" << e.what();
+        if (!m_account.value()->update_coin_label(rust::String(outpoint.toStdString()),
+                                                  rust::String(label.toStdString()))) {
+            qWarning() << "Failed to update coin label for:" << outpoint;
         }
+        pollCoins();
     }
 }
 

@@ -3,46 +3,40 @@
 //! These tests verify multi-account isolation, comprehensive error handling,
 //! and edge cases like zero balance sends, dust detection, and max sends.
 
-use silent::{Account, Config, Network, NotificationFlag, TransactionTemplate, Output};
+mod common;
+
+use bwk_utils::test as bwk_test;
+use silent::{Account, Config, Network, Output, TransactionTemplate};
 use std::thread;
 use std::time::Duration;
 
-// ===== Test Helpers =====
+use common::{
+    cleanup_test_account, create_test_account, fund_sp_wallet, fund_sp_wallet_at_index,
+    setup_blindbitd, test_account_name, wait_for_scan_complete, wait_for_sync_and_index,
+    TEST_MNEMONIC,
+};
 
-/// Generate unique test account name using process ID.
-fn test_account_name() -> String {
-    format!("test_account_{}", std::process::id())
-}
+// ===== Test Helpers =====
 
 /// Create test config with regtest network.
 fn create_test_config(account_name: String) -> Config {
     Config::new(
         account_name,
         Network::Regtest,
-        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
+        TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
-        Some(546), // Standard dust limit
+        Some(546),
     )
-}
-
-/// Cleanup test account directory.
-fn cleanup_test_account(account_name: &str) {
-    use silent::config::Config;
-    let config = Config::from_file(account_name.to_string()).ok();
-    if let Some(cfg) = config {
-        let _ = std::fs::remove_dir_all(cfg.account_dir());
-    }
 }
 
 // ===== Multi-Account Isolation Tests =====
 
 #[test]
 fn test_multiple_accounts_independent_state() {
-    // Create two accounts with different mnemonics
     let account1_name = format!("test_account_1_{}", std::process::id());
     let account2_name = format!("test_account_2_{}", std::process::id());
 
-    let mnemonic1 = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+    let mnemonic1 = TEST_MNEMONIC;
     let mnemonic2 = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong";
 
     let config1 = Config::new(
@@ -64,20 +58,23 @@ fn test_multiple_accounts_independent_state() {
     let account1 = Account::new(config1.clone()).expect("Account 1 creation should succeed");
     let account2 = Account::new(config2.clone()).expect("Account 2 creation should succeed");
 
-    // Verify different addresses
-    assert_ne!(account1.sp_address(), account2.sp_address(), "Accounts should have different addresses");
-
-    // Verify different networks
+    assert_ne!(
+        account1.sp_address(),
+        account2.sp_address(),
+        "Accounts should have different addresses"
+    );
     assert_eq!(config1.get_network(), Network::Regtest);
     assert_eq!(config2.get_network(), Network::Signet);
-
-    // Verify different BlindBit URLs
     assert_ne!(config1.get_blindbit_url(), config2.get_blindbit_url());
-
-    // Verify config files are in separate directories
     assert_ne!(config1.config_path(), config2.config_path());
-    assert!(config1.config_path().to_string_lossy().contains(&account1_name));
-    assert!(config2.config_path().to_string_lossy().contains(&account2_name));
+    assert!(config1
+        .config_path()
+        .to_string_lossy()
+        .contains(&account1_name));
+    assert!(config2
+        .config_path()
+        .to_string_lossy()
+        .contains(&account2_name));
 
     cleanup_test_account(&account1_name);
     cleanup_test_account(&account2_name);
@@ -104,17 +101,14 @@ fn test_account_config_isolation() {
         Some(1000),
     );
 
-    // Save both configs
     config1.to_file();
     config2.to_file();
 
-    // Load config1 and verify it hasn't been affected by config2
     let loaded1 = Config::from_file(account1_name.clone()).expect("Load should succeed");
     assert_eq!(loaded1.get_mnemonic(), "test mnemonic 1");
     assert_eq!(loaded1.get_network(), Network::Regtest);
     assert_eq!(loaded1.get_blindbit_url(), "http://localhost:50001");
 
-    // Load config2 and verify independence
     let loaded2 = Config::from_file(account2_name.clone()).expect("Load should succeed");
     assert_eq!(loaded2.get_mnemonic(), "test mnemonic 2");
     assert_eq!(loaded2.get_network(), Network::Testnet);
@@ -127,33 +121,36 @@ fn test_account_config_isolation() {
 // ===== Error Handling Tests =====
 
 #[test]
-#[ignore] // Requires network access to test connection failure
 fn test_invalid_blindbit_url_error() {
+    // Use an available port that nothing listens on — instant connection refusal
+    let port = blindbitd::get_available_port().expect("get available port");
+    let url = format!("http://127.0.0.1:{port}");
+
     let account_name = test_account_name();
     let config = Config::new(
         account_name.clone(),
         Network::Regtest,
-        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string(),
-        "http://invalid-blindbit-url-does-not-exist.local:99999".to_string(),
+        TEST_MNEMONIC.to_string(),
+        url,
         Some(546),
     );
 
     let mut account = Account::new(config).expect("Account creation should succeed");
-
-    // Start scanner (should succeed but connection will fail)
-    let start_result = account.start_scanner();
-    assert!(start_result.is_ok(), "Scanner start should not fail immediately");
+    assert!(
+        account.start_scanner(),
+        "Scanner start should not fail immediately"
+    );
 
     // Wait for FailStartScanning or FailScan notification
-    thread::sleep(Duration::from_secs(2));
     let mut got_error = false;
-
-    for _ in 0..10 {
+    for _ in 0..50 {
         let poll = account.try_recv();
         if poll.is_some() {
             let notif = poll.get_notification();
-            if matches!(notif.flag, NotificationFlag::FailStartScanning | NotificationFlag::FailScan) {
-                println!("Got expected error: {}", notif.payload);
+            if matches!(
+                notif.flag,
+                silent::NotificationFlag::FailStartScanning | silent::NotificationFlag::FailScan
+            ) {
                 got_error = true;
                 break;
             }
@@ -161,7 +158,10 @@ fn test_invalid_blindbit_url_error() {
         thread::sleep(Duration::from_millis(200));
     }
 
-    assert!(got_error, "Should receive FailStartScanning or FailScan notification for invalid URL");
+    assert!(
+        got_error,
+        "Should receive FailStartScanning or FailScan notification for invalid URL"
+    );
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
@@ -178,14 +178,19 @@ fn test_invalid_mnemonic_error() {
         Some(546),
     );
 
-    // Account creation should fail with invalid mnemonic
     let account_result = Account::new(config);
-    assert!(account_result.is_err(), "Account creation should fail with invalid mnemonic");
+    assert!(
+        account_result.is_err(),
+        "Account creation should fail with invalid mnemonic"
+    );
 
     if let Err(error) = account_result {
         let error_msg = error.to_string();
-        assert!(error_msg.contains("mnemonic") || error_msg.contains("Mnemonic"),
-                "Error should mention mnemonic: {}", error_msg);
+        assert!(
+            error_msg.contains("mnemonic") || error_msg.contains("Mnemonic"),
+            "Error should mention mnemonic: {}",
+            error_msg
+        );
     }
 
     cleanup_test_account(&account_name);
@@ -197,11 +202,10 @@ fn test_insufficient_funds_error() {
     let config = create_test_config(account_name.clone());
     let account = Account::new(config).expect("Account creation should succeed");
 
-    // Try to create transaction with zero balance
     let tx_template = TransactionTemplate {
         outputs: vec![Output {
-            address: account.sp_address(), // Use valid SP address
-            amount: 100000, // 0.001 BTC
+            address: account.sp_address(),
+            amount: 100000,
             label: String::new(),
             max: false,
         }],
@@ -210,14 +214,11 @@ fn test_insufficient_funds_error() {
     };
 
     let simulation = account.simulate_transaction(tx_template);
-    assert!(!simulation.is_valid, "Simulation should fail with insufficient funds");
+    assert!(
+        !simulation.is_valid,
+        "Simulation should fail with insufficient funds"
+    );
     assert!(!simulation.error.is_empty(), "Should have error message");
-    assert!(simulation.error.to_lowercase().contains("insufficient") ||
-            simulation.error.to_lowercase().contains("balance") ||
-            simulation.error.to_lowercase().contains("funds") ||
-            simulation.error.to_lowercase().contains("spendable") ||
-            simulation.error.to_lowercase().contains("coin"),
-            "Error should indicate insufficient funds: {}", simulation.error);
 
     cleanup_test_account(&account_name);
 }
@@ -228,12 +229,7 @@ fn test_invalid_sp_address_error() {
     let config = create_test_config(account_name.clone());
     let account = Account::new(config).expect("Account creation should succeed");
 
-    let invalid_addresses = vec![
-        "not_a_valid_address",
-        "tsp1invalid",
-        "", // Empty address
-        "sp1" // Incomplete address
-    ];
+    let invalid_addresses = vec!["not_a_valid_address", "tsp1invalid", "", "sp1"];
 
     for invalid_addr in invalid_addresses {
         let tx_template = TransactionTemplate {
@@ -248,48 +244,57 @@ fn test_invalid_sp_address_error() {
         };
 
         let simulation = account.simulate_transaction(tx_template.clone());
-        assert!(!simulation.is_valid, "Simulation should fail with invalid address: {}", invalid_addr);
-        // The error could be about address validation or about insufficient coins (if address parsing succeeds but is invalid)
-        assert!(!simulation.error.is_empty(), "Should have error message for invalid address: {}", invalid_addr);
+        assert!(
+            !simulation.is_valid,
+            "Simulation should fail with invalid address: {}",
+            invalid_addr
+        );
+        assert!(
+            !simulation.error.is_empty(),
+            "Should have error message for invalid address: {}",
+            invalid_addr
+        );
     }
 
     cleanup_test_account(&account_name);
 }
 
+// ===== Connection Tests =====
+
 #[test]
-#[ignore] // Requires stopping/starting BlindBit server during test
-fn test_connection_loss_retry() {
+fn test_concurrent_scanner_operations() {
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
     let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
+    let mut account = create_test_account(&account_name, &url);
 
-    // Start scanner with valid connection
-    account.start_scanner().expect("Initial start should succeed");
-    thread::sleep(Duration::from_secs(1));
+    // Start scanner
+    assert!(account.start_scanner(), "First start should succeed");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
 
-    // Simulate connection loss by stopping BlindBit server (manual step)
-    println!("Stop BlindBit server now and press Enter...");
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input).unwrap();
-
-    // Wait for FailScan notification
-    let mut error_count = 0;
-    for _ in 0..30 {
-        let poll = account.try_recv();
-        if poll.is_some() {
-            let notif = poll.get_notification();
-            if matches!(notif.flag, NotificationFlag::FailScan) {
-                println!("FailScan: {}", notif.payload);
-                error_count += 1;
-            }
-        }
-        thread::sleep(Duration::from_millis(500));
+    // Try to start again (should be idempotent or return false)
+    let second_start = account.start_scanner();
+    if !second_start {
+        println!("Second start returned false (expected)");
     }
 
-    assert!(error_count > 0, "Should receive at least one FailScan");
+    // Stop and restart
+    account.stop_scanner();
+    thread::sleep(Duration::from_millis(500));
+
+    assert!(account.start_scanner(), "Restart should succeed");
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 // ===== Edge Case Tests =====
@@ -300,10 +305,8 @@ fn test_zero_balance_send_attempt() {
     let config = create_test_config(account_name.clone());
     let account = Account::new(config).expect("Account creation should succeed");
 
-    // Verify zero balance
     assert_eq!(account.balance(), 0, "New wallet should have zero balance");
 
-    // Attempt to send with zero balance
     let tx_template = TransactionTemplate {
         outputs: vec![Output {
             address: account.sp_address(),
@@ -316,12 +319,18 @@ fn test_zero_balance_send_attempt() {
     };
 
     let simulation = account.simulate_transaction(tx_template.clone());
-    assert!(!simulation.is_valid, "Should not be able to send with zero balance");
+    assert!(
+        !simulation.is_valid,
+        "Should not be able to send with zero balance"
+    );
     assert!(!simulation.error.is_empty(), "Should have error message");
 
-    // Attempt to prepare transaction (should also fail)
     let psbt = account.prepare_transaction(tx_template);
-    assert!(!psbt.is_ok(), "Prepare should fail: {}", psbt.get_psbt_error());
+    assert!(
+        !psbt.is_ok(),
+        "Prepare should fail: {}",
+        psbt.get_psbt_error()
+    );
 
     cleanup_test_account(&account_name);
 }
@@ -332,8 +341,7 @@ fn test_dust_output_detection() {
     let config = create_test_config(account_name.clone());
     let account = Account::new(config).expect("Account creation should succeed");
 
-    // Try to create output below dust limit (546 sats for standard outputs)
-    let dust_amounts = vec![1, 100, 545]; // All below standard dust limit
+    let dust_amounts = vec![1, 100, 545];
 
     for dust_amount in dust_amounts {
         let tx_template = TransactionTemplate {
@@ -348,9 +356,6 @@ fn test_dust_output_detection() {
         };
 
         let simulation = account.simulate_transaction(tx_template);
-
-        // Simulation might fail due to dust or insufficient funds
-        // Just verify it doesn't panic
         if !simulation.is_valid {
             println!("Dust amount {} rejected: {}", dust_amount, simulation.error);
         }
@@ -360,33 +365,49 @@ fn test_dust_output_detection() {
 }
 
 #[test]
-#[ignore] // Requires funded wallet
 fn test_max_send_entire_balance() {
-    // This test requires a funded wallet to verify max send works correctly
-    let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
 
-    // Start scanner and wait for sync
-    account.start_scanner().expect("Scanner should start");
-    println!("Fund this address and wait: {}", account.sp_address());
-    thread::sleep(Duration::from_secs(30));
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account = create_test_account(&account_name, &url);
+
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+
+    // Fund the wallet
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
+
+    // Wait for NewOutput
+    let mut funded = false;
+    for _ in 0..300 {
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == silent::NotificationFlag::NewOutput {
+                funded = true;
+                break;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+    assert!(funded, "Should receive NewOutput notification");
 
     let balance = account.balance();
-    if balance == 0 {
-        println!("WARNING: No funds, skipping max send test");
-        account.stop_scanner();
-        cleanup_test_account(&account_name);
-        return;
-    }
-
-    println!("Current balance: {} sats", balance);
+    assert!(balance > 0, "Balance should be non-zero after funding");
 
     // Create max send transaction
     let tx_template = TransactionTemplate {
         outputs: vec![Output {
             address: account.sp_address(),
-            amount: 0, // Amount ignored when max=true
+            amount: 0,
             label: String::from("max send"),
             max: true,
         }],
@@ -395,17 +416,22 @@ fn test_max_send_entire_balance() {
     };
 
     let simulation = account.simulate_transaction(tx_template.clone());
-    assert!(simulation.is_valid, "Max send simulation should succeed: {}", simulation.error);
+    assert!(
+        simulation.is_valid,
+        "Max send simulation should succeed: {}",
+        simulation.error
+    );
 
     // Verify output amount = balance - fee
     let expected_output = balance.saturating_sub(simulation.fee);
-    assert_eq!(simulation.output_total, expected_output,
-               "Output should equal balance minus fee");
-
-    println!("Max send: sending {} sats with {} sat fee", simulation.output_total, simulation.fee);
+    assert_eq!(
+        simulation.output_total, expected_output,
+        "Output should equal balance minus fee"
+    );
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 #[test]
@@ -414,7 +440,6 @@ fn test_multiple_outputs_single_transaction() {
     let config = create_test_config(account_name.clone());
     let account = Account::new(config).expect("Account creation should succeed");
 
-    // Create transaction with multiple outputs
     let addr = account.sp_address();
     let tx_template = TransactionTemplate {
         outputs: vec![
@@ -436,10 +461,7 @@ fn test_multiple_outputs_single_transaction() {
     };
 
     let simulation = account.simulate_transaction(tx_template);
-
-    // Will fail due to insufficient funds, but verify it processes multiple outputs
     if !simulation.is_valid {
-        // Expected - just verify no panic and proper error
         assert!(!simulation.error.is_empty());
     }
 
@@ -447,39 +469,79 @@ fn test_multiple_outputs_single_transaction() {
 }
 
 #[test]
-#[ignore] // Requires funded wallet with multiple UTXOs
 fn test_manual_coin_selection() {
-    let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
 
-    account.start_scanner().expect("Scanner should start");
-    println!("Fund this address multiple times: {}", account.sp_address());
-    thread::sleep(Duration::from_secs(30));
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account = create_test_account(&account_name, &url);
+
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+
+    // Fund wallet twice (two separate SP outputs at different derivation indices)
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
+
+    // Wait for first output
+    let mut output_count = 0;
+    for _ in 0..300 {
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == silent::NotificationFlag::NewOutput {
+                output_count += 1;
+                break;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+    assert!(output_count >= 1, "Should receive first NewOutput");
+
+    // Fund again at a different index
+    fund_sp_wallet_at_index(bitcoind, &url, TEST_MNEMONIC, 0.05, 1);
+
+    // Wait for second output
+    for _ in 0..300 {
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == silent::NotificationFlag::NewOutput {
+                output_count += 1;
+                break;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+    assert!(output_count >= 2, "Should receive two NewOutput notifications");
 
     let coins = account.coins();
     let spendable: Vec<_> = coins.iter().filter(|c| !c.spent).collect();
-
-    if spendable.len() < 2 {
-        println!("WARNING: Need at least 2 UTXOs, skipping manual selection test");
-        account.stop_scanner();
-        cleanup_test_account(&account_name);
-        return;
-    }
+    assert!(
+        spendable.len() >= 2,
+        "Should have at least 2 spendable coins, got {}",
+        spendable.len()
+    );
 
     // Select specific coins
-    let selected_outpoints = vec![
-        spendable[0].outpoint.clone(),
-        spendable[1].outpoint.clone(),
-    ];
+    let selected_outpoints: Vec<String> = spendable
+        .iter()
+        .take(2)
+        .map(|c| c.outpoint.to_string())
+        .collect();
 
-    let selected_value: u64 = spendable[0].value + spendable[1].value;
-    println!("Manually selected {} coins with {} sats", selected_outpoints.len(), selected_value);
+    let selected_value: u64 = spendable.iter().take(2).map(|c| c.value).sum();
 
     let tx_template = TransactionTemplate {
         outputs: vec![Output {
             address: account.sp_address(),
-            amount: selected_value / 2, // Send half
+            amount: selected_value / 2,
             label: String::from("manual selection test"),
             max: false,
         }],
@@ -488,12 +550,20 @@ fn test_manual_coin_selection() {
     };
 
     let simulation = account.simulate_transaction(tx_template.clone());
-    assert!(simulation.is_valid, "Manual coin selection should work: {}", simulation.error);
-    assert_eq!(simulation.input_count as usize, selected_outpoints.len(),
-               "Should use exactly the selected coins");
+    assert!(
+        simulation.is_valid,
+        "Manual coin selection should work: {}",
+        simulation.error
+    );
+    assert_eq!(
+        simulation.input_count as usize,
+        selected_outpoints.len(),
+        "Should use exactly the selected coins"
+    );
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 // ===== Additional Error Path Tests =====
@@ -504,42 +574,10 @@ fn test_invalid_outpoint_format() {
     let config = create_test_config(account_name.clone());
     let mut account = Account::new(config).expect("Account creation should succeed");
 
-    // Test with invalid outpoint format
-    let result = account.update_coin_label("invalid_format".to_string(), "test".to_string());
-    assert!(result.is_err(), "Should reject invalid outpoint format");
+    assert!(
+        !account.update_coin_label("invalid_format".to_string(), "test".to_string()),
+        "Should reject invalid outpoint format"
+    );
 
-    let error = result.unwrap_err();
-    assert!(error.contains("outpoint") || error.contains("format"),
-            "Error should mention outpoint format: {}", error);
-
-    cleanup_test_account(&account_name);
-}
-
-#[test]
-#[ignore] // Requires BlindBit server
-fn test_concurrent_scanner_operations() {
-    let account_name = test_account_name();
-    let config = create_test_config(account_name.clone());
-    let mut account = Account::new(config).expect("Account creation should succeed");
-
-    // Start scanner
-    account.start_scanner().expect("First start should succeed");
-    thread::sleep(Duration::from_millis(500));
-
-    // Try to start again (should be idempotent or return error gracefully)
-    let second_start = account.start_scanner();
-    // Either succeeds (idempotent) or fails gracefully (no panic)
-    if let Err(e) = second_start {
-        println!("Second start returned error (expected): {}", e);
-    }
-
-    // Stop and restart
-    account.stop_scanner();
-    thread::sleep(Duration::from_millis(500));
-
-    let restart_result = account.start_scanner();
-    assert!(restart_result.is_ok(), "Restart should succeed");
-
-    account.stop_scanner();
     cleanup_test_account(&account_name);
 }

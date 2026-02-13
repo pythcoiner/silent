@@ -4,6 +4,7 @@
 
 use std::fs;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use bwk_sp::Config as SpConfig;
 use bitcoin::Network as BtcNetwork;
@@ -158,7 +159,7 @@ impl Config {
             self.network.into(),
             self.mnemonic.clone(),
             self.blindbit_url.clone(),
-            self.account_dir(),
+            self.data_dir.clone(),
         );
         config.set_dust_limit(self.dust_limit);
         config.set_birthday_height(Some(1));
@@ -206,11 +207,24 @@ impl Config {
     }
 }
 
+/// Override for the data directory. Once set, all calls to `datadir()` use this path.
+static DATADIR_OVERRIDE: OnceLock<PathBuf> = OnceLock::new();
+
+/// Override the data directory. Intended for testing.
+/// Must be called before any other config operations. Can only be set once.
+pub fn set_datadir(path: PathBuf) {
+    DATADIR_OVERRIDE.set(path).expect("datadir already set");
+}
+
 /// Returns the base data directory for Silent.
 ///
 /// On Linux: ~/.silent
 /// On other systems: {config_dir}/Silent
 pub fn datadir() -> PathBuf {
+    if let Some(dir) = DATADIR_OVERRIDE.get() {
+        maybe_create_dir(dir);
+        return dir.clone();
+    }
     #[cfg(target_os = "linux")]
     let dir = {
         let mut dir = dirs::home_dir().expect("home directory not found");
@@ -284,10 +298,15 @@ pub fn new_config(
 }
 
 /// Delete an account's data from disk.
-pub fn delete_config(account_name: String) -> Result<(), String> {
+pub fn delete_config(account_name: String) -> bool {
     let data_dir = datadir();
-    SpConfig::delete_account_dir(&data_dir, &account_name)
-        .map_err(|e| format!("failed to delete account '{account_name}': {e}"))
+    match SpConfig::delete_account_dir(&data_dir, &account_name) {
+        Ok(()) => true,
+        Err(e) => {
+            log::error!("failed to delete account '{account_name}': {e}");
+            false
+        }
+    }
 }
 
 /// Load config from file.

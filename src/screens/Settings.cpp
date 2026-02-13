@@ -126,13 +126,11 @@ auto Settings::actionToggle() -> void {
         clearBackendInfo();
     } else {
         // Connect
-        try {
-            accountOpt.value()->start_scanner();
-            fetchBackendInfo();
-        } catch (const std::exception &e) {
-            auto msg = QString("Failed to connect: %1").arg(e.what());
-            auto *modal = new qontrol::Modal("Error", msg);
+        if (!accountOpt.value()->start_scanner()) {
+            auto *modal = new qontrol::Modal("Error", "Failed to start scanner");
             AppController::execModal(modal);
+        } else {
+            fetchBackendInfo();
         }
     }
 }
