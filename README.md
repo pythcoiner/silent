@@ -68,6 +68,68 @@ cargo test --manifest-path silent/Cargo.toml
 cargo clippy --manifest-path silent/Cargo.toml
 ```
 
-## License
+## Vendored Dependencies
 
-See [LICENSE](LICENSE).
+Crates.io dependencies are vendored in `silent/vendor/` for offline/reproducible
+builds. Git dependencies are **not** vendored and are still fetched from GitHub:
+
+| Git dependency | Repository | Crates pulled |
+|---|---|---|
+| bwk | `pythcoiner/bwk.git` | `bwk-sp` |
+| spdk | `pythcoiner/spdk.git` | `spdk-core`, `backend-blindbit-native-non-async`, `bitcoin` (spdk's internal wrapper) |
+| rust-silentpayments | `pythcoiner/rust-silentpayments.git` | `silentpayments` |
+| ureq fork | `pythcoiner/ureq.git` | `ureq` (3.x with gzip branch) |
+
+The configuration lives in `silent/.cargo/config.toml`.
+
+### Re-vendor after changing dependencies
+
+After adding, removing, or updating a crates.io dependency in `silent/Cargo.toml`:
+
+```sh
+cd silent
+cargo vendor
+```
+
+This regenerates `vendor/`. `cargo vendor` also vendors git dependencies — those
+must be removed since they are not meant to be vendored:
+
+```sh
+cd silent
+
+# list what cargo vendor put from git sources:
+ls -d vendor/bwk-sp vendor/spdk-core vendor/backend-blindbit-native-non-async \
+      vendor/bitcoin-0.1.0 vendor/silentpayments vendor/ureq 2>/dev/null
+
+# remove them:
+rm -rf vendor/bwk-sp vendor/spdk-core vendor/backend-blindbit-native-non-async \
+       vendor/bitcoin-0.1.0 vendor/silentpayments vendor/ureq
+```
+
+`cargo vendor` also prints a suggested `.cargo/config.toml` — **ignore it**,
+the existing config is already correct (only crates-io is replaced, git sources
+are left alone).
+
+> **ureq note:** `vendor/ureq` (no version suffix) is the git fork — remove it.
+> `vendor/ureq-2.12.1` is from crates.io — keep it.
+
+> **Identifying git crates:** if the list above is outdated, check
+> `silent/Cargo.lock` for entries with `source = "git+https://..."` — those are
+> the git-sourced crates. The vendored directory name matches the crate name
+> (with a version suffix when there are duplicates, e.g. `bitcoin-0.1.0` vs
+> `bitcoin`).
+
+### Moving a dependency between vendored and non-vendored
+
+**Vendor a git dependency** (stop fetching from GitHub):
+
+1. Add a `[source."git+<url>"]` section to `silent/.cargo/config.toml` with
+   `replace-with = "vendored-sources"` (see the output of `cargo vendor` for
+   the exact syntax).
+2. Re-run `cargo vendor` and keep that crate in `vendor/`.
+
+**Stop vendoring entirely** (fetch everything from the network):
+
+Delete `silent/vendor/` and `silent/.cargo/config.toml`. Cargo will fetch from
+crates.io and git as usual.
+
