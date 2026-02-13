@@ -41,7 +41,7 @@ binding:
 
 # Build the full project locally (binding + cmake, no nix)
 build-local: binding
-    cmake -B build . && cmake --build build
+    cmake -B build . && cmake --build build -j$(nproc)
 
 # Run silent
 run:
@@ -50,6 +50,18 @@ run:
 # Build locally + run
 br: build-local
     just run
+
+# Format all C++ source files
+format:
+    find src -name '*.cpp' -o -name '*.h' | xargs clang-format -i
+
+# Lint C++ source files (clang-tidy)
+lint:
+    find src -name '*.cpp' | xargs -P$(nproc) -n1 clang-tidy -p build --header-filter='^.*/silent/src/.*' --quiet
+
+# Auto-fix clang-tidy warnings
+fix:
+    find src -name '*.cpp' | xargs -P$(nproc) -n1 clang-tidy -p build --header-filter='^.*/silent/src/.*' --quiet --fix
 
 # Clean all build artifacts (Rust + C++)
 clean:

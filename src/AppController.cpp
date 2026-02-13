@@ -1,13 +1,14 @@
 #include "AppController.h"
-#include "MainWindow.h"
 #include "AccountWidget.h"
-#include "screens/modals/CreateAccount.h"
+#include "MainWindow.h"
 #include "screens/modals/ConfirmDelete.h"
+#include "screens/modals/CreateAccount.h"
+#include <common.h>
 #include <qlogging.h>
 
 AppController::AppController() = default;
 
-void AppController::init() {
+auto AppController::init() -> void {
     if (Controller::isInit()) {
         qFatal() << "Controller have already been initialized!";
     }
@@ -20,13 +21,13 @@ auto AppController::get() -> AppController * {
     return controller;
 }
 
-void AppController::initState() {
-    connect(this, &AppController::accountCreated, this,
-            &AppController::onAccountCreated, qontrol::UNIQUE);
+auto AppController::initState() -> void {
+    connect(this, &AppController::accountCreated, this, &AppController::onAccountCreated,
+            qontrol::UNIQUE);
     listAccounts();
 }
 
-void AppController::addAccount(const QString &name) {
+auto AppController::addAccount(const QString &name) -> void {
     auto *window = AppController::window();
     auto *win = dynamic_cast<MainWindow *>(window);
     if (win == nullptr) {
@@ -42,7 +43,7 @@ void AppController::addAccount(const QString &name) {
     }
 }
 
-void AppController::removeAccount(const QString &account) {
+auto AppController::removeAccount(const QString &account) -> void {
     auto *win = dynamic_cast<MainWindow *>(window());
     if (win == nullptr) {
         qCritical() << "Failed to cast window to MainWindow";
@@ -53,7 +54,7 @@ void AppController::removeAccount(const QString &account) {
     listAccounts();
 }
 
-void AppController::listAccounts() {
+auto AppController::listAccounts() -> void {
     auto raccounts = list_configs();
     auto accounts = QList<QString>();
     for (auto &acc : raccounts) {
@@ -62,21 +63,18 @@ void AppController::listAccounts() {
     emit accountList(accounts);
 }
 
-void AppController::onCreateAccount() {
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto AppController::onCreateAccount() -> void {
     auto *modal = new CreateAccount();
     AppController::execModal(modal);
 }
 
-void AppController::createAccount(const QString &name, const QString &mnemonic,
-                                  Network network, const QString &blindbit_url) {
+auto AppController::createAccount(const QString &name, const QString &mnemonic, Network network,
+                                  const QString &blindbit_url) -> void {
     // Create config with default dust limit of 546 sats
-    auto config = new_config(
-        rust::String(name.toStdString()),
-        network,
-        rust::String(mnemonic.toStdString()),
-        rust::String(blindbit_url.toStdString()),
-        546
-    );
+    auto config =
+        new_config(rust::String(name.toStdString()), network, rust::String(mnemonic.toStdString()),
+                   rust::String(blindbit_url.toStdString()), 546);
 
     // Save config to file
     config->to_file();
@@ -84,19 +82,19 @@ void AppController::createAccount(const QString &name, const QString &mnemonic,
     emit accountCreated(name);
 }
 
-void AppController::onAccountCreated(const QString &name) {
+auto AppController::onAccountCreated(const QString &name) -> void {
     qDebug() << "AppController::onAccountCreated()";
     addAccount(name);
 }
 
-void AppController::openAccount(const QString &name) {
+auto AppController::openAccount(const QString &name) -> void {
     addAccount(name);
     listAccounts();
 }
 
-void AppController::deleteAccount(const QString &name) {
+auto AppController::deleteAccount(const QString &name) -> void {
     auto *modal = new ConfirmDelete(name);
-    connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) {
+    connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) -> void {
         try {
             delete_config(rust::String(account.toStdString()));
         } catch (const std::exception &e) {

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "AccountController.h"
-#include <QObject>
 #include <QHash>
+#include <QObject>
 #include <QString>
 #include <Qontrol>
 #include <silent.h>
@@ -14,26 +14,26 @@ class AppController : public qontrol::Controller {
 
 public:
     AppController();
-    static void init();
+    static auto init() -> void;
     static auto get() -> AppController *;
     auto accounts() -> int;
-    auto isAccountOpen(const QString &name) const -> bool;
+    [[nodiscard]] auto isAccountOpen(const QString &name) const -> bool;
 
 signals:
     void accountList(QList<QString>);
     void accountCreated(const QString &name);
 
 public slots:
-    void initState();
-    void addAccount(const QString &name);
-    void removeAccount(const QString &account);
-    void listAccounts();
-    void onCreateAccount();
-    void createAccount(const QString &name, const QString &mnemonic,
-                      Network network, const QString &blindbit_url);
-    void onAccountCreated(const QString &name);
-    void openAccount(const QString &name);
-    void deleteAccount(const QString &name);
+    auto initState() -> void;
+    auto addAccount(const QString &name) -> void;
+    auto removeAccount(const QString &account) -> void;
+    auto listAccounts() -> void;
+    auto onCreateAccount() -> void;
+    auto createAccount(const QString &name, const QString &mnemonic, Network network,
+                       const QString &blindbit_url) -> void;
+    auto onAccountCreated(const QString &name) -> void;
+    auto openAccount(const QString &name) -> void;
+    auto deleteAccount(const QString &name) -> void;
 
 private:
     QHash<QString, AccountController *> m_accounts;

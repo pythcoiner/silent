@@ -81,12 +81,15 @@ getter methods callable from C++.
 |---------|-----------|---------|
 | Classes | PascalCase | `AccountController`, `MainWindow` |
 | Methods | camelCase, trailing return type | `auto get() -> AppController *` |
-| Member variables | `m_` prefix | `m_account`, `m_notif_timer` |
+| Local variables | camelBack | `coinState`, `urlRow`, `btnFont` |
+| Parameters | lower_case | `tip_height`, `blind_bit_url` |
+| Member variables | `m_` prefix + lower_case | `m_account`, `m_notif_timer` |
+| Local constants | `c_` prefix + lower_case | `c_threshold` |
+| Constants | UPPER_CASE (in `utils.h`) | `MARGIN`, `SATS`, `V_SPACER` |
 | Signals | camelCase, descriptive noun/verb | `accountCreated`, `scanProgress` |
 | Slot handlers | `on` prefix for signal handlers | `onBackendInfoReady`,
 `onLabelEdited` |
 | Action slots | imperative verb | `poll()`, `loadPanel()`, `sendTransaction()` |
-| Constants | UPPER_CASE (in `common.h`) | `MARGIN`, `SATS`, `V_SPACER` |
 | Screen classes | `screen::` namespace | `screen::Send`, `screen::Coins` |
 | Modal classes | `modal::` namespace | `modal::SelectCoins`, `modal::CoinWidget` |
 
@@ -94,6 +97,105 @@ getter methods callable from C++.
 `m_*_btn` (QPushButton), `m_*_input` (QLineEdit/QTextEdit), `m_*_label` (QLabel),
 `m_*_column` (qontrol::Column), `m_*_row` (qontrol::Row), `m_*_table`
 (QTableWidget), `m_*_timer` (QTimer), `m_*_frame` (framed widgets).
+
+## C++: Clangd Lint Rules
+
+The `.clangd` config enforces clang-tidy checks and `UnusedIncludes: Strict`. All
+new code must satisfy these:
+
+**Include hygiene:**
+- Headers use `#pragma once` (not traditional include guards).
+- Sort `#include` directives alphabetically within each block (enforced by
+  `llvm-include-order`). Case-sensitive sort (uppercase before lowercase).
+- Only include headers whose symbols are directly used in the file. clangd's
+  `UnusedIncludes: Strict` flags unused includes.
+- When a forward declaration (`class Foo;`) is sufficient (pointer/reference members
+  or parameters), prefer it over `#include "Foo.h"` in headers. Include the full
+  header in the `.cpp` file instead.
+
+**`[[nodiscard]]`:** Mark `const` methods that return a value (especially `bool`) with
+`[[nodiscard]]`:
+```cpp
+[[nodiscard]] auto isAccountOpen(const QString &name) const -> bool;
+```
+
+**Trailing return types:** Use trailing return type syntax for all functions with
+non-void return types (enforced by `modernize-use-trailing-return-type`):
+```cpp
+auto main(int argc, char *argv[]) -> int;
+auto getCoins() -> rust::Vec<RustCoin>;
+```
+
+**Explicit nullptr comparisons:** Never rely on implicit pointer-to-bool conversion.
+Use explicit comparisons (enforced by `readability-implicit-bool-conversion`):
+```cpp
+if (m_controller != nullptr) { ... }  // good
+if (m_controller) { ... }             // bad
+```
+
+**Container emptiness:** Use `empty()` instead of `size() == 0` (enforced by
+`readability-container-size-empty`):
+```cpp
+if (m_outputs.empty()) { ... }  // good
+if (m_outputs.size() == 0) { ... }  // bad
+```
+
+**Prefer algorithms over manual loops:** Use `std::ranges::any_of`,
+`std::ranges::sort`, etc. instead of hand-written loops when possible (enforced by
+`readability-use-anyofallof`):
+```cpp
+return std::ranges::any_of(m_tabs, [&name](const auto &tab) { return tab.first == name; });
+```
+
+**Switch over enum if-else chains:** When handling `NotificationFlag` or other CXX
+enums, prefer `switch` statements over long if-else chains. This reduces cognitive
+complexity (enforced by `readability-function-cognitive-complexity`, threshold 25):
+```cpp
+switch (flag) {
+case NotificationFlag::ScanProgress: { ... break; }
+case NotificationFlag::NewOutput:
+case NotificationFlag::OutputSpent:
+    pollCoins();
+    break;
+default: break;
+}
+```
+
+**One declaration per statement:** Don't combine multiple variable declarations
+(enforced by `readability-isolate-declaration`):
+```cpp
+bool ok1 = false;  // good
+bool ok2 = false;
+bool ok1 = false, ok2 = false;  // bad
+```
+
+**No redundant base class initializers:** Don't explicitly call the default
+constructor of a base class in the initializer list (enforced by
+`readability-redundant-member-init`):
+```cpp
+ConfirmDelete(...) : m_name(name) { ... }           // good
+ConfirmDelete(...) : qontrol::Modal(), m_name(name) { ... }  // bad
+```
+
+**Static member access:** Access static members through the class name, not through an
+instance (enforced by `readability-static-accessed-through-instance`):
+```cpp
+QApplication::exec();  // good
+app.exec();            // bad
+```
+
+**Unused parameters:** For parameters required by a signal-slot signature but unused
+in the implementation, annotate with `[[maybe_unused]]`:
+```cpp
+void onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) { ... }
+```
+
+**Qt slots and `readability-convert-member-functions-to-static`:** Qt slots must
+remain non-static member functions. Suppress with `// NOLINTNEXTLINE`:
+```cpp
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+void sendTransaction() { ... }
+```
 
 ## C++: Qontrol Framework Usage
 
@@ -123,14 +225,22 @@ delete this->layout();
 this->setLayout(m_main_widget->layout());
 ```
 
-**Modals:** always use `qontrol::Modal`, never `QDialog`. Modals call
-`setMainWidget(widget)` to set their content and are displayed via
+**Modal subclasses** (`qontrol::Modal`) follow the same three-phase lifecycle as
+screens:
+1. `init()` — create all widgets
+2. `doConnect()` — connect signals/slots
+3. `view()` — build layout with `setMainWidget(widget)`
+
+Always use `qontrol::Modal`, never `QDialog`. Modals are displayed via
 `AppController::execModal(modal)`.
 
 **Signal connections** use `qontrol::UNIQUE` flag to avoid duplicate connections:
 ```cpp
 connect(source, &Source::signal, dest, &Dest::slot, qontrol::UNIQUE);
 ```
+
+**Clang-tidy NOLINT:** slots that clang-tidy suggests could be made static must be
+suppressed with `// NOLINT` — Qt slots must remain non-static member functions.
 
 ## C++: Singleton Pattern
 
@@ -199,7 +309,7 @@ delete output->widget();
 delete output;
 ```
 
-## C++: Utility Functions (`src/screens/common.h`)
+## C++: Utility Functions (`src/screens/utils.h`)
 
 ```cpp
 auto margin(QWidget *widget) -> QWidget *;             // default margin wrapper

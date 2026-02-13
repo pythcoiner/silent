@@ -1,7 +1,7 @@
-#include "common.h"
-#include <Qontrol>
+#include "utils.h"
 #include <QPainter>
 #include <QPen>
+#include <Qontrol>
 #include <qboxlayout.h>
 #include <qframe.h>
 #include <qnamespace.h>
@@ -11,14 +11,8 @@ auto margin(QWidget *widget) -> QWidget * {
 }
 
 auto margin(QWidget *widget, int margin) -> QWidget * {
-    auto *col = (new qontrol::Column)
-                    ->pushSpacer(margin)
-                    ->push(widget)
-                    ->pushSpacer(margin);
-    auto *row = (new qontrol::Row)
-                    ->pushSpacer(margin)
-                    ->push(col)
-                    ->pushSpacer(margin);
+    auto *col = (new qontrol::Column)->pushSpacer(margin)->push(widget)->pushSpacer(margin);
+    auto *row = (new qontrol::Row)->pushSpacer(margin)->push(col)->pushSpacer(margin);
     return row;
 }
 
@@ -48,7 +42,7 @@ auto coinsCount(uint64_t count) -> QString {
     return coinsStr + " coins";
 }
 
-void Frame::paintEvent(QPaintEvent *event) {
+auto Frame::paintEvent(QPaintEvent *event) -> void {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 

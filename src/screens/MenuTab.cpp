@@ -1,76 +1,64 @@
 #include "MenuTab.h"
 #include "AppController.h"
-#include <qboxlayout.h>
+#include <Qontrol>
+#include <common.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
-#include <qsizepolicy.h>
 #include <qstyle.h>
 
 MenuTab::MenuTab(QWidget *parent) : QWidget(parent) {
-    initUI();
-    connect(AppController::get(), &AppController::accountList,
-            this, &MenuTab::onAccountList, qontrol::UNIQUE);
+    init();
+    doConnect();
+    view();
 }
 
-void MenuTab::initUI() {
-    auto *layout = new QVBoxLayout(this);
+auto MenuTab::init() -> void {
+    m_create_btn = new QPushButton("+ Create New Wallet");
+    m_create_btn->setFixedWidth(354);
+    m_create_btn->setFixedHeight(50);
+    auto btnFont = m_create_btn->font();
+    btnFont.setPointSize(14);
+    m_create_btn->setFont(btnFont);
 
-    // Add spacer at top
-    layout->addStretch();
+    m_accounts_column = new qontrol::Column;
+}
 
-    // Add title label
+auto MenuTab::doConnect() -> void {
+    connect(m_create_btn, &QPushButton::clicked, this,
+            []() -> void { AppController::get()->onCreateAccount(); });
+    connect(AppController::get(), &AppController::accountList, this, &MenuTab::onAccountList,
+            qontrol::UNIQUE);
+}
+
+auto MenuTab::view() -> void {
     auto *title = new QLabel("Silent - Silent Payments Wallet");
-    auto title_font = title->font();
-    title_font.setPointSize(24);
-    title_font.setBold(true);
-    title->setFont(title_font);
+    auto titleFont = title->font();
+    titleFont.setPointSize(24);
+    titleFont.setBold(true);
+    title->setFont(titleFont);
     title->setAlignment(Qt::AlignCenter);
-    layout->addWidget(title);
 
-    layout->addSpacing(40);
+    auto *titleRow = (new qontrol::Row)->pushSpacer()->push(title)->pushSpacer();
+    auto *btnRow = (new qontrol::Row)->pushSpacer()->push(m_create_btn)->pushSpacer();
 
-    // Account list section
-    m_accountListLayout = new QVBoxLayout();
-    m_accountListLayout->setAlignment(Qt::AlignHCenter);
-    layout->addLayout(m_accountListLayout);
+    auto *col = (new qontrol::Column)
+                    ->pushSpacer()
+                    ->push(titleRow)
+                    ->pushSpacer(40)
+                    ->push(m_accounts_column)
+                    ->pushSpacer(20)
+                    ->push(btnRow)
+                    ->pushSpacer();
 
-    layout->addSpacing(20);
-
-    // Add create account button
-    auto *create_btn = new QPushButton("+ Create New Wallet");
-    create_btn->setFixedWidth(354);
-    create_btn->setFixedHeight(50);
-    auto btn_font = create_btn->font();
-    btn_font.setPointSize(14);
-    create_btn->setFont(btn_font);
-
-    // Center the button horizontally
-    auto *btn_layout = new QHBoxLayout();
-    btn_layout->addStretch();
-    btn_layout->addWidget(create_btn);
-    btn_layout->addStretch();
-    layout->addLayout(btn_layout);
-
-    // Add spacer at bottom
-    layout->addStretch();
-
-    setLayout(layout);
-
-    // Connect button to AppController
-    connect(create_btn, &QPushButton::clicked, this, [this]() {
-        AppController::get()->onCreateAccount();
-    });
+    setLayout(col->layout());
 }
 
-void MenuTab::clearAccountButtons() {
-    for (auto *row : m_accountRows) {
-        m_accountListLayout->removeWidget(row);
-        row->deleteLater();
-    }
-    m_accountRows.clear();
+auto MenuTab::clearAccountButtons() -> void {
+    m_accounts_column->clear();
+    m_account_rows.clear();
 }
 
-void MenuTab::onAccountList(const QList<QString> &accounts) {
+auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
     clearAccountButtons();
 
     if (accounts.isEmpty()) {
@@ -78,38 +66,35 @@ void MenuTab::onAccountList(const QList<QString> &accounts) {
     }
 
     for (const auto &name : accounts) {
-        auto *row = new QWidget();
-        auto *row_layout = new QHBoxLayout(row);
-        row_layout->setContentsMargins(0, 0, 0, 0);
-        row_layout->setSpacing(4);
-
         auto *btn = new QPushButton(name);
         btn->setFixedWidth(300);
         btn->setFixedHeight(50);
-        auto btn_font = btn->font();
-        btn_font.setPointSize(14);
-        btn->setFont(btn_font);
+        auto btnFont = btn->font();
+        btnFont.setPointSize(14);
+        btn->setFont(btnFont);
 
-        auto *trash_btn = new QPushButton();
-        trash_btn->setFixedSize(50, 50);
-        trash_btn->setIcon(trash_btn->style()->standardIcon(QStyle::SP_TrashIcon));
-        trash_btn->setToolTip("Delete wallet");
+        auto *trashBtn = new QPushButton();
+        trashBtn->setFixedSize(50, 50);
+        trashBtn->setIcon(trashBtn->style()->standardIcon(QStyle::SP_TrashIcon));
+        trashBtn->setToolTip("Delete wallet");
 
-        row_layout->addWidget(btn);
-        row_layout->addWidget(trash_btn);
+        connect(btn, &QPushButton::clicked, this,
+                [name]() -> void { AppController::get()->openAccount(name); });
+        connect(trashBtn, &QPushButton::clicked, this,
+                [name]() -> void { AppController::get()->deleteAccount(name); });
 
-        connect(btn, &QPushButton::clicked, this, [name]() {
-            AppController::get()->openAccount(name);
-        });
-        connect(trash_btn, &QPushButton::clicked, this, [name]() {
-            AppController::get()->deleteAccount(name);
-        });
+        auto *row = (new qontrol::Row)
+                        ->pushSpacer()
+                        ->push(btn)
+                        ->pushSpacer(4)
+                        ->push(trashBtn)
+                        ->pushSpacer();
 
         if (AppController::get()->isAccountOpen(name)) {
             row->setEnabled(false);
         }
 
-        m_accountListLayout->addWidget(row, 0, Qt::AlignHCenter);
-        m_accountRows.append(row);
+        m_accounts_column->push(row);
+        m_account_rows.append(row);
     }
 }

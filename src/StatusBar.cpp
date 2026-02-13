@@ -1,13 +1,14 @@
 #include "StatusBar.h"
 #include "AccountController.h"
-#include "screens/common.h"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
+#include "screens/utils.h"
 #include <QBrush>
 #include <QFrame>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 StatusBar::StatusBar(AccountController *controller, QWidget *parent)
-    : QWidget(parent), m_controller(controller) {
+    : QWidget(parent),
+      m_controller(controller) {
     initUI();
     loadBlindbitUrl();
 
@@ -16,11 +17,10 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
     updateConnectionState(m_connected);
 
     // Connect toggle signal
-    connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled,
-            this, &StatusBar::onToggled);
+    connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled, this, &StatusBar::onToggled);
 }
 
-void StatusBar::initUI() {
+auto StatusBar::initUI() -> void {
     setFixedHeight(32);
 
     // Top separator line
@@ -51,17 +51,16 @@ void StatusBar::initUI() {
     setLayout(layout);
 }
 
-void StatusBar::loadBlindbitUrl() {
-    auto &account_opt = m_controller->getAccount();
-    if (account_opt.has_value()) {
-        auto account_name = account_opt.value()->name();
-        auto config = config_from_file(account_name);
-        m_blindbit_url = QString::fromStdString(
-            std::string(config->get_blindbit_url().c_str()));
+auto StatusBar::loadBlindbitUrl() -> void {
+    auto &accountOpt = m_controller->getAccount();
+    if (accountOpt.has_value()) {
+        auto accountName = accountOpt.value()->name();
+        auto config = config_from_file(accountName);
+        m_blindbit_url = QString::fromStdString(std::string(config->get_blindbit_url().c_str()));
     }
 }
 
-void StatusBar::updateConnectionState(bool connected) {
+auto StatusBar::updateConnectionState(bool connected) -> void {
     m_connected = connected;
 
     // Update toggle state without triggering signal
@@ -71,16 +70,16 @@ void StatusBar::updateConnectionState(bool connected) {
 
     // Update toggle color
     if (connected) {
-        m_toggle->setBrush(QBrush(QColor(0, 180, 0)));  // Green
+        m_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
     } else {
-        m_toggle->setBrush(QBrush(QColor(180, 0, 0)));  // Red
+        m_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
         m_status_text->setText("Disconnected");
     }
 
     m_toggle->update();
 }
 
-void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
+auto StatusBar::updateScanProgress(uint32_t height, uint32_t tip) -> void {
     if (height < tip) {
         m_status_text->setText(QString("Scanning... %1 / %2").arg(height).arg(tip));
     } else {
@@ -89,36 +88,36 @@ void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
     }
 }
 
-void StatusBar::updateWaitingForBlocks(uint32_t tipHeight) {
-    m_status_text->setText(QString("Synced at block %1 • Watching...").arg(tipHeight));
+auto StatusBar::updateWaitingForBlocks(uint32_t tip_height) -> void {
+    m_status_text->setText(QString("Synced at block %1 • Watching...").arg(tip_height));
 }
 
-void StatusBar::updateScanError(rust::String error) {
+auto StatusBar::updateScanError(rust::String error) -> void {
     QString errorStr = QString::fromStdString(std::string(error.c_str()));
     m_status_text->setText(QString("Error: %1").arg(errorStr));
 }
 
-void StatusBar::reloadUrl() {
+auto StatusBar::reloadUrl() -> void {
     loadBlindbitUrl();
 }
 
-void StatusBar::onToggled(bool checked) {
-    auto &account_opt = m_controller->getAccount();
-    if (!account_opt.has_value()) {
+auto StatusBar::onToggled(bool checked) -> void {
+    auto &accountOpt = m_controller->getAccount();
+    if (!accountOpt.has_value()) {
         return;
     }
 
     if (checked) {
         // Connecting
         m_status_text->setText("Connecting...");
-        m_toggle->setBrush(QBrush(QColor(0, 180, 0)));  // Green
+        m_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
         m_toggle->update();
-        account_opt.value()->start_scanner();
+        accountOpt.value()->start_scanner();
     } else {
         // Disconnecting
         m_status_text->setText("Disconnecting...");
-        m_toggle->setBrush(QBrush(QColor(180, 0, 0)));  // Red
+        m_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
         m_toggle->update();
-        account_opt.value()->stop_scanner();
+        accountOpt.value()->stop_scanner();
     }
 }

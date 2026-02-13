@@ -1,0 +1,68 @@
+# see https://clang.llvm.org/docs/DiagnosticsReference.html
+CompileFlags:
+  Remove: [-mno-direct-extern-access,]
+  Add: [-Wunused,]
+
+InlayHints:
+  BlockEnd: No
+  Designators: Yes
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  TypeNameLimit: 0
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    FastCheckFilter: Loose
+    Add: [
+      modernize-use-*,
+      readability-*,
+      performance-*,
+      bugprone-argument-comment,
+      bugprone-move-forwarding-reference,
+      bugprone-string-constructor,
+      bugprone-use-after-move,
+      bugprone-lambda-function-name,
+      bugprone-unhandled-self-assignment,
+      misc-unused-using-decls,
+      misc-no-recursion,
+      cppcoreguidelines-init-variables,
+      cppcoreguidelines-pro-type-member-init,
+      bugprone-infinite-loop,
+      bugprone-integer-division,
+      cppcoreguidelines-rvalue-reference-param-not-moved, 
+      llvm-include-order,
+      misc-header-include-cycle,
+      misc-unused-parameters,
+      cppcoreguidelines-non-private-member-variables-in-classes,
+      misc-definitions-in-headers,
+
+
+    ]
+    Remove: [
+      readability-braces-around-statements,
+      readability-identifier-length,
+      readability-redundant-access-specifiers,
+      readability-magic-numbers,
+    ]
+    # options can be found at https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
+    CheckOptions:
+      readability-identifier-naming.VariableCase: camelBack
+      readability-identifier-naming.FunctionCase: camelBack
+      readability-identifier-naming.ClassMethodCase: camelBack
+      readability-identifier-naming.ParameterCase: lower_case
+      readability-identifier-naming.ClassMemberCase: lower_case
+      readability-identifier-naming.ClassMemberPrefix: m_
+      readability-identifier-naming.ProtectedMemberCase: lower_case
+      readability-identifier-naming.ProtectedMemberPrefix: m_
+      readability-identifier-naming.PrivateMemberCase: lower_case
+      readability-identifier-naming.PrivateMemberPrefix: m_
+      readability-identifier-naming.ClassCase: CamelCase
+      readability-identifier-naming.ConstantCase: UPPER_CASE
+      readability-identifier-naming.EnumConstantCase: CamelCase
+      readability-identifier-naming.LocalConstantCase: lower_case
+      readability-identifier-naming.LocalConstantPrefix: c_
+      misc-unused-parameters.StrictMode: true
+      misc-unused-parameters.IgnoreVirtual: true
+

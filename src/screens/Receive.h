@@ -1,9 +1,6 @@
 #pragma once
 
 #include <Qontrol>
-#include <QApplication>
-#include <QClipboard>
-#include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -19,9 +16,9 @@ public:
     Receive(AccountController *ctrl);
 
 protected:
-    void init() override;
-    void doConnect() override;
-    void view() override;
+    auto init() -> void override;
+    auto doConnect() -> void override;
+    auto view() -> void override;
 
 private:
     AccountController *m_controller;

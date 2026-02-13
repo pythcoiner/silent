@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QWidget>
 #include <QPointer>
+#include <QWidget>
 #include <Qontrol>
 
 class AccountController;
@@ -15,7 +15,7 @@ public:
     ~AccountWidget() override;
 
     auto controller() -> AccountController *;
-    void loadPanel(qontrol::Panel *panel);
+    auto loadPanel(qontrol::Panel *panel) -> void;
 
 private:
     AccountController *m_controller = nullptr;
@@ -24,5 +24,5 @@ private:
     QPointer<qontrol::Panel> m_current_panel;
     StatusBar *m_status_bar = nullptr;
 
-    void initUI();
+    auto initUI() -> void;
 };

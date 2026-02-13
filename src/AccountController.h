@@ -1,11 +1,10 @@
 #pragma once
 
-#include "AccountWidget.h"
-#include <QObject>
-#include <QTimer>
 #include <QHash>
-#include <QString>
+#include <QObject>
 #include <QPointer>
+#include <QString>
+#include <QTimer>
 #include <Qontrol>
 #include <optional>
 #include <silent.h>
@@ -17,9 +16,9 @@ class AccountController : public QObject {
 
 public:
     AccountController(const QString &account, AccountWidget *widget);
-    void init(const QString &account);
+    auto init(const QString &account) -> void;
     auto screen(const QString &screen) -> std::optional<qontrol::Screen *>;
-    void loadPanels();
+    auto loadPanels() -> void;
     auto getCoins() -> rust::Vec<RustCoin>;
     auto getSpAddress() -> rust::String;
     auto coins() -> qontrol::Screen *;
@@ -30,27 +29,29 @@ signals:
     void updateBalance(uint64_t balance);
     void newAddress(rust::String addr);
     void scanProgress(uint32_t height, uint32_t tip);
-    void waitingForBlocks(uint32_t tipHeight);
+    void waitingForBlocks(uint32_t tip_height);
     void scanError(rust::String error);
     void scannerStateChanged(bool running);
 
 public slots:
-    void loadPanel(const QString &name);
-    void insertPanel(qontrol::Panel *panel);
-    void poll();
-    void pollCoins();
-    void pollNotifications();
+    auto loadPanel(const QString &name) -> void;
+    auto insertPanel(qontrol::Panel *panel) -> void;
+    auto poll() -> void;
+    auto pollCoins() -> void;
+    auto pollNotifications() -> void;
     auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
-    void updateCoinLabel(const QString &outpoint, const QString &label);
-    void stop();
+    auto updateCoinLabel(const QString &outpoint, const QString &label) -> void;
+    auto stop() -> void;
 
     // Screen button actions
-    void coinsClicked();
-    void sendClicked();
-    void receiveClicked();
-    void settingsClicked();
+    auto coinsClicked() -> void;
+    auto sendClicked() -> void;
+    auto receiveClicked() -> void;
+    auto settingsClicked() -> void;
 
-    bool isScannerRunning() const { return m_scanner_running; }
+    [[nodiscard]] auto isScannerRunning() const -> bool {
+        return m_scanner_running;
+    }
 
 private:
     QPointer<qontrol::Panel> m_current_panel;

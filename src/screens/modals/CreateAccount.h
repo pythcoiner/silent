@@ -1,11 +1,10 @@
 #pragma once
 
-#include <Qontrol>
-#include <QLineEdit>
 #include <QComboBox>
-#include <QRadioButton>
-#include <QTextEdit>
+#include <QLineEdit>
 #include <QPushButton>
+#include <QTextEdit>
+#include <Qontrol>
 #include <silent.h>
 
 class CreateAccount : public qontrol::Modal {
@@ -15,26 +14,25 @@ public:
     explicit CreateAccount(QWidget *parent = nullptr);
 
 signals:
-    void createAccount(const QString &name, const QString &mnemonic,
-                      Network network, const QString &blindbit_url);
+    void createAccount(const QString &name, const QString &mnemonic, Network network,
+                       const QString &blindbit_url);
 
 private slots:
-    void onGenerate();
-    void onCreate();
-    void onModeChanged();
-    void onNetworkChanged();
-    void onTestBackend();
+    auto onGenerate() -> void;
+    auto onCreate() -> void;
+    auto onNetworkChanged() -> void;
+    auto onTestBackend() -> void;
+    auto onUpdateCreateButton() -> void;
 
 private:
-    void initUI();
-    void invalidateBackendTest();
-    void updateCreateButton();
-    void onBackendInfoReady(BackendInfo info);
+    auto init() -> void;
+    auto doConnect() -> void;
+    auto view() -> void;
+    auto invalidateBackendTest() -> void;
+    auto onBackendInfoReady(BackendInfo info) -> void;
     auto generateMnemonic() -> QString;
 
     QLineEdit *m_name_input = nullptr;
-    QRadioButton *m_generate_radio = nullptr;
-    QRadioButton *m_restore_radio = nullptr;
     QTextEdit *m_mnemonic_input = nullptr;
     QPushButton *m_generate_btn = nullptr;
     QComboBox *m_network_combo = nullptr;

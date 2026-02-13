@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QWidget>
-#include <QVBoxLayout>
-#include <Qontrol>
 #include <QPushButton>
+#include <QWidget>
+#include <Qontrol>
 
 class MenuTab : public QWidget {
     Q_OBJECT
@@ -15,12 +14,15 @@ signals:
     void createAccount();
 
 public slots:
-    void onAccountList(const QList<QString> &accounts);
+    auto onAccountList(const QList<QString> &accounts) -> void;
 
 private:
-    void initUI();
-    void clearAccountButtons();
+    auto init() -> void;
+    auto doConnect() -> void;
+    auto view() -> void;
+    auto clearAccountButtons() -> void;
 
-    QVBoxLayout *m_accountListLayout = nullptr;
-    QList<QWidget *> m_accountRows;
+    QPushButton *m_create_btn = nullptr;
+    qontrol::Column *m_accounts_column = nullptr;
+    QList<QWidget *> m_account_rows;
 };

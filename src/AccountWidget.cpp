@@ -1,88 +1,86 @@
 #include "AccountWidget.h"
 #include "AccountController.h"
 #include "StatusBar.h"
+#include <Qontrol>
 #include <qboxlayout.h>
 #include <qpushbutton.h>
 #include <qsizepolicy.h>
-#include <Qontrol>
 
-AccountWidget::AccountWidget(const QString &account, QWidget *parent)
-    : QWidget(parent) {
+AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(parent) {
     m_controller = new AccountController(account, this);
     initUI();
     m_controller->loadPanels();
 }
 
-void AccountWidget::initUI() {
+auto AccountWidget::initUI() -> void {
     // Create side menu
     m_menu = new qontrol::Column(this);
     m_menu->setFixedWidth(200);
 
-    auto *coins_btn = new QPushButton("Coins");
-    coins_btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *send_btn = new QPushButton("Send");
-    send_btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *recv_btn = new QPushButton("Receive");
-    recv_btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *settings_btn = new QPushButton("Settings");
-    settings_btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *coinsBtn = new QPushButton("Coins");
+    coinsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *sendBtn = new QPushButton("Send");
+    sendBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *recvBtn = new QPushButton("Receive");
+    recvBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *settingsBtn = new QPushButton("Settings");
+    settingsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    m_menu->push(coins_btn);
-    m_menu->push(send_btn);
-    m_menu->push(recv_btn);
-    m_menu->push(settings_btn);
+    m_menu->push(coinsBtn);
+    m_menu->push(sendBtn);
+    m_menu->push(recvBtn);
+    m_menu->push(settingsBtn);
 
-    connect(coins_btn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked);
-    connect(send_btn, &QPushButton::clicked, m_controller, &AccountController::sendClicked);
-    connect(recv_btn, &QPushButton::clicked, m_controller, &AccountController::receiveClicked);
-    connect(settings_btn, &QPushButton::clicked, m_controller, &AccountController::settingsClicked);
+    connect(coinsBtn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked);
+    connect(sendBtn, &QPushButton::clicked, m_controller, &AccountController::sendClicked);
+    connect(recvBtn, &QPushButton::clicked, m_controller, &AccountController::receiveClicked);
+    connect(settingsBtn, &QPushButton::clicked, m_controller, &AccountController::settingsClicked);
 
     // Create screen container
     m_screen_container = new QWidget(this);
     m_screen_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *container_layout = new QVBoxLayout(m_screen_container);
-    container_layout->setContentsMargins(0, 0, 0, 0);
+    auto *containerLayout = new QVBoxLayout(m_screen_container);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
 
     // Wrap menu + screen container in horizontal layout
-    auto *content_widget = new QWidget(this);
-    auto *content_layout = new QHBoxLayout(content_widget);
-    content_layout->setContentsMargins(0, 0, 0, 0);
-    content_layout->setSpacing(0);
-    content_layout->addWidget(m_menu);
-    content_layout->addWidget(m_screen_container, 1);
+    auto *contentWidget = new QWidget(this);
+    auto *contentLayout = new QHBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(0);
+    contentLayout->addWidget(m_menu);
+    contentLayout->addWidget(m_screen_container, 1);
 
     // Create status bar
     m_status_bar = new StatusBar(m_controller, this);
 
     // Connect status bar signals
-    connect(m_controller, &AccountController::scannerStateChanged,
-            m_status_bar, &StatusBar::updateConnectionState);
-    connect(m_controller, &AccountController::scanProgress,
-            m_status_bar, &StatusBar::updateScanProgress);
-    connect(m_controller, &AccountController::waitingForBlocks,
-            m_status_bar, &StatusBar::updateWaitingForBlocks);
-    connect(m_controller, &AccountController::scanError,
-            m_status_bar, &StatusBar::updateScanError);
+    connect(m_controller, &AccountController::scannerStateChanged, m_status_bar,
+            &StatusBar::updateConnectionState);
+    connect(m_controller, &AccountController::scanProgress, m_status_bar,
+            &StatusBar::updateScanProgress);
+    connect(m_controller, &AccountController::waitingForBlocks, m_status_bar,
+            &StatusBar::updateWaitingForBlocks);
+    connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError);
 
     // Create main vertical layout with content + status bar
-    auto *main_layout = new QVBoxLayout(this);
-    main_layout->setContentsMargins(0, 0, 0, 0);
-    main_layout->setSpacing(0);
-    main_layout->addWidget(content_widget, 1);
-    main_layout->addWidget(m_status_bar);
-    setLayout(main_layout);
+    auto *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+    mainLayout->addWidget(contentWidget, 1);
+    mainLayout->addWidget(m_status_bar);
+    setLayout(mainLayout);
 }
 
-void AccountWidget::loadPanel(qontrol::Panel *panel) {
+auto AccountWidget::loadPanel(qontrol::Panel *panel) -> void {
     if (panel == nullptr)
         return;
 
     // Remove current panel if exists
     if (m_current_panel != nullptr) {
-        auto *current_widget = m_current_panel->widget();
-        if (current_widget != nullptr) {
-            m_screen_container->layout()->removeWidget(current_widget);
-            current_widget->setVisible(false);
+        auto *currentWidget = m_current_panel->widget();
+        if (currentWidget != nullptr) {
+            m_screen_container->layout()->removeWidget(currentWidget);
+            currentWidget->setVisible(false);
         }
     }
 

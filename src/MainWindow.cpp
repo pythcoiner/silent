@@ -1,9 +1,11 @@
 #include "MainWindow.h"
+#include "AccountWidget.h"
 #include "AppController.h"
 #include "screens/MenuTab.h"
+#include <algorithm>
 #include <qlogging.h>
-#include <qtabwidget.h>
 #include <qtabbar.h>
+#include <qtabwidget.h>
 #include <qwidget.h>
 
 MainWindow::MainWindow(QWidget *parent) : Window(parent) {
@@ -12,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) : Window(parent) {
     initWindow();
 }
 
-void MainWindow::initWindow() {
+auto MainWindow::initWindow() -> void {
     if (m_init)
         return;
 
@@ -24,7 +26,7 @@ void MainWindow::initWindow() {
     setCentralWidget(m_tab);
 
     // Connect tab close signal
-    connect(m_tab, &QTabWidget::tabCloseRequested, this, [this](int index) {
+    connect(m_tab, &QTabWidget::tabCloseRequested, this, [this](int index) -> void {
         // Find account name by index
         if (index >= 0 && index < m_tabs.size()) {
             auto name = m_tabs.at(index).first;
@@ -40,14 +42,10 @@ void MainWindow::initWindow() {
 auto MainWindow::accountExists(const QString &name) -> bool {
     if (m_tabs.isEmpty())
         return false;
-    for (const auto &tab : m_tabs) {
-        if (tab.first == name)
-            return true;
-    }
-    return false;
+    return std::ranges::any_of(m_tabs, [&name](const auto &tab) -> auto { return tab.first == name; });
 }
 
-void MainWindow::insertAccount(AccountWidget *account, const QString &name) {
+auto MainWindow::insertAccount(AccountWidget *account, const QString &name) -> void {
     if (!accountExists(name)) {
         m_tabs.append(QPair<QString, AccountWidget *>(name, account));
         updateTabs();
@@ -56,7 +54,7 @@ void MainWindow::insertAccount(AccountWidget *account, const QString &name) {
     }
 }
 
-void MainWindow::removeAccount(const QString &name) {
+auto MainWindow::removeAccount(const QString &name) -> void {
     auto exists = false;
     int index = 0;
     for (int i = 0; i < m_tabs.size(); ++i) {
@@ -79,7 +77,7 @@ void MainWindow::removeAccount(const QString &name) {
     widget->deleteLater();
 }
 
-void MainWindow::updateTabs() {
+auto MainWindow::updateTabs() -> void {
     // Clear all tabs except the menu tab
     while (m_tab->count() > 0) {
         m_tab->removeTab(0);
@@ -97,7 +95,7 @@ void MainWindow::updateTabs() {
     m_tab->tabBar()->setTabButton(m_tab->count() - 1, QTabBar::RightSide, nullptr);
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+auto MainWindow::closeEvent(QCloseEvent *event) -> void {
     // Stop all account controllers
     for (const auto &tab : m_tabs) {
         tab.second->controller()->stop();

@@ -34,5 +34,5 @@ public:
     }
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    auto paintEvent(QPaintEvent *event) -> void override;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 #include <Qontrol>
 #include <silent.h>
 
@@ -14,18 +14,18 @@ public:
     explicit StatusBar(AccountController *controller, QWidget *parent = nullptr);
 
 public slots:
-    void updateConnectionState(bool connected);
-    void updateScanProgress(uint32_t height, uint32_t tip);
-    void updateWaitingForBlocks(uint32_t tipHeight);
-    void updateScanError(rust::String error);
-    void reloadUrl();
+    auto updateConnectionState(bool connected) -> void;
+    auto updateScanProgress(uint32_t height, uint32_t tip) -> void;
+    auto updateWaitingForBlocks(uint32_t tip_height) -> void;
+    auto updateScanError(rust::String error) -> void;
+    auto reloadUrl() -> void;
 
 private slots:
-    void onToggled(bool checked);
+    auto onToggled(bool checked) -> void;
 
 private:
-    void initUI();
-    void loadBlindbitUrl();
+    auto initUI() -> void;
+    auto loadBlindbitUrl() -> void;
 
     AccountController *m_controller = nullptr;
     qontrol::widgets::ToggleSwitch *m_toggle = nullptr;

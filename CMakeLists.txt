@@ -46,8 +46,8 @@ set(SOURCES
     src/screens/MenuTab.cpp
     src/screens/modals/CreateAccount.h
     src/screens/modals/CreateAccount.cpp
-    src/screens/common.h
-    src/screens/common.cpp
+    src/screens/utils.h
+    src/screens/utils.cpp
     src/screens/Coins.h
     src/screens/Coins.cpp
     src/screens/Receive.h

@@ -1,13 +1,12 @@
 #pragma once
 
-#include "AccountWidget.h"
-#include <Qontrol>
-#include <QTabWidget>
+#include <QCloseEvent>
 #include <QHash>
 #include <QList>
 #include <QPair>
+#include <QTabWidget>
 #include <QWidget>
-#include <QCloseEvent>
+#include <Qontrol>
 
 class AccountWidget;
 
@@ -18,13 +17,13 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
-    void insertAccount(AccountWidget *account, const QString &name);
-    void removeAccount(const QString &name);
+    auto insertAccount(AccountWidget *account, const QString &name) -> void;
+    auto removeAccount(const QString &name) -> void;
     auto accountExists(const QString &name) -> bool;
-    void updateTabs();
+    auto updateTabs() -> void;
 
 protected:
-    void closeEvent(QCloseEvent *event) override;
+    auto closeEvent(QCloseEvent *event) -> void override;
 
 private:
     bool m_init = false;
@@ -32,5 +31,5 @@ private:
     QList<QPair<QString, AccountWidget *>> m_tabs;
     QWidget *m_menu_tab = nullptr;
 
-    void initWindow();
+    auto initWindow() -> void;
 };

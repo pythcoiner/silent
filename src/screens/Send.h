@@ -31,8 +31,8 @@ class OutputW {
 public:
     OutputW(Send *screen, int id);
     auto widget() -> QWidget *;
-    void setDeletable(bool deletable);
-    void enableMax(bool max);
+    auto setDeletable(bool deletable) -> void;
+    auto enableMax(bool max) -> void;
     auto isMax() -> bool;
     auto address() -> QString;
     auto amount() -> std::optional<uint64_t>;
@@ -53,10 +53,10 @@ class RadioElement {
 public:
     RadioElement(Send *parent, const QString &label);
     auto widget() -> qontrol::Row *;
-    void update();
+    auto update() -> void;
     auto button() -> QAbstractButton *;
     auto text() -> QString;
-    void setEnabled(bool enabled);
+    auto setEnabled(bool enabled) -> void;
     auto checked() -> bool;
 
 private:
@@ -74,23 +74,23 @@ public:
 signals:
 
 public slots:
-    void outputSetMax(int id);
-    void deleteOutput(int id);
-    void addOutput();
-    void clearOutputs();
-    void updateRadio();
-    void setBroadcastable(bool broadcastable);
-    void addCoins();
-    void onCoinsSelected(const QList<RustCoin> &coins);
-    void setSpendable(bool spendable);
-    void process();
-    void simulateTransaction();
-    void sendTransaction();
+    auto outputSetMax(int id) -> void;
+    auto deleteOutput(int id) -> void;
+    auto addOutput() -> void;
+    auto clearOutputs() -> void;
+    auto updateRadio() -> void;
+    auto setBroadcastable(bool broadcastable) -> void;
+    auto addCoins() -> void;
+    auto onCoinsSelected(const QList<RustCoin> &coins) -> void;
+    auto setSpendable(bool spendable) -> void;
+    auto process() -> void;
+    auto simulateTransaction() -> void;
+    auto sendTransaction() -> void;
 
 protected:
-    void init() override;
-    void doConnect() override;
-    void view() override;
+    auto init() -> void override;
+    auto doConnect() -> void override;
+    auto view() -> void override;
     auto outputsView() -> QWidget *;
     auto inputsView() -> QWidget *;
     auto txTemplate() -> std::optional<TransactionTemplate>;

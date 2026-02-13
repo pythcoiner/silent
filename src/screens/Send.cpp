@@ -1,10 +1,11 @@
 #include "Send.h"
 #include "AccountController.h"
 #include "AppController.h"
-#include "common.h"
 #include "screens/modals/SelectCoins.h"
+#include "utils.h"
 #include <Qontrol>
 #include <algorithm>
+#include <common.h>
 #include <cstdint>
 #include <cstdlib>
 #include <optional>
@@ -49,12 +50,10 @@ OutputW::OutputW(Send *screen, int id) {
     m_address = new QLineEdit;
     m_address->setFixedWidth(300);
     m_address->setPlaceholderText("Silent Payment Address");
-    QObject::connect(m_address, &QLineEdit::editingFinished, screen,
-                     &Send::process);
+    QObject::connect(m_address, &QLineEdit::editingFinished, screen, &Send::process);
 
     m_delete = new QPushButton();
-    QIcon closeIcon = m_delete->style()->standardIcon(
-        QStyle::SP_DialogCloseButton);
+    QIcon closeIcon = m_delete->style()->standardIcon(QStyle::SP_DialogCloseButton);
     m_delete->setIcon(closeIcon);
     m_delete->setFixedWidth(m_address->minimumSizeHint().height());
     m_delete->setFixedHeight(m_address->minimumSizeHint().height());
@@ -65,8 +64,7 @@ OutputW::OutputW(Send *screen, int id) {
     m_amount = new QLineEdit;
     m_amount->setFixedWidth(95);
     m_amount->setPlaceholderText("0.002 BTC");
-    QObject::connect(m_amount, &QLineEdit::editingFinished, screen,
-                     &Send::process);
+    QObject::connect(m_amount, &QLineEdit::editingFinished, screen, &Send::process);
 
     m_label = new QLineEdit;
     m_label->setFixedWidth(2 * INPUT_WIDTH);
@@ -79,8 +77,7 @@ OutputW::OutputW(Send *screen, int id) {
         height: 28px;
       }
     )");
-    QObject::connect(m_max, &QCheckBox::toggled, screen, &Send::process,
-                     qontrol::UNIQUE);
+    QObject::connect(m_max, &QCheckBox::toggled, screen, &Send::process, qontrol::UNIQUE);
 
     m_max_label = new QLabel("MAX");
     QFont f = m_max_label->font();
@@ -109,9 +106,9 @@ OutputW::OutputW(Send *screen, int id) {
                     ->pushSpacer(2 * V_SPACER);
 
     QObject::connect(m_delete, &QPushButton::clicked, screen,
-                     [screen, id]() { screen->deleteOutput(id); });
+                     [screen, id]() -> void { screen->deleteOutput(id); });
     QObject::connect(m_max, &QCheckBox::checkStateChanged, screen,
-                     [screen, id]() { screen->outputSetMax(id); });
+                     [screen, id]() -> void { screen->outputSetMax(id); });
 
     m_widget = col;
 }
@@ -120,12 +117,12 @@ auto OutputW::widget() -> QWidget * {
     return m_widget;
 }
 
-void OutputW::setDeletable(bool deletable) {
+auto OutputW::setDeletable(bool deletable) -> void {
     m_delete->setVisible(deletable);
     m_delete_spacer->setVisible(deletable);
 }
 
-void OutputW::enableMax(bool max) {
+auto OutputW::enableMax(bool max) -> void {
     m_max->setChecked(false);
     m_max->setVisible(max);
     m_max_label->setVisible(max);
@@ -137,12 +134,10 @@ auto OutputW::isMax() -> bool {
 
 RadioElement::RadioElement(Send *parent, const QString &label) {
     m_button = new QRadioButton(parent);
-    QObject::connect(m_button, &QAbstractButton::toggled, parent,
-                     &Send::process);
+    QObject::connect(m_button, &QAbstractButton::toggled, parent, &Send::process);
     m_value = new QLineEdit;
     m_value->setFixedWidth(100);
-    QObject::connect(m_value, &QLineEdit::editingFinished, parent,
-                     &Send::process);
+    QObject::connect(m_value, &QLineEdit::editingFinished, parent, &Send::process);
     m_label = new QLabel(label);
 
     auto *row = (new qontrol::Row)
@@ -159,7 +154,7 @@ auto RadioElement::button() -> QAbstractButton * {
     return m_button;
 }
 
-void RadioElement::update() {
+auto RadioElement::update() -> void {
     m_value->setEnabled(m_button->isChecked());
 }
 
@@ -167,7 +162,7 @@ auto RadioElement::widget() -> qontrol::Row * {
     return m_widget;
 }
 
-void Send::updateRadio() {
+auto Send::updateRadio() -> void {
     m_fee_sats_vb->update();
     process();
 }
@@ -182,25 +177,15 @@ Send::Send(AccountController *ctrl) {
     this->setBroadcastable(false);
 }
 
-void Send::init() {
+auto Send::init() -> void {
     m_outputs_column = (new qontrol::Column);
     m_inputs_column = (new qontrol::Column);
 
     m_add_output_btn = new QPushButton("+ Add an Output");
-    connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput);
-
     m_select_coins_btn = new QPushButton("Select Coins");
-    connect(m_select_coins_btn, &QPushButton::clicked, this, &Send::addCoins);
-
     m_simulate_btn = new QPushButton("Simulate");
-    connect(m_simulate_btn, &QPushButton::clicked, this, &Send::simulateTransaction);
-
     m_send_button = new QPushButton("Send");
-    connect(m_send_button, &QPushButton::clicked, this, &Send::sendTransaction);
-
     m_clear_outputs_btn = new QPushButton("Clear");
-    connect(m_clear_outputs_btn, &QPushButton::clicked, this,
-            &Send::clearOutputs, qontrol::UNIQUE);
 
     m_fee_sats_vb = new RadioElement(this, "sats/vb");
     m_fee_group = new QButtonGroup;
@@ -212,10 +197,16 @@ void Send::init() {
     m_fee_sats_vb->button()->setChecked(true);
 }
 
-void Send::doConnect() {
+auto Send::doConnect() -> void {
+    connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput, qontrol::UNIQUE);
+    connect(m_select_coins_btn, &QPushButton::clicked, this, &Send::addCoins, qontrol::UNIQUE);
+    connect(m_simulate_btn, &QPushButton::clicked, this, &Send::simulateTransaction,
+            qontrol::UNIQUE);
+    connect(m_send_button, &QPushButton::clicked, this, &Send::sendTransaction, qontrol::UNIQUE);
+    connect(m_clear_outputs_btn, &QPushButton::clicked, this, &Send::clearOutputs, qontrol::UNIQUE);
 }
 
-void Send::view() {
+auto Send::view() -> void {
     auto *oldOutputs = m_outputs_frame;
     m_outputs_frame = frame(outputsView());
     delete oldOutputs;
@@ -224,10 +215,7 @@ void Send::view() {
     m_inputs_frame = frame(inputsView());
     delete oldInputs;
 
-    auto *row = (new qontrol::Row)
-                    ->push(m_inputs_frame)
-                    ->pushSpacer(20)
-                    ->push(m_outputs_frame);
+    auto *row = (new qontrol::Row)->push(m_inputs_frame)->pushSpacer(20)->push(m_outputs_frame);
 
     auto *oldWidget = m_main_widget;
     m_main_widget = margin(row, 10);
@@ -267,9 +255,7 @@ auto Send::outputsView() -> QWidget * {
                         ->push(m_send_button)
                         ->pushSpacer();
 
-    auto *feeRow = (new qontrol::Row)
-                       ->merge(m_fee_sats_vb->widget())
-                       ->pushSpacer();
+    auto *feeRow = (new qontrol::Row)->merge(m_fee_sats_vb->widget())->pushSpacer();
 
     auto *warningRow = (new qontrol::Row)->push(m_warning_label)->pushSpacer();
 
@@ -278,10 +264,7 @@ auto Send::outputsView() -> QWidget * {
     font.setPointSize(15);
     title->setFont(font);
 
-    auto *titleRow = (new qontrol::Row)
-                         ->pushSpacer(15)
-                         ->push(title)
-                         ->pushSpacer();
+    auto *titleRow = (new qontrol::Row)->pushSpacer(15)->push(title)->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->push(titleRow)
@@ -315,23 +298,17 @@ auto Send::inputsView() -> QWidget * {
     font.setPointSize(15);
     title->setFont(font);
 
-    auto *titleRow = (new qontrol::Row)
-                         ->pushSpacer(15)
-                         ->push(title)
-                         ->pushSpacer();
+    auto *titleRow = (new qontrol::Row)->pushSpacer(15)->push(title)->pushSpacer();
 
-    auto *col = (new qontrol::Column)
-                    ->push(titleRow)
-                    ->pushSpacer(20)
-                    ->push(m_inputs_column)
-                    ->pushSpacer();
+    auto *col =
+        (new qontrol::Column)->push(titleRow)->pushSpacer(20)->push(m_inputs_column)->pushSpacer();
 
     return col;
 }
 
-void Send::addOutput() {
+auto Send::addOutput() -> void {
     auto *output = new OutputW(this, m_output_id);
-    if (m_outputs.size() == 0) {
+    if (m_outputs.empty()) {
         output->setDeletable(false);
     } else {
         for (auto &out : m_outputs) {
@@ -351,7 +328,7 @@ void Send::addOutput() {
     view();
 }
 
-void Send::deleteOutput(int id) {
+auto Send::deleteOutput(int id) -> void {
     auto *output = m_outputs.take(id);
     if (output->isMax()) {
         for (auto *outp : m_outputs) {
@@ -371,7 +348,7 @@ void Send::deleteOutput(int id) {
     view();
 }
 
-void Send::outputSetMax(int id) {
+auto Send::outputSetMax(int id) -> void {
     if (m_outputs.value(id)->isMax()) {
         for (auto &key : m_outputs.keys()) {
             if (key != id) {
@@ -386,12 +363,12 @@ void Send::outputSetMax(int id) {
     process();
 }
 
-void Send::setBroadcastable(bool broadcastable) {
+auto Send::setBroadcastable(bool broadcastable) -> void {
     m_broadcastable = broadcastable;
     m_send_button->setEnabled(broadcastable);
 }
 
-void Send::clearOutputs() {
+auto Send::clearOutputs() -> void {
     for (auto *outp : m_outputs) {
         delete outp;
     }
@@ -401,7 +378,7 @@ void Send::clearOutputs() {
     view();
 }
 
-void Send::addCoins() {
+auto Send::addCoins() -> void {
     qDebug() << "Send::addCoins() - Opening SelectCoins modal";
 
     // Get available coins from AccountController
@@ -421,11 +398,12 @@ void Send::addCoins() {
 
     // Create and show SelectCoins modal
     auto *selectCoinsModal = new modal::SelectCoins(coinsList);
-    connect(selectCoinsModal, &modal::SelectCoins::coinsSelected, this, &Send::onCoinsSelected, qontrol::UNIQUE);
+    connect(selectCoinsModal, &modal::SelectCoins::coinsSelected, this, &Send::onCoinsSelected,
+            qontrol::UNIQUE);
     AppController::execModal(selectCoinsModal);
 }
 
-void Send::onCoinsSelected(const QList<RustCoin> &coins) {
+auto Send::onCoinsSelected(const QList<RustCoin> &coins) -> void {
     qDebug() << "Send::onCoinsSelected() - " << coins.size() << " coins selected";
 
     // Store selected coins for transaction building
@@ -434,14 +412,15 @@ void Send::onCoinsSelected(const QList<RustCoin> &coins) {
     uint64_t totalValue = 0;
     for (const auto &coin : coins) {
         totalValue += coin.value;
-        qDebug() << "  Selected coin:" << QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size())
+        qDebug() << "  Selected coin:"
+                 << QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size())
                  << "Value:" << coin.value;
     }
 
-    auto *modal = new qontrol::Modal("Coins Selected",
-        QString("Selected %1 coin(s) with total value: %2 BTC")
-            .arg(coins.size())
-            .arg(toBitcoin(totalValue)));
+    auto *modal =
+        new qontrol::Modal("Coins Selected", QString("Selected %1 coin(s) with total value: %2 BTC")
+                                                 .arg(coins.size())
+                                                 .arg(toBitcoin(totalValue)));
     AppController::execModal(modal);
 
     // Re-process transaction with new coin selection
@@ -494,7 +473,7 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
 
         if (out->isMax()) {
             output.max = true;
-            output.amount = 0;  // Amount is ignored when max is true
+            output.amount = 0; // Amount is ignored when max is true
         } else {
             auto amount = out->amount();
             if (!amount.has_value()) {
@@ -516,7 +495,7 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
     return txTemplate;
 }
 
-void RadioElement::setEnabled(bool enabled) {
+auto RadioElement::setEnabled(bool enabled) -> void {
     m_button->setEnabled(enabled);
     m_value->setEnabled(enabled);
 }
@@ -525,11 +504,11 @@ auto RadioElement::checked() -> bool {
     return m_button->isChecked();
 }
 
-void Send::setSpendable(bool spendable) {
+auto Send::setSpendable(bool spendable) -> void {
     m_simulate_btn->setEnabled(spendable);
 }
 
-void Send::process() {
+auto Send::process() -> void {
     qDebug() << "Send::process()";
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
@@ -556,7 +535,7 @@ void Send::process() {
     }
 }
 
-void Send::simulateTransaction() {
+auto Send::simulateTransaction() -> void {
     qDebug() << "Send::simulateTransaction()";
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
@@ -567,12 +546,13 @@ void Send::simulateTransaction() {
 
     auto simu = m_controller->simulateTx(txTemp.value());
     if (simu.error.empty() && simu.is_valid) {
-        QString msg = QString("Fee: %1 BTC\nWeight: %2\nInputs: %3\nInput Total: %4 BTC\nOutput Total: %5 BTC")
-            .arg(toBitcoin(simu.fee))
-            .arg(simu.weight)
-            .arg(simu.input_count)
-            .arg(toBitcoin(simu.input_total))
-            .arg(toBitcoin(simu.output_total));
+        QString msg = QString("Fee: %1 BTC\nWeight: %2\nInputs: %3\nInput "
+                              "Total: %4 BTC\nOutput Total: %5 BTC")
+                          .arg(toBitcoin(simu.fee))
+                          .arg(simu.weight)
+                          .arg(simu.input_count)
+                          .arg(toBitcoin(simu.input_total))
+                          .arg(toBitcoin(simu.output_total));
         auto *modal = new qontrol::Modal("Transaction Simulation", msg);
         AppController::execModal(modal);
         setBroadcastable(true);
@@ -584,7 +564,8 @@ void Send::simulateTransaction() {
     }
 }
 
-void Send::sendTransaction() {
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto Send::sendTransaction() -> void {
     qDebug() << "Send::sendTransaction()";
     // NOTE: Transaction signing and broadcasting not yet implemented.
     // This will be implemented in a future phase. The UI and transaction
@@ -595,9 +576,10 @@ void Send::sendTransaction() {
     // 2. Call m_controller->getAccount()->prepare_transaction(txTemplate)
     // 3. Call m_controller->getAccount()->sign_and_broadcast(psbt_result)
     // 4. Display success/failure modal with txid
-    auto *modal = new qontrol::Modal("Not Implemented",
-        "Transaction signing and broadcasting will be implemented in a future phase.\n\n"
-        "Use the Simulate button to verify transaction details.");
+    auto *modal = new qontrol::Modal(
+        "Not Implemented", "Transaction signing and broadcasting will be implemented in a future "
+                           "phase.\n\n"
+                           "Use the Simulate button to verify transaction details.");
     AppController::execModal(modal);
 }
 

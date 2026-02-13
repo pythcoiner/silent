@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Qontrol>
-#include <qlabel.h>
 #include <qcombobox.h>
+#include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qtmetamacros.h>
@@ -22,26 +22,25 @@ signals:
     void configSaved();
 
 public slots:
-    void actionSave();
-    void actionToggle();
-    void actionTestBackend();
-    void updateToggleButton(bool running);
-    void onScanProgress(uint32_t height, uint32_t tip);
+    auto actionSave() -> void;
+    auto actionToggle() -> void;
+    auto actionTestBackend() -> void;
+    auto updateToggleButton(bool running) -> void;
+    auto onScanProgress(uint32_t height, uint32_t tip) -> void;
 
 protected:
-    void init() override;
-    void doConnect() override;
-    void view() override;
+    auto init() -> void override;
+    auto doConnect() -> void override;
+    auto view() -> void override;
 
 private:
-    void fetchBackendInfo();
-    void onBackendInfoReady(BackendInfo info);
-    void invalidateBackendTest();
-    void clearBackendInfo();
-    void updateButtons();
+    auto fetchBackendInfo() -> void;
+    auto onBackendInfoReady(BackendInfo info) -> void;
+    auto invalidateBackendTest() -> void;
+    auto clearBackendInfo() -> void;
+    auto updateButtons() -> void;
 
     AccountController *m_controller = nullptr;
-    bool m_view_init = false;
     bool m_backend_verified = false;
     QWidget *m_main_widget = nullptr;
     QLineEdit *m_blindbit_url = nullptr;

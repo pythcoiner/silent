@@ -1,13 +1,13 @@
 #include "Coins.h"
 #include "AccountController.h"
-#include "common.h"
+#include "utils.h"
 #include <Qontrol>
 #include <cstdint>
 #include <optional>
 #include <qlabel.h>
 #include <qnamespace.h>
-#include <qpushbutton.h>
 #include <qtablewidget.h>
+#include <utility>
 
 namespace screen {
 
@@ -18,23 +18,23 @@ Coins::Coins(AccountController *ctrl) {
     this->view();
 }
 
-void Coins::init() {
+auto Coins::init() -> void {
 }
 
-void Coins::recvPayload(const CoinState &state) {
-    // Always update to ensure coin list changes (like label updates) are reflected
+auto Coins::recvPayload(const CoinState &state) -> void {
+    // Always update to ensure coin list changes (like label updates) are
+    // reflected
     m_state = state;
     this->view();
     emit coinsUpdated();
 }
 
-void Coins::doConnect() {
+auto Coins::doConnect() -> void {
     auto *ctrl = m_controller;
     connect(ctrl, &AccountController::updateCoins, this, &Coins::recvPayload);
 }
 
-auto balanceRow(const QString &label_str, uint64_t balance,
-                uint64_t coins_count) -> QWidget * {
+auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count) -> QWidget * {
     auto *label = new QLabel(label_str);
     label->setFixedWidth(LABEL_WIDTH);
 
@@ -46,16 +46,12 @@ auto balanceRow(const QString &label_str, uint64_t balance,
     auto *coins = new QLabel(coinStr);
     coins->setFixedWidth(PRICE_WIDTH);
 
-    auto *row = (new qontrol::Row)
-                    ->push(label)
-                    ->push(price)
-                    ->push(coins)
-                    ->pushSpacer();
+    auto *row = (new qontrol::Row)->push(label)->push(price)->push(coins)->pushSpacer();
 
     return row;
 }
 
-void insertCoin(QTableWidget *table, const RustCoin &coin, int index) {
+auto insertCoin(QTableWidget *table, const RustCoin &coin, int index) -> void {
     QString blockHeight;
     if (!coin.spent && coin.height > 0) {
         blockHeight = QString::number(coin.height);
@@ -85,15 +81,14 @@ void insertCoin(QTableWidget *table, const RustCoin &coin, int index) {
     table->setItem(index, 3, value);
 }
 
-void Coins::view() {
+auto Coins::view() -> void {
     auto *oldCR = m_confirmed_row;
-    m_confirmed_row = balanceRow("Confirmed:", m_state.confirmed_balance,
-                                 m_state.confirmed_count);
+    m_confirmed_row = balanceRow("Confirmed:", m_state.confirmed_balance, m_state.confirmed_count);
     delete oldCR;
 
     auto *oldUR = m_unconfirmed_row;
-    m_unconfirmed_row = balanceRow("Unconfirmed:", m_state.unconfirmed_balance,
-                                   m_state.unconfirmed_count);
+    m_unconfirmed_row =
+        balanceRow("Unconfirmed:", m_state.unconfirmed_balance, m_state.unconfirmed_count);
     delete oldUR;
 
     // Get coins from controller's account
@@ -151,8 +146,8 @@ auto Coins::getCoins() -> std::optional<QList<RustCoin>> {
     return std::make_optional(coins);
 }
 
-void Coins::onLabelEdited(QTableWidgetItem *item) {
-    if (!item || !m_table) {
+auto Coins::onLabelEdited(QTableWidgetItem *item) -> void {
+    if (item == nullptr || m_table == nullptr) {
         return;
     }
 
@@ -162,13 +157,13 @@ void Coins::onLabelEdited(QTableWidgetItem *item) {
     }
 
     int row = item->row();
-    if (row < 0 || row >= static_cast<int>(m_coins.size())) {
+    if (row < 0 || std::cmp_greater_equal(row, m_coins.size())) {
         return;
     }
 
     // Get the outpoint from column 1
     auto *outpointItem = m_table->item(row, 1);
-    if (!outpointItem) {
+    if (outpointItem == nullptr) {
         return;
     }
 
@@ -178,7 +173,7 @@ void Coins::onLabelEdited(QTableWidgetItem *item) {
     qDebug() << "Coins::onLabelEdited() - Updating label for" << outpoint << "to" << newLabel;
 
     // Update the coin label through the controller
-    if (m_controller) {
+    if (m_controller != nullptr) {
         m_controller->updateCoinLabel(outpoint, newLabel);
     }
 }

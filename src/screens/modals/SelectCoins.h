@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Qontrol>
-#include <optional>
 #include <qbuttongroup.h>
 #include <qcheckbox.h>
 #include <qhash.h>
@@ -23,8 +22,8 @@ class CoinWidget : public QObject {
 public:
     CoinWidget(const RustCoin &coin, SelectCoins *modal);
     auto isChecked() -> bool;
-    auto setCheckable(bool checkable);
-    void setChecked(bool checked);
+    auto setCheckable(bool checkable) -> void;
+    auto setChecked(bool checked) -> void;
     auto coin() -> RustCoin;
     auto checkbox() -> QCheckBox *;
     auto outpoint() -> QLineEdit *;
@@ -32,7 +31,7 @@ public:
     auto amount() -> QLineEdit *;
 
 public slots:
-    void updateLabel();
+    auto updateLabel() -> void;
 
 private:
     RustCoin m_coin;
@@ -47,20 +46,21 @@ class SelectCoins : public qontrol::Modal {
 public:
     SelectCoins(const QList<RustCoin> &coins);
 
-    void init(const QList<RustCoin> &coins);
-    void view();
+    auto init(const QList<RustCoin> &coins) -> void;
+    auto doConnect() -> void;
+    auto view() -> void;
     auto filter(const QList<CoinWidget *> &coins) -> QList<CoinWidget *>;
     auto sort(const QList<CoinWidget *> &coins) -> QList<CoinWidget *>;
     auto getCoins() -> QList<CoinWidget *>;
-    void applyFilter();
+    auto applyFilter() -> void;
 
 signals:
     void coinsSelected(QList<RustCoin> coins);
 
 public slots:
-    void checked();
-    void onAbort();
-    void onOk();
+    auto checked() -> void;
+    auto onAbort() -> void;
+    auto onOk() -> void;
 
 private:
     int m_amount_width = 150;

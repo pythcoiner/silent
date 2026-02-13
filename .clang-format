@@ -1,0 +1,20 @@
+BasedOnStyle: LLVM
+IndentWidth: 4       # number of spaces per indent level
+TabWidth: 4          # number of spaces a tab counts for
+UseTab: Never        # always use spaces, never literal tabs
+
+BreakBeforeBraces: Attach                 # put “{” on same line
+AllowShortFunctionsOnASingleLine: None    # never collapse bodies into one line
+PointerAlignment: Right                    # bind the ‘*’ to the type
+ColumnLimit: 100
+MaxEmptyLinesToKeep: 1
+
+SeparateDefinitionBlocks: Always          # always add an empty line after a {} definition block
+PackConstructorInitializers: CurrentLine  # keep constructor initializer on the same line if it fits
+
+# do not indent public/private/protected
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+SortIncludes:         CaseSensitive
+IncludeBlocks:        Preserve

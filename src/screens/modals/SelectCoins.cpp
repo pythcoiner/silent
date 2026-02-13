@@ -1,21 +1,20 @@
 #include "SelectCoins.h"
-#include "screens/common.h"
+#include "screens/utils.h"
 #include <Qontrol>
+#include <algorithm>
+#include <common.h>
 #include <optional>
-#include <qbuttongroup.h>
 #include <qcheckbox.h>
 #include <qcontainerfwd.h>
 #include <qlabel.h>
 #include <qlineedit.h>
-#include <qlogging.h>
 #include <qnamespace.h>
 #include <qpushbutton.h>
 #include <qscrollarea.h>
-#include <algorithm>
 
 namespace modal {
 
-void CoinWidget::updateLabel() {
+auto CoinWidget::updateLabel() -> void {
     auto stdStr = m_label->text().toStdString();
     m_coin.label = rust::String(stdStr);
 }
@@ -28,7 +27,7 @@ auto CoinWidget::coin() -> RustCoin {
     return m_coin;
 }
 
-void SelectCoins::onOk() {
+auto SelectCoins::onOk() -> void {
     auto selectedCoins = QList<RustCoin>();
     for (auto id : m_coins.keys()) {
         auto *cw = m_coins.value(id);
@@ -41,18 +40,16 @@ void SelectCoins::onOk() {
     accept();
 }
 
-void SelectCoins::onAbort() {
+auto SelectCoins::onAbort() -> void {
     reject();
 }
 
-void SelectCoins::init(const QList<RustCoin> &coins) {
+auto SelectCoins::init(const QList<RustCoin> &coins) -> void {
     setWindowTitle("Select coin(s)");
     setFixedSize(700, 400);
 
     m_label_filter = new QLineEdit();
     m_label_filter->setPlaceholderText("label filter...");
-    connect(m_label_filter, &QLineEdit::textEdited, this,
-            &SelectCoins::applyFilter, qontrol::UNIQUE);
 
     m_value_up = new QPushButton();
     auto up = m_value_up->style()->standardIcon(QStyle::SP_ArrowUp);
@@ -74,29 +71,12 @@ void SelectCoins::init(const QList<RustCoin> &coins) {
     m_total_label->setFixedWidth(m_label_width);
     m_total_label->setAlignment(Qt::AlignRight);
 
-    connect(m_value_up, &QPushButton::toggled, [this]() {
-        if (this->m_value_up->isChecked()) {
-            this->m_value_down->setChecked(false);
-        }
-        this->view();
-    });
-    connect(m_value_down, &QPushButton::toggled, [this]() {
-        if (this->m_value_down->isChecked()) {
-            this->m_value_up->setChecked(false);
-        }
-        this->view();
-    });
-
     m_abort = new QPushButton("Cancel");
     m_abort->setFixedWidth(150);
-    connect(m_abort, &QPushButton::clicked, this, &SelectCoins::onAbort,
-            qontrol::UNIQUE);
 
     m_ok = new QPushButton("Ok");
     m_ok->setFixedWidth(150);
     m_ok->setEnabled(false);
-    connect(m_ok, &QPushButton::clicked, this, &SelectCoins::onOk,
-            qontrol::UNIQUE);
 
     int id = 0;
     for (const auto &coin : coins) {
@@ -111,7 +91,26 @@ void SelectCoins::init(const QList<RustCoin> &coins) {
     }
 }
 
-void SelectCoins::view() {
+auto SelectCoins::doConnect() -> void {
+    connect(m_label_filter, &QLineEdit::textEdited, this, &SelectCoins::applyFilter,
+            qontrol::UNIQUE);
+    connect(m_value_up, &QPushButton::toggled, this, [this]() -> void {
+        if (this->m_value_up->isChecked()) {
+            this->m_value_down->setChecked(false);
+        }
+        this->view();
+    });
+    connect(m_value_down, &QPushButton::toggled, this, [this]() -> void {
+        if (this->m_value_down->isChecked()) {
+            this->m_value_up->setChecked(false);
+        }
+        this->view();
+    });
+    connect(m_abort, &QPushButton::clicked, this, &SelectCoins::onAbort, qontrol::UNIQUE);
+    connect(m_ok, &QPushButton::clicked, this, &SelectCoins::onOk, qontrol::UNIQUE);
+}
+
+auto SelectCoins::view() -> void {
     // Reset parents to avoid deletion
     for (auto *cw : getCoins()) {
         cw->amount()->setParent(nullptr);
@@ -161,8 +160,7 @@ void SelectCoins::view() {
     }
     auto *scroll = new QScrollArea;
     scroll->setWidget(coinsCol);
-    scroll->setHorizontalScrollBarPolicy(
-        Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
 
     uint64_t selectedAmount = 0;
 
@@ -192,12 +190,8 @@ void SelectCoins::view() {
         m_total_label->setVisible(false);
     }
 
-    auto *lastRow = (new qontrol::Row)
-                        ->pushSpacer()
-                        ->push(m_abort)
-                        ->pushSpacer()
-                        ->push(m_ok)
-                        ->pushSpacer();
+    auto *lastRow =
+        (new qontrol::Row)->pushSpacer()->push(m_abort)->pushSpacer()->push(m_ok)->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->push(firstRow)
@@ -242,8 +236,9 @@ auto CoinWidget::outpoint() -> QLineEdit * {
 CoinWidget::CoinWidget(const RustCoin &coin, SelectCoins *modal) {
     m_coin = coin;
     m_checkbox = new QCheckBox();
-    connect(m_checkbox, &QCheckBox::checkStateChanged, modal,
-            [modal]() { modal->checked(); }, qontrol::UNIQUE);
+    connect(
+        m_checkbox, &QCheckBox::checkStateChanged, modal, [modal]() -> void { modal->checked(); },
+        qontrol::UNIQUE);
 
     m_outpoint = new QLineEdit();
     auto op = m_coin.outpoint;
@@ -263,31 +258,29 @@ CoinWidget::CoinWidget(const RustCoin &coin, SelectCoins *modal) {
     m_value->setEnabled(false);
 }
 
-auto SelectCoins::sort(const QList<CoinWidget *> &coins)
-    -> QList<CoinWidget *> {
+auto SelectCoins::sort(const QList<CoinWidget *> &coins) -> QList<CoinWidget *> {
     QList<CoinWidget *> sortedCoins = coins;
 
     bool sortAscendingAmount = m_value_up->isChecked();
     bool sortDescendingAmount = m_value_down->isChecked();
 
     if (sortAscendingAmount) {
-        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) {
+        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) -> bool {
             return a->coin().value < b->coin().value;
         });
     } else if (sortDescendingAmount) {
-        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) {
+        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) -> bool {
             return a->coin().value > b->coin().value;
         });
     } else {
-        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) {
+        std::ranges::sort(sortedCoins, [](CoinWidget *a, CoinWidget *b) -> bool {
             return a->coin().outpoint < b->coin().outpoint;
         });
     }
     return sortedCoins;
 }
 
-auto SelectCoins::filter(const QList<CoinWidget *> &coins)
-    -> QList<CoinWidget *> {
+auto SelectCoins::filter(const QList<CoinWidget *> &coins) -> QList<CoinWidget *> {
     if (!m_label_filter->text().isEmpty()) {
         auto filtered = QList<CoinWidget *>();
         for (auto *coin : coins) {
@@ -301,7 +294,7 @@ auto SelectCoins::filter(const QList<CoinWidget *> &coins)
     return coins;
 }
 
-void SelectCoins::applyFilter() {
+auto SelectCoins::applyFilter() -> void {
     int cursorPos = m_label_filter->cursorPosition();
 
     view();
@@ -312,14 +305,15 @@ void SelectCoins::applyFilter() {
 
 SelectCoins::SelectCoins(const QList<RustCoin> &coins) {
     init(coins);
+    doConnect();
     view();
 }
 
-auto CoinWidget::setCheckable(bool checkable) {
+auto CoinWidget::setCheckable(bool checkable) -> void {
     m_checkbox->setCheckable(checkable);
 }
 
-void SelectCoins::checked() {
+auto SelectCoins::checked() -> void {
     int checked = 0;
     for (auto *cw : m_coins) {
         if (cw->isChecked()) {
@@ -335,7 +329,7 @@ void SelectCoins::checked() {
     view();
 }
 
-void CoinWidget::setChecked(bool checked) {
+auto CoinWidget::setChecked(bool checked) -> void {
     m_checkbox->setChecked(checked);
 }
 

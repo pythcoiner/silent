@@ -1,10 +1,7 @@
 #pragma once
 
-#include "AccountController.h"
 #include <Qontrol>
-#include <cstdint>
 #include <optional>
-#include <qpushbutton.h>
 #include <qtablewidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -24,13 +21,13 @@ signals:
     void coinsUpdated();
 
 public slots:
-    void recvPayload(const CoinState &state);
-    void onLabelEdited(QTableWidgetItem *item);
+    auto recvPayload(const CoinState &state) -> void;
+    auto onLabelEdited(QTableWidgetItem *item) -> void;
 
 protected:
-    void init() override;
-    void doConnect() override;
-    void view() override;
+    auto init() -> void override;
+    auto doConnect() -> void override;
+    auto view() -> void override;
 
 private:
     CoinState m_state;

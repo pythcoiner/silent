@@ -1,7 +1,9 @@
 #pragma once
 
-#include <Qontrol>
 #include <QString>
+#include <Qontrol>
+#include <qlabel.h>
+#include <qpushbutton.h>
 
 class ConfirmDelete : public qontrol::Modal {
     Q_OBJECT
@@ -13,6 +15,12 @@ signals:
     void confirmed(const QString &name);
 
 private:
+    auto init() -> void;
+    auto doConnect() -> void;
+    auto view() -> void;
+
     QString m_name;
-    void initUI();
+    QLabel *m_label = nullptr;
+    QPushButton *m_cancel_btn = nullptr;
+    QPushButton *m_delete_btn = nullptr;
 };

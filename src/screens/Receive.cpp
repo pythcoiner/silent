@@ -1,11 +1,10 @@
 #include "Receive.h"
 #include "AccountController.h"
-#include "common.h"
-#include <Qontrol>
+#include "utils.h"
 #include <QApplication>
 #include <QClipboard>
+#include <Qontrol>
 #include <qlabel.h>
-#include <qlineedit.h>
 #include <qpushbutton.h>
 
 namespace screen {
@@ -17,19 +16,19 @@ Receive::Receive(AccountController *ctrl) {
     this->view();
 }
 
-void Receive::init() {
+auto Receive::init() -> void {
     // Get SP address from controller
     if (m_controller != nullptr) {
         m_sp_address = m_controller->getSpAddress();
     }
 }
 
-void Receive::doConnect() {
+auto Receive::doConnect() -> void {
 }
 
-void Receive::view() {
-    auto *addr_label = new QLabel("Silent Payment Address:");
-    addr_label->setFixedWidth(200);
+auto Receive::view() -> void {
+    auto *addrLabel = new QLabel("Silent Payment Address:");
+    addrLabel->setFixedWidth(200);
 
     // Display the SP address (large, copyable)
     auto addrQStr = QString(m_sp_address.c_str());
@@ -41,19 +40,12 @@ void Receive::view() {
     addrDisplay->setFont(f);
 
     m_btn_copy = new QPushButton("Copy");
-    connect(m_btn_copy, &QPushButton::clicked, [addrQStr]() {
-        QApplication::clipboard()->setText(addrQStr);
-    });
+    connect(m_btn_copy, &QPushButton::clicked,
+            [addrQStr]() -> void { QApplication::clipboard()->setText(addrQStr); });
 
-    auto *addrRow = (new qontrol::Row)
-                        ->push(addr_label)
-                        ->push(addrDisplay)
-                        ->pushSpacer();
+    auto *addrRow = (new qontrol::Row)->push(addrLabel)->push(addrDisplay)->pushSpacer();
 
-    auto *btnRow = (new qontrol::Row)
-                       ->pushSpacer()
-                       ->push(m_btn_copy)
-                       ->pushSpacer();
+    auto *btnRow = (new qontrol::Row)->pushSpacer()->push(m_btn_copy)->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->pushSpacer(50)
