@@ -134,6 +134,8 @@ mod ffi {
         pub is_ok: bool,
         /// Error message (empty if is_ok is true).
         pub error: String,
+        /// Normalized URL that successfully connected (with scheme).
+        pub url: String,
         /// Network reported by the backend.
         pub network: Network,
         /// Current block height.
@@ -353,9 +355,10 @@ pub fn notification_to_string(notif: &Notification) -> String {
 /// Query backend info. Returns a BackendInfo with is_ok=false on error.
 pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
     match bwk_sp::backend_info(blindbit_url) {
-        Ok(info) => BackendInfo {
+        Ok((info, url)) => BackendInfo {
             is_ok: true,
             error: String::new(),
+            url,
             network: info.network.into(),
             height: info.height.to_consensus_u32(),
             tweaks_only: info.tweaks_only,
@@ -366,6 +369,7 @@ pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
         Err(e) => BackendInfo {
             is_ok: false,
             error: e.to_string(),
+            url: String::new(),
             network: Network::Regtest,
             height: 0,
             tweaks_only: false,

@@ -186,6 +186,8 @@ auto CreateAccount::onBackendInfoReady(BackendInfo info) -> void {
     m_backend_verified = networkMatch;
     onUpdateCreateButton();
 
+    m_blindbit_input->setText(QString::fromStdString(std::string(info.url.c_str())));
+
     auto yn = [](bool v) -> const char * { return v ? "Yes" : "No"; };
     QString msg =
         QString("Network: %1%2\n"
