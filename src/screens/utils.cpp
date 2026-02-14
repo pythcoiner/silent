@@ -30,11 +30,21 @@ auto frame(QWidget *widget) -> QWidget * {
 
 auto toBitcoin(uint64_t sats, bool with_unit) -> QString {
     double bitcoinValue = static_cast<double>(sats) / SATS;
-    auto btcStr = QString::number(bitcoinValue);
+    auto btcStr = QString::number(bitcoinValue, 'f', 8);
     if (with_unit) {
         return btcStr + " BTC";
     }
     return btcStr;
+}
+
+auto shortenOutpoint(const QString &outpoint) -> QString {
+    int colonIdx = outpoint.lastIndexOf(':');
+    if (colonIdx < 12) {
+        return outpoint;
+    }
+    QString txid = outpoint.left(colonIdx);
+    QString vout = outpoint.mid(colonIdx);
+    return txid.left(6) + "..." + txid.right(6) + vout;
 }
 
 auto coinsCount(uint64_t count) -> QString {

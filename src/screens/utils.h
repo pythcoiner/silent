@@ -24,6 +24,7 @@ auto margin(QWidget *widget) -> QWidget *;
 auto margin(QWidget *widget, int margin) -> QWidget *;
 auto frame(QWidget *widget) -> QWidget *;
 auto toBitcoin(uint64_t sats, bool with_unit = true) -> QString;
+auto shortenOutpoint(const QString &outpoint) -> QString;
 auto coinsCount(uint64_t count) -> QString;
 
 class Frame : public QFrame {

@@ -26,11 +26,11 @@ auto MainWindow::initWindow() -> void {
 
     setCentralWidget(m_tab);
 
-    // Connect tab close signal
     connect(m_tab, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested,
             qontrol::UNIQUE);
 
     m_tab->setTabsClosable(true);
+    m_tab->setMovable(true);
     m_init = true;
 }
 
@@ -50,25 +50,29 @@ auto MainWindow::insertAccount(AccountWidget *account, const QString &name) -> v
 }
 
 auto MainWindow::removeAccount(const QString &name) -> void {
-    auto exists = false;
-    int index = 0;
+    // Find the account in m_tabs by name
+    int listIndex = -1;
+    AccountWidget *widget = nullptr;
     for (int i = 0; i < m_tabs.size(); ++i) {
         if (m_tabs.at(i).first == name) {
-            index = i;
-            exists = true;
+            listIndex = i;
+            widget = m_tabs.at(i).second;
             break;
         }
     }
 
-    if (!exists)
+    if (listIndex < 0 || widget == nullptr) {
         return;
+    }
 
-    // Remove widget from tab widget
-    m_tab->removeTab(index);
+    // Find the visual tab index by widget
+    int tabIndex = m_tab->indexOf(widget);
+    if (tabIndex >= 0) {
+        m_tab->removeTab(tabIndex);
+    }
 
-    // Delete the widget
-    auto *widget = m_tabs.at(index).second;
-    m_tabs.removeAt(index);
+    // Remove from list and delete widget
+    m_tabs.removeAt(listIndex);
     widget->deleteLater();
 }
 
@@ -100,10 +104,17 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void {
 }
 
 auto MainWindow::onTabCloseRequested(int index) -> void {
-    if (index >= 0 && index < m_tabs.size()) {
-        auto name = m_tabs.at(index).first;
-        auto *controller = AppController::get();
-        controller->removeAccount(name);
+    auto *widget = qobject_cast<AccountWidget *>(m_tab->widget(index));
+    if (widget == nullptr) {
+        return; // Menu tab or invalid
+    }
+
+    // Find account name by widget
+    for (const auto &tab : m_tabs) {
+        if (tab.second == widget) {
+            AppController::get()->removeAccount(tab.first);
+            return;
+        }
     }
 }
 

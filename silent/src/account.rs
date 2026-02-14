@@ -7,7 +7,7 @@ use std::sync::mpsc;
 use bwk_sp::spdk_core::{
     self, bip39, RecipientAddress, SilentPaymentUnsignedTransaction, SpClient,
 };
-use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification, ScanMode};
+use bwk_sp::{Account as SpAccount, AccountError, Fees, Notification as SpNotification, ScanMode};
 
 use crate::config::Config;
 use crate::ffi::{
@@ -340,6 +340,7 @@ impl Account {
             output_total: 0,
             input_count: 0,
             error,
+            selected_outpoints: Vec::new(),
         };
 
         let Some(inner) = &self.inner else {
@@ -368,11 +369,16 @@ impl Account {
         }
 
         let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
+        let fees = if tx_template.fee > 0 {
+            Fees::Sats(tx_template.fee)
+        } else {
+            Fees::MilliSatsVb((tx_template.fee_rate.max(1.0) * 1000.0) as u64)
+        };
 
         let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
             Self::create_transaction_with_manual_selection(
                 inner,
-                tx_template.input_outpoints,
+                tx_template.input_outpoints.clone(),
                 recipients,
                 max_addr,
                 has_max,
@@ -384,9 +390,9 @@ impl Account {
             }
             inner
                 .account
-                .create_drain_transaction(max_addr.unwrap(), fee_rate)
+                .create_drain_transaction(max_addr.unwrap(), fees.clone())
         } else {
-            inner.account.create_transaction(recipients, fee_rate)
+            inner.account.create_transaction(recipients, fees)
         };
 
         match unsigned_tx_result {
@@ -410,6 +416,18 @@ impl Account {
                     vbytes * 4
                 };
 
+                let selected_outpoints: Vec<String> = unsigned_tx
+                    .selected_utxos
+                    .iter()
+                    .map(|(outpoint, _)| outpoint.to_string())
+                    .collect();
+
+                log::debug!(
+                    "simulate_transaction: selected {} outpoints: {:?}",
+                    selected_outpoints.len(),
+                    selected_outpoints
+                );
+
                 TransactionSimulation {
                     is_valid: true,
                     fee,
@@ -418,6 +436,7 @@ impl Account {
                     output_total,
                     input_count,
                     error: String::new(),
+                    selected_outpoints,
                 }
             }
             Err(e) => err_sim(e.to_string()),
@@ -459,11 +478,16 @@ impl Account {
         }
 
         let fee_rate = FeeRate::from_sat_per_vb(tx_template.fee_rate.max(1.0) as f32);
+        let fees = if tx_template.fee > 0 {
+            Fees::Sats(tx_template.fee)
+        } else {
+            Fees::MilliSatsVb((tx_template.fee_rate.max(1.0) * 1000.0) as u64)
+        };
 
         let unsigned_tx_result = if !tx_template.input_outpoints.is_empty() {
             Self::create_transaction_with_manual_selection(
                 inner,
-                tx_template.input_outpoints,
+                tx_template.input_outpoints.clone(),
                 recipients,
                 max_addr,
                 has_max,
@@ -475,9 +499,9 @@ impl Account {
             }
             inner
                 .account
-                .create_drain_transaction(max_addr.unwrap(), fee_rate)
+                .create_drain_transaction(max_addr.unwrap(), fees.clone())
         } else {
-            inner.account.create_transaction(recipients, fee_rate)
+            inner.account.create_transaction(recipients, fees)
         };
 
         let finalized_result = unsigned_tx_result

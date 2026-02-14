@@ -220,6 +220,7 @@ fn test_send_receive_sp_flow() {
             max: false,
         }],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: vec![],
     };
 

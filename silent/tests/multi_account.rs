@@ -210,6 +210,7 @@ fn test_insufficient_funds_error() {
             max: false,
         }],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: vec![],
     };
 
@@ -240,6 +241,7 @@ fn test_invalid_sp_address_error() {
                 max: false,
             }],
             fee_rate: 1.0,
+            fee: 0,
             input_outpoints: vec![],
         };
 
@@ -315,6 +317,7 @@ fn test_zero_balance_send_attempt() {
             max: false,
         }],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: vec![],
     };
 
@@ -352,6 +355,7 @@ fn test_dust_output_detection() {
                 max: false,
             }],
             fee_rate: 1.0,
+            fee: 0,
             input_outpoints: vec![],
         };
 
@@ -412,6 +416,7 @@ fn test_max_send_entire_balance() {
             max: true,
         }],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: vec![],
     };
 
@@ -457,6 +462,7 @@ fn test_multiple_outputs_single_transaction() {
             },
         ],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: vec![],
     };
 
@@ -546,6 +552,7 @@ fn test_manual_coin_selection() {
             max: false,
         }],
         fee_rate: 1.0,
+        fee: 0,
         input_outpoints: selected_outpoints.clone(),
     };
 

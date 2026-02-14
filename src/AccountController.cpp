@@ -24,7 +24,7 @@ auto AccountController::init(const QString &account) -> void {
     auto acc = new_account(rust::String(account.toStdString()));
     if (!acc->is_ok()) {
         qCritical() << "Failed to create account:" << account
-                     << QString::fromStdString(std::string(acc->get_error().c_str()));
+                    << QString::fromStdString(std::string(acc->get_error().c_str()));
         return;
     }
     m_account = std::make_optional(std::move(acc));
@@ -94,14 +94,14 @@ auto AccountController::pollNotifications() -> void {
                 uint32_t height = parts[0].toUInt(&ok1);
                 uint32_t tip = parts[1].toUInt(&ok2);
                 if (ok1 && ok2) {
-                    qDebug() << "AccountController: Scan progress" << height << "/" << tip;
+                    // qDebug() << "AccountController: Scan progress" << height << "/" << tip;
                     emit scanProgress(height, tip);
                 } else {
-                    qWarning() << "Failed to parse scan progress payload:" << payload;
+                    // qWarning() << "Failed to parse scan progress payload:" << payload;
                     emit scanProgress(0, 0);
                 }
             } else {
-                qWarning() << "Invalid scan progress payload format:" << payload;
+                // qWarning() << "Invalid scan progress payload format:" << payload;
                 emit scanProgress(0, 0);
             }
             break;
@@ -112,37 +112,37 @@ auto AccountController::pollNotifications() -> void {
             break;
         case NotificationFlag::FailStartScanning: {
             auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            qWarning() << "AccountController: Failed to start scanning:" << payload;
+            // qWarning() << "AccountController: Failed to start scanning:" << payload;
             emit scanError(notif.payload);
             break;
         }
         case NotificationFlag::FailScan: {
             auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            qWarning() << "AccountController: Scan failed:" << payload;
+            // qWarning() << "AccountController: Scan failed:" << payload;
             emit scanError(notif.payload);
             break;
         }
         case NotificationFlag::StartingScan:
-            qDebug() << "AccountController: Starting scan";
+            // qDebug() << "AccountController: Starting scan";
             m_scanner_running = true;
             emit scannerStateChanged(true);
             break;
         case NotificationFlag::ScanStarted: {
             auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            qDebug() << "AccountController: Scan started, range:" << payload;
+            // qDebug() << "AccountController: Scan started, range:" << payload;
             m_scanner_running = true;
             emit scannerStateChanged(true);
             break;
         }
         case NotificationFlag::StoppingScan:
-            qDebug() << "AccountController: Stopping scan";
+            // qDebug() << "AccountController: Stopping scan";
             break;
         case NotificationFlag::ScanCompleted:
-            qDebug() << "AccountController: Scan completed";
+            // qDebug() << "AccountController: Scan completed";
             pollCoins();
             break;
         case NotificationFlag::ScanStopped:
-            qDebug() << "AccountController: Scanner stopped";
+            // qDebug() << "AccountController: Scanner stopped";
             m_scanner_running = false;
             emit scannerStateChanged(false);
             break;
@@ -151,7 +151,7 @@ auto AccountController::pollNotifications() -> void {
             bool ok = false;
             uint32_t tipHeight = payload.toUInt(&ok);
             if (ok) {
-                qDebug() << "AccountController: Waiting for blocks at tip" << tipHeight;
+                // qDebug() << "AccountController: Waiting for blocks at tip" << tipHeight;
                 emit waitingForBlocks(tipHeight);
             }
             break;
@@ -160,12 +160,12 @@ auto AccountController::pollNotifications() -> void {
             auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
             auto parts = payload.split(",");
             if (parts.size() == 2) {
-                qDebug() << "AccountController: New blocks" << parts[0] << "->" << parts[1];
+                // qDebug() << "AccountController: New blocks" << parts[0] << "->" << parts[1];
             }
             break;
         }
         default:
-            qDebug() << "AccountController: Unknown notification type";
+            // qDebug() << "AccountController: Unknown notification type";
             break;
         }
 

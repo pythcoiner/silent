@@ -30,8 +30,8 @@ protected:
     auto view() -> void override;
 
 private:
-    CoinState m_state;
-    rust::Vec<RustCoin> m_coins;
+    CoinState m_state{};
+    rust::Vec<RustCoin> m_coins{};
     QWidget *m_main_widget = nullptr;
     QWidget *m_confirmed_row = nullptr;
     QWidget *m_unconfirmed_row = nullptr;

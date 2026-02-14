@@ -114,6 +114,21 @@ The scanner runs in a background thread and sends `SpNotification` values throug
 wrapper — never blocks. The `Poll` type encapsulates Ok/None/Err states with
 getter methods callable from C++.
 
+## C++: Class Member Organization
+
+**Section order in class declarations:**
+1. `public:` — constructors, public methods
+2. `signals:` — Qt signals (if applicable)
+3. `public slots:` — Qt slot methods
+4. `protected:` — overridden methods, then non-virtual methods (no private methods)
+5. `private:` — member variables only (no methods)
+
+**Private section contains only members, no methods.** Non-public helper methods go in
+`protected`. This keeps the private section focused on data.
+
+**Member variables are declared last within private.** Order logically by functionality,
+not alphabetically.
+
 ## C++: Naming Conventions
 
 | Element | Convention | Example |
@@ -273,20 +288,59 @@ screens:
 Always use `qontrol::Modal`, never `QDialog`. Modals are displayed via
 `AppController::execModal(modal)`.
 
+**Static widgets with conditional visibility.** When content is not dynamic (just
+conditional visibility or state), create the widget in `init()`, store it in a member,
+and hide it by default. Control visibility in slots rather than conditionally creating
+in `view()`:
+```cpp
+// good — create once in init(), toggle visibility
+void init() {
+    m_total_row = (new qontrol::Row)->push(m_total_label)->push(m_total);
+    m_total_row->setVisible(false);
+}
+void updateTotal() {
+    m_total_row->setVisible(hasSelection);
+}
+
+// bad — conditionally create in view()
+void view() {
+    std::optional<QWidget *> totalRow = std::nullopt;
+    if (hasSelection) {
+        totalRow = (new qontrol::Row)->push(...);
+    }
+}
+```
+
 **Signal connections** use `qontrol::UNIQUE` flag to avoid duplicate connections:
 ```cpp
 connect(source, &Source::signal, dest, &Dest::slot, qontrol::UNIQUE);
 ```
 
-**Prefer named slots over lambdas in `connect()`.** Lambdas make signal-slot
-connections harder to read, test, and debug. Extract the callback logic into a named
-slot method instead:
+**Lambdas in `connect()` are FORBIDDEN.** Always create named slots. Lambdas make
+signal-slot connections harder to read, test, and debug. They also prevent using
+`qontrol::UNIQUE` for duplicate connection prevention. The only exception is when
+there is absolutely no other choice (extremely rare). Extract the callback logic
+into a named slot method instead:
 ```cpp
-// good
+// good — named slot
 connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
 
-// bad
+// bad — lambda
 connect(modal, &ConfirmDelete::confirmed, this, [this](const QString &account) { ... });
+```
+
+When a signal needs to trigger actions on multiple objects (e.g., validation + processing),
+connect to a single slot that handles both:
+```cpp
+// good — single slot handles all actions
+connect(m_amount, &QLineEdit::textChanged, screen, &Send::process);
+// process() calls updateOutputValidations() + updateInputsTotal() internally
+
+// bad — lambda to call multiple methods
+connect(m_amount, &QLineEdit::textChanged, [this, screen]() {
+    updateValidation();
+    screen->process();
+});
 ```
 
 **Chain signals to slots for state updates.** When an action (e.g. account deletion)
@@ -308,8 +362,67 @@ auto AppController::deleteAccount(const QString &name) -> void {
     listAccounts(); // wrong: bypasses signal-slot chain
 }
 ```
-Never use `QTimer::singleShot(0, ...)` to work around signal-slot ordering issues —
-restructure the chain instead.
+Never use `QTimer::singleShot(0, ...)` or `QMetaObject::invokeMethod(..., Qt::QueuedConnection)`
+to work around signal-slot ordering issues — restructure the chain instead.
+
+**Don't call `view()` from widget signal handlers.** When a signal handler would trigger
+`view()` which reparents the signaling widget, update state directly instead:
+```cpp
+// bad — reparents checkbox during its own signal handler
+auto SelectCoins::checked() -> void {
+    m_ok->setEnabled(hasChecked());
+    view(); // view() reparents checkboxes → undefined behavior
+}
+
+// good — update display directly without layout rebuild
+auto SelectCoins::checked() -> void {
+    m_ok->setEnabled(hasChecked());
+    updateTotal(); // separate slot for the action
+}
+```
+
+**Extract signal-triggered actions into separate slots.** When a signal handler performs
+an action (update display, calculate state), move that logic into a dedicated slot.
+This improves readability and allows the action to be called from multiple places:
+```cpp
+// good — action logic in dedicated slot
+auto SelectCoins::checked() -> void {
+    m_ok->setEnabled(hasChecked());
+    updateTotal();
+}
+
+auto SelectCoins::updateTotal() -> void {
+    uint64_t total = calculateSelectedAmount();
+    m_total->setText(formatBtc(total));
+    m_total->setVisible(total > 0);
+}
+```
+
+**Early exit with direct action over counting or algorithms.** When checking if any item
+matches a condition, prefer a simple loop with early break and direct action:
+```cpp
+// bad — wasteful counting when you only need to know if any exist
+int count = 0;
+for (auto *cw : m_coins) {
+    if (cw->isChecked()) {
+        count++;
+    }
+}
+m_ok->setEnabled(count > 0);
+
+// ok — but less readable and no performance benefit here
+bool hasChecked = std::ranges::any_of(m_coins, [](auto *cw) { return cw->isChecked(); });
+m_ok->setEnabled(hasChecked);
+
+// preferred — simple loop, early break, direct action
+m_ok->setEnabled(false);
+for (auto *cw : m_coins) {
+    if (cw->isChecked()) {
+        m_ok->setEnabled(true);
+        break;
+    }
+}
+```
 
 **Clang-tidy NOLINT:** slots that clang-tidy suggests could be made static must be
 suppressed with `// NOLINT` — Qt slots must remain non-static member functions.
@@ -452,3 +565,58 @@ assert!(sp_addr.len() >= 100, "SP address should be at least 100 characters, got
 // ===== Wallet Creation and Config Tests =====
 // ===== Error Handling Tests =====
 ```
+
+## C++: Input Validation Pattern
+
+All input fields must provide visual validation feedback to users:
+
+- **Valid input** → green ✓ check mark displayed after field
+- **Invalid input** → red ✗ cross displayed after field
+- **Empty input** → empty placeholder (same width, no mark)
+
+**Important:** The indicator must always occupy its space in the layout to prevent UI
+shifting. Never use `setVisible(false)` — instead clear the text for empty inputs.
+
+**Implementation:**
+
+1. Add a `QLabel *m_indicator` member next to each input field (20px wide, center-aligned)
+2. Connect the input's `textChanged` signal to a validation method
+3. Use the helper function to update indicator state:
+
+```cpp
+static void setValidationIndicator(QLabel *indicator, const QString &text, bool valid) {
+    if (text.isEmpty()) {
+        indicator->setText("");
+        indicator->setStyleSheet("");
+    } else {
+        if (valid) {
+            indicator->setText(QString::fromUtf8("✓"));
+            indicator->setStyleSheet("QLabel { color: green; }");
+        } else {
+            indicator->setText(QString::fromUtf8("✗"));
+            indicator->setStyleSheet("QLabel { color: red; }");
+        }
+    }
+}
+```
+
+**Use Qt validators for input restriction.** When restricting input format (numeric ranges,
+decimal places, etc.), use Qt's built-in validators rather than manual validation logic:
+
+```cpp
+// sats/vb: 3 decimal places max (milli-sats precision)
+auto *validator = new QDoubleValidator(0.001, 1000000.0, 3, m_fee_value);
+validator->setNotation(QDoubleValidator::StandardNotation);
+m_fee_value->setValidator(validator);
+
+// sats: integers only
+m_fee_value->setValidator(new QIntValidator(1, 100000000, m_fee_value));
+```
+
+Available validators: `QIntValidator`, `QDoubleValidator`, `QRegularExpressionValidator`.
+
+**Validation examples:**
+- Address fields: use `::validate_address()` FFI function (returns empty string if valid)
+- Amount fields: `QDoubleValidator` with appropriate range and decimals
+- Fee rate fields: `QDoubleValidator` with 3 decimal places (milli-sats precision)
+- Absolute fee fields: `QIntValidator` (satoshis are integers)

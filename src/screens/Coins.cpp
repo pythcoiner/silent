@@ -98,7 +98,7 @@ auto Coins::view() -> void {
         m_coins = rust::Vec<RustCoin>();
     }
 
-    int rowCount = m_coins.size();
+    int rowCount = static_cast<int>(m_coins.size());
     auto *table = new QTableWidget(rowCount, 4);
     table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto headers = QStringList{"Block Height", "OutPoint", "Label", "Value"};
@@ -135,6 +135,7 @@ auto Coins::view() -> void {
     this->setLayout(boxed->layout());
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Coins::getCoins() -> std::optional<QList<RustCoin>> {
     auto coins = QList<RustCoin>();
     for (const auto &coin : m_coins) {

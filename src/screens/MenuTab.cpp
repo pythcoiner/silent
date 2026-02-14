@@ -115,6 +115,10 @@ auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
             row->setEnabled(false);
         }
 
+        if (!m_account_rows.isEmpty()) {
+            m_accounts_column->pushSpacer(8);
+        }
+
         m_accounts_column->push(row);
         m_account_rows.append(row);
     }

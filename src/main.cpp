@@ -7,7 +7,7 @@ auto main(int argc, char *argv[]) -> int {
     QApplication app(argc, argv);
 
     // Initialize Rust logging (Debug level for verbose output)
-    init_logging(LogLevel::Info);
+    init_logging(LogLevel::Error);
 
     // Initialize application controller
     AppController::init();

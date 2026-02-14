@@ -3,12 +3,12 @@
 #include <Qontrol>
 #include <cstdint>
 #include <optional>
-#include <qabstractbutton.h>
-#include <qbuttongroup.h>
 #include <qcheckbox.h>
+#include <qhash.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
-#include <qradiobutton.h>
+#include <qscrollarea.h>
+#include <qstringlist.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <silent.h>
@@ -22,6 +22,9 @@ class InputW {
 public:
     InputW(const RustCoin &coin);
     auto widget() -> QWidget *;
+    static const int OUTPOINT_WIDTH = 180;
+    static const int LABEL_WIDTH = 420;
+    static const int VALUE_WIDTH = 150;
 
 private:
     QWidget *m_widget = nullptr;
@@ -37,6 +40,10 @@ public:
     auto address() -> QString;
     auto amount() -> std::optional<uint64_t>;
     auto label() -> QString;
+    auto updateAddressValidation() -> void;
+    auto updateAmountValidation() -> void;
+    auto setAmountVisible(bool visible) -> void;
+    auto clearAmount() -> void;
 
 private:
     QLineEdit *m_address = nullptr;
@@ -46,24 +53,10 @@ private:
     QWidget *m_delete_spacer = nullptr;
     QCheckBox *m_max = nullptr;
     QLabel *m_max_label = nullptr;
+    QLabel *m_address_indicator = nullptr;
+    QLabel *m_amount_indicator = nullptr;
+    QWidget *m_amount_spacer = nullptr;
     QWidget *m_widget = nullptr;
-};
-
-class RadioElement {
-public:
-    RadioElement(Send *parent, const QString &label);
-    auto widget() -> qontrol::Row *;
-    auto update() -> void;
-    auto button() -> QAbstractButton *;
-    auto text() -> QString;
-    auto setEnabled(bool enabled) -> void;
-    auto checked() -> bool;
-
-private:
-    QRadioButton *m_button = nullptr;
-    QLineEdit *m_value = nullptr;
-    QLabel *m_label = nullptr;
-    qontrol::Row *m_widget;
 };
 
 class Send : public qontrol::Screen {
@@ -80,14 +73,22 @@ public slots:
     auto onOutputDeleteClicked() -> void;
     auto onOutputMaxToggled() -> void;
     auto clearOutputs() -> void;
-    auto updateRadio() -> void;
+    auto clearInputs() -> void;
+    auto onFeeToggled() -> void;
     auto setBroadcastable(bool broadcastable) -> void;
-    auto addCoins() -> void;
-    auto onCoinsSelected(const QList<RustCoin> &coins) -> void;
+    auto onCoinToggled() -> void;
+    auto onAutoSelectionToggled() -> void;
+    auto updateInputsTotal() -> void;
+    auto updateOutputValidations() -> void;
+    auto updateFeeValidation() -> void;
+    auto updateSelectedCoinsFromSimulation() -> void;
     auto setSpendable(bool spendable) -> void;
     auto process() -> void;
-    auto simulateTransaction() -> void;
     auto sendTransaction() -> void;
+    auto onSendConfirmed() -> void;
+    auto onSignResult(TxResult result) -> void;
+    auto onBroadcastResult(TxResult result) -> void;
+    auto onCoinsUpdated(CoinState state) -> void;
 
 protected:
     auto init() -> void override;
@@ -96,6 +97,9 @@ protected:
     auto outputsView() -> QWidget *;
     auto inputsView() -> QWidget *;
     auto txTemplate() -> std::optional<TransactionTemplate>;
+    auto output() -> QWidget *;
+    auto updateCoinCheckboxes() -> void;
+    auto updateInputsTitle() -> void;
 
 private:
     AccountController *m_controller = nullptr;
@@ -108,22 +112,37 @@ private:
     QWidget *m_outputs_frame = nullptr;
     QWidget *m_inputs_frame = nullptr;
 
-    RadioElement *m_fee_sats_vb = nullptr;
-    QButtonGroup *m_fee_group = nullptr;
+    qontrol::widgets::ToggleSwitch *m_fee_toggle = nullptr;
+    QLineEdit *m_fee_value = nullptr;
+    QLabel *m_fee_label = nullptr;
+    QLabel *m_fee_indicator = nullptr;
+    qontrol::Row *m_fee_row = nullptr;
 
     QLabel *m_warning_label = nullptr;
+    QLabel *m_inputs_title = nullptr;
 
     QPushButton *m_add_output_btn = nullptr;
-    QPushButton *m_select_coins_btn = nullptr;
+    QScrollArea *m_coins_scroll = nullptr;
+
+    qontrol::Row *m_inputs_total_row = nullptr;
+    QLineEdit *m_inputs_total = nullptr;
+    qontrol::Row *m_inputs_min_row = nullptr;
+    QLineEdit *m_inputs_min = nullptr;
+    QCheckBox *m_auto_coin_selection = nullptr;
 
     QPushButton *m_clear_outputs_btn = nullptr;
-    QPushButton *m_simulate_btn = nullptr;
+    QPushButton *m_clear_inputs_btn = nullptr;
     QPushButton *m_send_button = nullptr;
 
-    bool m_broadcastable = false;
-    QList<RustCoin> m_selected_coins;
+    QLabel *m_fee_estimate_label = nullptr;
 
-    auto output() -> QWidget *;
+    bool m_broadcastable = false;
+    std::optional<rust::Box<PsbtResult>> m_psbt_result = std::nullopt;
+    QString m_signed_tx_hex;
+    QList<RustCoin> m_selected_coins;
+    QStringList m_auto_selected_outpoints;
+    QHash<QString, QCheckBox *> m_coin_checkboxes;
+    CoinState m_last_coin_state{};
 };
 
 } // namespace screen

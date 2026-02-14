@@ -1,35 +1,52 @@
 #include "Send.h"
 #include "AccountController.h"
 #include "AppController.h"
-#include "screens/modals/SelectCoins.h"
+#include "modals/ConfirmSend.h"
 #include "utils.h"
+#include <QApplication>
+#include <QDoubleValidator>
+#include <QIntValidator>
+#include <QThread>
 #include <Qontrol>
 #include <algorithm>
 #include <common.h>
 #include <cstdint>
 #include <cstdlib>
 #include <optional>
-#include <qbuttongroup.h>
 #include <qcheckbox.h>
 #include <qcontainerfwd.h>
 #include <qlabel.h>
 #include <qlineedit.h>
-#include <qlogging.h>
 #include <qpushbutton.h>
-#include <qradiobutton.h>
+#include <string>
 
 namespace screen {
 
+static void setValidationIndicator(QLabel *indicator, const QString &text, bool valid) {
+    if (text.isEmpty()) {
+        indicator->setText("");
+        indicator->setStyleSheet("");
+    } else {
+        if (valid) {
+            indicator->setText(QString::fromUtf8("✓"));
+            indicator->setStyleSheet("QLabel { color: green; }");
+        } else {
+            indicator->setText(QString::fromUtf8("✗"));
+            indicator->setStyleSheet("QLabel { color: red; }");
+        }
+    }
+}
+
 InputW::InputW(const RustCoin &coin) {
     auto *outpointLabel = new QLabel(QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size()));
-    outpointLabel->setFixedWidth(300);
+    outpointLabel->setFixedWidth(OUTPOINT_WIDTH);
 
-    auto *valueLabel = new QLabel(toBitcoin(coin.value, false));
-    valueLabel->setFixedWidth(95);
+    auto *valueLabel = new QLabel(toBitcoin(coin.value));
+    valueLabel->setFixedWidth(LABEL_WIDTH);
     valueLabel->setAlignment(Qt::AlignRight);
 
     auto *labelLabel = new QLabel(QString::fromUtf8(coin.label.data(), coin.label.size()));
-    labelLabel->setFixedWidth(2 * INPUT_WIDTH);
+    labelLabel->setFixedWidth(VALUE_WIDTH);
 
     auto *row = (new qontrol::Row)
                     ->push(outpointLabel)
@@ -50,7 +67,10 @@ OutputW::OutputW(Send *screen, int id) {
     m_address = new QLineEdit;
     m_address->setFixedWidth(300);
     m_address->setPlaceholderText("Silent Payment Address");
-    QObject::connect(m_address, &QLineEdit::editingFinished, screen, &Send::process);
+
+    m_address_indicator = new QLabel();
+    m_address_indicator->setFixedWidth(20);
+    m_address_indicator->setAlignment(Qt::AlignCenter);
 
     m_delete = new QPushButton();
     QIcon closeIcon = m_delete->style()->standardIcon(QStyle::SP_DialogCloseButton);
@@ -64,7 +84,14 @@ OutputW::OutputW(Send *screen, int id) {
     m_amount = new QLineEdit;
     m_amount->setFixedWidth(95);
     m_amount->setPlaceholderText("0.002 BTC");
-    QObject::connect(m_amount, &QLineEdit::editingFinished, screen, &Send::process);
+
+    m_amount_indicator = new QLabel();
+    m_amount_indicator->setFixedWidth(20);
+    m_amount_indicator->setAlignment(Qt::AlignCenter);
+
+    m_amount_spacer = new QWidget;
+    m_amount_spacer->setFixedWidth(95 + 20);  // amount + indicator width
+    m_amount_spacer->setVisible(false);
 
     m_label = new QLineEdit;
     m_label->setFixedWidth(2 * INPUT_WIDTH);
@@ -84,12 +111,19 @@ OutputW::OutputW(Send *screen, int id) {
     f.setPointSize(f.pointSize() + 4);
     m_max_label->setFont(f);
 
+    // Connect to process() which handles validation updates
+    QObject::connect(m_address, &QLineEdit::textChanged, screen, &Send::process);
+    QObject::connect(m_amount, &QLineEdit::textChanged, screen, &Send::process);
+
     auto *addrRow = (new qontrol::Row)
                         ->push(m_delete)
                         ->push(m_delete_spacer)
                         ->push(m_address)
+                        ->push(m_address_indicator)
                         ->pushSpacer(H_SPACER)
                         ->push(m_amount)
+                        ->push(m_amount_indicator)
+                        ->push(m_amount_spacer)
                         ->pushSpacer(H_SPACER)
                         ->push(m_max)
                         ->pushSpacer(H_SPACER)
@@ -129,44 +163,35 @@ auto OutputW::enableMax(bool max) -> void {
     m_max->setChecked(false);
     m_max->setVisible(max);
     m_max_label->setVisible(max);
+    setAmountVisible(true);
+}
+
+auto OutputW::setAmountVisible(bool visible) -> void {
+    m_amount->setVisible(visible);
+    m_amount_indicator->setVisible(visible);
+    m_amount_spacer->setVisible(!visible);
+}
+
+auto OutputW::clearAmount() -> void {
+    m_amount->clear();
 }
 
 auto OutputW::isMax() -> bool {
     return m_max->isChecked();
 }
 
-RadioElement::RadioElement(Send *parent, const QString &label) {
-    m_button = new QRadioButton(parent);
-    QObject::connect(m_button, &QAbstractButton::toggled, parent, &Send::process);
-    m_value = new QLineEdit;
-    m_value->setFixedWidth(100);
-    QObject::connect(m_value, &QLineEdit::editingFinished, parent, &Send::process);
-    m_label = new QLabel(label);
-
-    auto *row = (new qontrol::Row)
-                    ->push(m_button)
-                    ->pushSpacer(V_SPACER)
-                    ->push(m_value)
-                    ->pushSpacer(V_SPACER)
-                    ->push(m_label)
-                    ->pushSpacer(4 * V_SPACER);
-    m_widget = row;
-}
-
-auto RadioElement::button() -> QAbstractButton * {
-    return m_button;
-}
-
-auto RadioElement::update() -> void {
-    m_value->setEnabled(m_button->isChecked());
-}
-
-auto RadioElement::widget() -> qontrol::Row * {
-    return m_widget;
-}
-
-auto Send::updateRadio() -> void {
-    m_fee_sats_vb->update();
+auto Send::onFeeToggled() -> void {
+    if (m_fee_toggle->isChecked()) {
+        m_fee_label->setText("sats/vb");
+        // sats/vb: 3 decimal places max (milli-sats precision)
+        auto *validator = new QDoubleValidator(0.001, 1000000.0, 3, m_fee_value);
+        validator->setNotation(QDoubleValidator::StandardNotation);
+        m_fee_value->setValidator(validator);
+    } else {
+        m_fee_label->setText("sats");
+        // sats: integers only
+        m_fee_value->setValidator(new QIntValidator(1, 100000000, m_fee_value));
+    }
     process();
 }
 
@@ -176,7 +201,7 @@ Send::Send(AccountController *ctrl) {
     this->doConnect();
     this->addOutput();
     this->view();
-    this->updateRadio();
+    this->onFeeToggled();
     this->setBroadcastable(false);
 }
 
@@ -185,31 +210,103 @@ auto Send::init() -> void {
     m_inputs_column = (new qontrol::Column);
 
     m_add_output_btn = new QPushButton("+ Add an Output");
-    m_select_coins_btn = new QPushButton("Select Coins");
-    m_simulate_btn = new QPushButton("Simulate");
     m_send_button = new QPushButton("Send");
     m_clear_outputs_btn = new QPushButton("Clear");
 
-    m_fee_sats_vb = new RadioElement(this, "sats/vb");
-    m_fee_group = new QButtonGroup;
-    m_fee_group->addButton(m_fee_sats_vb->button());
+    m_fee_estimate_label = new QLabel();
+    m_fee_estimate_label->setVisible(false);
+
+    // Fee toggle: OFF = sats (absolute), ON = sats/vb (rate)
+    m_fee_toggle = new qontrol::widgets::ToggleSwitch;
+    m_fee_toggle->setChecked(true); // Default to sats/vb mode
+    m_fee_toggle->setFixedSize(40, 20);
+
+    m_fee_value = new QLineEdit;
+    m_fee_value->setFixedWidth(100);
+    m_fee_value->setText("1");
+
+    m_fee_indicator = new QLabel;
+    m_fee_indicator->setFixedWidth(20);
+    m_fee_indicator->setAlignment(Qt::AlignCenter);
+
+    m_fee_label = new QLabel("sats/vb");
+    m_fee_label->setFixedWidth(m_fee_label->fontMetrics().horizontalAdvance("sats/vb") + 5);
+
+    m_fee_row = (new qontrol::Row)
+                    ->push(m_fee_toggle)
+                    ->pushSpacer(V_SPACER)
+                    ->push(m_fee_value)
+                    ->push(m_fee_indicator)
+                    ->pushSpacer(V_SPACER)
+                    ->push(m_fee_label)
+                    ->pushSpacer();
 
     m_warning_label = new QLabel();
     m_warning_label->setVisible(false);
 
-    m_fee_sats_vb->button()->setChecked(true);
+    // Calculate label width to align with coin value column
+    // checkbox + spacer + outpoint + spacer + label = total label width
+    int labelWidth = 20 + H_SPACER + InputW::OUTPOINT_WIDTH + H_SPACER + InputW::LABEL_WIDTH;
+
+    // Inputs total row
+    auto *totalLabel = new QLabel("Total selected:");
+    totalLabel->setFixedWidth(labelWidth);
+    totalLabel->setAlignment(Qt::AlignRight);
+    m_inputs_total = new QLineEdit();
+    m_inputs_total->setFixedWidth(InputW::VALUE_WIDTH);
+    m_inputs_total->setAlignment(Qt::AlignRight);
+    m_inputs_total->setEnabled(false);
+    m_inputs_total_row = (new qontrol::Row)
+                             ->push(totalLabel)
+                             ->pushSpacer(H_SPACER)
+                             ->push(m_inputs_total)
+                             ->pushSpacer();
+    m_inputs_total_row->setVisible(false);
+
+    // Inputs minimum row
+    auto *minLabel = new QLabel("Amount to select:");
+    minLabel->setFixedWidth(labelWidth);
+    minLabel->setAlignment(Qt::AlignRight);
+    m_inputs_min = new QLineEdit();
+    m_inputs_min->setFixedWidth(InputW::VALUE_WIDTH);
+    m_inputs_min->setAlignment(Qt::AlignRight);
+    m_inputs_min->setEnabled(false);
+    m_inputs_min_row =
+        (new qontrol::Row)->push(minLabel)->pushSpacer(H_SPACER)->push(m_inputs_min)->pushSpacer();
+    m_inputs_min_row->setVisible(false);
+
+    m_auto_coin_selection = new QCheckBox("Auto coin selection");
+    m_auto_coin_selection->setChecked(true);
+
+    m_clear_inputs_btn = new QPushButton("Clear");
+
+    m_inputs_title = new QLabel("Select Inputs");
+    auto titleFont = m_inputs_title->font();
+    titleFont.setPointSize(15);
+    m_inputs_title->setFont(titleFont);
 }
 
 auto Send::doConnect() -> void {
     connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput, qontrol::UNIQUE);
-    connect(m_select_coins_btn, &QPushButton::clicked, this, &Send::addCoins, qontrol::UNIQUE);
-    connect(m_simulate_btn, &QPushButton::clicked, this, &Send::simulateTransaction,
-            qontrol::UNIQUE);
     connect(m_send_button, &QPushButton::clicked, this, &Send::sendTransaction, qontrol::UNIQUE);
     connect(m_clear_outputs_btn, &QPushButton::clicked, this, &Send::clearOutputs, qontrol::UNIQUE);
+    connect(m_clear_inputs_btn, &QPushButton::clicked, this, &Send::clearInputs, qontrol::UNIQUE);
+    connect(m_auto_coin_selection, &QCheckBox::toggled, this, &Send::onAutoSelectionToggled,
+            qontrol::UNIQUE);
+    connect(m_controller, &AccountController::updateCoins, this, &Send::onCoinsUpdated,
+            qontrol::UNIQUE);
+    connect(m_fee_toggle, &QCheckBox::toggled, this, &Send::onFeeToggled, qontrol::UNIQUE);
+    connect(m_fee_value, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
 }
 
 auto Send::view() -> void {
+    // Save focus state before rebuild (QPointer auto-nulls if widget is deleted)
+    QPointer<QWidget> focusedWidget = QApplication::focusWidget();
+    int cursorPos = 0;
+    if (auto *lineEdit = qobject_cast<QLineEdit *>(focusedWidget.data())) {
+        cursorPos = lineEdit->cursorPosition();
+    }
+
     auto *oldOutputs = m_outputs_frame;
     m_outputs_frame = frame(outputsView());
     delete oldOutputs;
@@ -218,13 +315,21 @@ auto Send::view() -> void {
     m_inputs_frame = frame(inputsView());
     delete oldInputs;
 
-    auto *row = (new qontrol::Row)->push(m_inputs_frame)->pushSpacer(20)->push(m_outputs_frame);
+    auto *col = (new qontrol::Column)->push(m_inputs_frame)->pushSpacer(20)->push(m_outputs_frame);
 
     auto *oldWidget = m_main_widget;
-    m_main_widget = margin(row, 10);
+    m_main_widget = margin(col, 10);
     delete oldWidget;
     delete this->layout();
     this->setLayout(m_main_widget->layout());
+
+    // Restore focus state after rebuild (QPointer is null if widget was deleted)
+    if (!focusedWidget.isNull()) {
+        focusedWidget->setFocus();
+        if (auto *lineEdit = qobject_cast<QLineEdit *>(focusedWidget.data())) {
+            lineEdit->setCursorPosition(cursorPos);
+        }
+    }
 }
 
 auto Send::outputsView() -> QWidget * {
@@ -243,26 +348,26 @@ auto Send::outputsView() -> QWidget * {
     }
     delete oldColumn;
 
-    auto *addOutputRow = (new qontrol::Row)
-                             ->pushSpacer()
-                             ->push(m_add_output_btn)
-                             ->pushSpacer()
-                             ->push(m_select_coins_btn)
-                             ->pushSpacer();
+    auto *addOutputRow = (new qontrol::Row)->pushSpacer()->push(m_add_output_btn)->pushSpacer();
 
     auto *lastRow = (new qontrol::Row)
                         ->pushSpacer()
                         ->push(m_clear_outputs_btn)
                         ->pushSpacer()
-                        ->push(m_simulate_btn)
                         ->push(m_send_button)
                         ->pushSpacer();
 
-    auto *feeRow = (new qontrol::Row)->merge(m_fee_sats_vb->widget())->pushSpacer();
+    m_fee_row->setParent(nullptr);
+    m_fee_estimate_label->setParent(nullptr);
+    auto *feeRow = (new qontrol::Row)
+                       ->merge(m_fee_row)
+                       ->pushSpacer(H_SPACER)
+                       ->push(m_fee_estimate_label)
+                       ->pushSpacer();
 
     auto *warningRow = (new qontrol::Row)->push(m_warning_label)->pushSpacer();
 
-    auto *title = new QLabel("Send Transaction");
+    auto *title = new QLabel("Recipients");
     auto font = title->font();
     font.setPointSize(15);
     title->setFont(font);
@@ -286,25 +391,103 @@ auto Send::outputsView() -> QWidget * {
 }
 
 auto Send::inputsView() -> QWidget * {
-    auto *oldColumn = m_inputs_column;
-    m_inputs_column = new qontrol::Column;
+    auto availableCoins = m_controller->getCoins();
 
-    // Display selected coins as inputs
-    for (const auto &coin : m_selected_coins) {
-        auto *input = new InputW(coin);
-        m_inputs_column->push(input->widget());
+    // Unparent persistent rows
+    m_inputs_total_row->setParent(nullptr);
+    m_inputs_min_row->setParent(nullptr);
+
+    // Clear old checkbox references
+    m_coin_checkboxes.clear();
+
+    bool autoMode = m_auto_coin_selection->isChecked();
+
+    auto *coinsColumn = new qontrol::Column;
+    for (const auto &coin : availableCoins) {
+        auto *checkbox = new QCheckBox();
+        QString outpoint = QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size());
+        checkbox->setProperty("outpoint", outpoint);
+        checkbox->setEnabled(!autoMode);
+
+        // Store reference for later updates
+        m_coin_checkboxes.insert(outpoint, checkbox);
+
+        // Determine selection state based on mode
+        bool isSelected = false;
+        if (autoMode) {
+            // In auto mode, use the auto-selected outpoints from last simulation
+            isSelected = m_auto_selected_outpoints.contains(outpoint);
+        } else {
+            // In manual mode, use m_selected_coins
+            for (const auto &selected : m_selected_coins) {
+                if (selected.outpoint == coin.outpoint) {
+                    isSelected = true;
+                    break;
+                }
+            }
+        }
+        checkbox->setChecked(isSelected);
+        connect(checkbox, &QCheckBox::checkStateChanged, this, &Send::onCoinToggled,
+                qontrol::UNIQUE);
+
+        auto *outpointField = new QLineEdit(shortenOutpoint(outpoint));
+        outpointField->setFixedWidth(InputW::OUTPOINT_WIDTH);
+        outpointField->setEnabled(false);
+
+        QString label = QString::fromUtf8(coin.label.data(), coin.label.size());
+        auto *labelField = new QLineEdit(label);
+        labelField->setFixedWidth(InputW::LABEL_WIDTH);
+        labelField->setEnabled(false);
+
+        auto *valueField = new QLineEdit(toBitcoin(coin.value));
+        valueField->setFixedWidth(InputW::VALUE_WIDTH);
+        valueField->setAlignment(Qt::AlignRight);
+        valueField->setEnabled(false);
+
+        auto *row = (new qontrol::Row)
+                        ->push(checkbox)
+                        ->pushSpacer(H_SPACER)
+                        ->push(outpointField)
+                        ->pushSpacer(H_SPACER)
+                        ->push(labelField)
+                        ->pushSpacer(H_SPACER)
+                        ->push(valueField)
+                        ->pushSpacer();
+        coinsColumn->pushSpacer(V_SPACER)->push(row);
     }
-    delete oldColumn;
 
-    auto *title = new QLabel("Selected Inputs");
-    auto font = title->font();
-    font.setPointSize(15);
-    title->setFont(font);
+    m_coins_scroll = new QScrollArea;
+    m_coins_scroll->setWidget(coinsColumn);
+    m_coins_scroll->setFixedHeight(200);
+    m_coins_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    auto *titleRow = (new qontrol::Row)->pushSpacer(15)->push(title)->pushSpacer();
+    m_auto_coin_selection->setParent(nullptr);
+    m_inputs_title->setParent(nullptr);
+    m_clear_inputs_btn->setParent(nullptr);
 
-    auto *col =
-        (new qontrol::Column)->push(titleRow)->pushSpacer(20)->push(m_inputs_column)->pushSpacer();
+    // Only show Clear button when in manual mode
+    m_clear_inputs_btn->setVisible(!m_auto_coin_selection->isChecked());
+
+    auto *titleRow = (new qontrol::Row)
+                         ->pushSpacer(15)
+                         ->push(m_inputs_title)
+                         ->pushSpacer()
+                         ->push(m_clear_inputs_btn)
+                         ->pushSpacer(10)
+                         ->push(m_auto_coin_selection)
+                         ->pushSpacer(15);
+
+    // Update total and minimum displays
+    updateInputsTotal();
+
+    auto *col = (new qontrol::Column)
+                    ->push(titleRow)
+                    ->pushSpacer(10)
+                    ->push(m_coins_scroll)
+                    ->pushSpacer(V_SPACER)
+                    ->push(m_inputs_min_row)
+                    ->push(m_inputs_total_row)
+                    ->pushSpacer();
 
     return col;
 }
@@ -381,57 +564,183 @@ auto Send::clearOutputs() -> void {
     view();
 }
 
-auto Send::addCoins() -> void {
-    qDebug() << "Send::addCoins() - Opening SelectCoins modal";
-
-    // Get available coins from AccountController
-    auto availableCoins = m_controller->getCoins();
-
-    // Convert rust::Vec to QList
-    QList<RustCoin> coinsList;
-    for (const auto &coin : availableCoins) {
-        coinsList.append(coin);
+auto Send::clearInputs() -> void {
+    m_selected_coins.clear();
+    for (auto *cb : m_coin_checkboxes.values()) {
+        cb->setChecked(false);
     }
+    process();
+    view();
+}
 
-    if (coinsList.isEmpty()) {
-        auto *modal = new qontrol::Modal("No Coins", "No spendable coins available for selection");
-        AppController::execModal(modal);
+auto Send::onCoinToggled() -> void {
+    auto *checkbox = qobject_cast<QCheckBox *>(sender());
+    if (checkbox == nullptr) {
         return;
     }
 
-    // Create and show SelectCoins modal
-    auto *selectCoinsModal = new modal::SelectCoins(coinsList);
-    connect(selectCoinsModal, &modal::SelectCoins::coinsSelected, this, &Send::onCoinsSelected,
-            qontrol::UNIQUE);
-    AppController::execModal(selectCoinsModal);
-}
+    QString outpoint = checkbox->property("outpoint").toString();
+    auto availableCoins = m_controller->getCoins();
 
-auto Send::onCoinsSelected(const QList<RustCoin> &coins) -> void {
-    qDebug() << "Send::onCoinsSelected() - " << coins.size() << " coins selected";
-
-    // Store selected coins for transaction building
-    m_selected_coins = coins;
-
-    uint64_t totalValue = 0;
-    for (const auto &coin : coins) {
-        totalValue += coin.value;
-        qDebug() << "  Selected coin:"
-                 << QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size())
-                 << "Value:" << coin.value;
+    if (checkbox->isChecked()) {
+        // Add to m_selected_coins if not already present
+        for (const auto &coin : availableCoins) {
+            if (QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size()) == outpoint) {
+                bool alreadySelected = false;
+                for (const auto &selected : m_selected_coins) {
+                    if (selected.outpoint == coin.outpoint) {
+                        alreadySelected = true;
+                        break;
+                    }
+                }
+                if (!alreadySelected) {
+                    m_selected_coins.append(coin);
+                }
+                break;
+            }
+        }
+    } else {
+        // Remove from m_selected_coins
+        for (int i = 0; i < m_selected_coins.size(); ++i) {
+            if (QString::fromUtf8(m_selected_coins[i].outpoint.data(),
+                                  m_selected_coins[i].outpoint.size()) == outpoint) {
+                m_selected_coins.removeAt(i);
+                break;
+            }
+        }
     }
-
-    auto *modal =
-        new qontrol::Modal("Coins Selected", QString("Selected %1 coin(s) with total value: %2 BTC")
-                                                 .arg(coins.size())
-                                                 .arg(toBitcoin(totalValue)));
-    AppController::execModal(modal);
-
-    // Re-process transaction with new coin selection
     process();
 }
 
-auto RadioElement::text() -> QString {
-    return m_value->text();
+auto Send::onAutoSelectionToggled() -> void {
+    if (!m_auto_coin_selection->isChecked()) {
+        // Switching to manual: populate m_selected_coins from last auto selection
+        updateSelectedCoinsFromSimulation();
+    }
+    process();
+    view();
+}
+
+auto Send::onCoinsUpdated(CoinState state) -> void {
+    // Only rebuild if coins actually changed
+    bool changed = (state.confirmed_count != m_last_coin_state.confirmed_count ||
+                    state.unconfirmed_count != m_last_coin_state.unconfirmed_count);
+
+    if (!changed) {
+        return;
+    }
+
+    m_last_coin_state = state;
+
+    // Rebuild the inputs view to show new/removed coins
+    view();
+
+    // If auto coin selection is enabled AND outputs are valid, re-run simulation
+    if (m_auto_coin_selection->isChecked()) {
+        auto txTemp = txTemplate();
+        if (txTemp.has_value()) {
+            process();
+        }
+    }
+}
+
+auto Send::updateSelectedCoinsFromSimulation() -> void {
+    m_selected_coins.clear();
+    auto availableCoins = m_controller->getCoins();
+    for (const auto &coin : availableCoins) {
+        QString op = QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size());
+        if (m_auto_selected_outpoints.contains(op)) {
+            m_selected_coins.append(coin);
+        }
+    }
+}
+
+auto Send::updateInputsTotal() -> void {
+    // Calculate total selected based on mode
+    uint64_t totalSelected = 0;
+
+    if (m_auto_coin_selection->isChecked()) {
+        // In auto mode, calculate from auto-selected outpoints
+        auto availableCoins = m_controller->getCoins();
+        for (const auto &coin : availableCoins) {
+            QString op = QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size());
+            if (m_auto_selected_outpoints.contains(op)) {
+                totalSelected += coin.value;
+            }
+        }
+    } else {
+        // In manual mode, calculate from m_selected_coins
+        for (const auto &coin : m_selected_coins) {
+            totalSelected += coin.value;
+        }
+    }
+
+    if (totalSelected > 0) {
+        double fValue = static_cast<double>(totalSelected) / SATS;
+        m_inputs_total->setText(QString::number(fValue, 'f', 8) + " BTC");
+        m_inputs_total_row->setVisible(true);
+    } else {
+        m_inputs_total_row->setVisible(false);
+    }
+
+    // Calculate minimum required from outputs
+    uint64_t minRequired = 0;
+    for (auto *out : m_outputs) {
+        if (!out->isMax()) {
+            auto amt = out->amount();
+            if (amt.has_value()) {
+                minRequired += amt.value();
+            }
+        }
+    }
+
+    if (minRequired > 0) {
+        double fValue = static_cast<double>(minRequired) / SATS;
+        m_inputs_min->setText(QString::number(fValue, 'f', 8) + " BTC");
+        m_inputs_min_row->setVisible(true);
+    } else {
+        m_inputs_min_row->setVisible(false);
+    }
+}
+
+auto Send::updateCoinCheckboxes() -> void {
+    bool autoMode = m_auto_coin_selection->isChecked();
+
+    for (auto it = m_coin_checkboxes.begin(); it != m_coin_checkboxes.end(); ++it) {
+        QString outpoint = it.key();
+        QCheckBox *checkbox = it.value();
+
+        bool isSelected = false;
+        if (autoMode) {
+            isSelected = m_auto_selected_outpoints.contains(outpoint);
+        } else {
+            for (const auto &coin : m_selected_coins) {
+                if (QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size()) == outpoint) {
+                    isSelected = true;
+                    break;
+                }
+            }
+        }
+        checkbox->setChecked(isSelected);
+    }
+    updateInputsTitle();
+}
+
+auto Send::updateInputsTitle() -> void {
+    int count = 0;
+    if (m_auto_coin_selection->isChecked()) {
+        count = m_auto_selected_outpoints.size();
+    } else {
+        count = m_selected_coins.size();
+    }
+
+    if (count == 1) {
+        m_inputs_title->setText(QString("Inputs (1 coin selected)"));
+    } else if (count > 1) {
+        m_inputs_title->setText(QString("Inputs (%1 coins selected)").arg(count));
+    } else {
+        m_inputs_title->setText("Inputs");
+    }
 }
 
 auto OutputW::address() -> QString {
@@ -443,7 +752,6 @@ auto OutputW::amount() -> std::optional<uint64_t> {
     bool ok = false;
     auto amountBtc = amountStr.toDouble(&ok);
     if (!ok) {
-        qDebug() << "Output::amount() m_amount value is not a valid double";
         return std::nullopt;
     }
     return static_cast<uint64_t>(amountBtc * SATS);
@@ -453,20 +761,45 @@ auto OutputW::label() -> QString {
     return m_label->text();
 }
 
+auto OutputW::updateAddressValidation() -> void {
+    QString addr = m_address->text();
+    if (addr.isEmpty()) {
+        setValidationIndicator(m_address_indicator, "", false);
+    } else {
+        auto result = ::validate_address(rust::String(addr.toStdString()));
+        setValidationIndicator(m_address_indicator, addr, result.empty());
+    }
+}
+
+auto OutputW::updateAmountValidation() -> void {
+    QString text = m_amount->text();
+    if (text.isEmpty()) {
+        setValidationIndicator(m_amount_indicator, "", false);
+    } else {
+        bool ok = false;
+        double val = text.toDouble(&ok);
+        setValidationIndicator(m_amount_indicator, text, ok && val > 0);
+    }
+}
+
 auto Send::txTemplate() -> std::optional<TransactionTemplate> {
     auto txTemplate = TransactionTemplate();
     bool ok = false;
 
-    // Fee rate
-    if (m_fee_sats_vb->checked()) {
-        auto fee = m_fee_sats_vb->text().toDouble(&ok);
-        if (!ok || fee <= 0) {
-            qDebug() << "Send::txTemplate() m_fee_sats_vb is not a valid double";
-            return std::nullopt;
-        }
-        txTemplate.fee_rate = fee;
-    } else {
+    // Fee handling: toggle ON = sats/vb (rate), toggle OFF = sats (absolute)
+    auto feeValue = m_fee_value->text().toDouble(&ok);
+    if (!ok || feeValue <= 0) {
         return std::nullopt;
+    }
+
+    if (m_fee_toggle->isChecked()) {
+        // Fee rate mode (sats/vb)
+        txTemplate.fee_rate = feeValue;
+        txTemplate.fee = 0;
+    } else {
+        // Absolute fee mode (sats)
+        txTemplate.fee = static_cast<uint64_t>(feeValue);
+        txTemplate.fee_rate = 1.0; // Fallback, not used when fee > 0
     }
 
     // Outputs
@@ -490,100 +823,206 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
         txTemplate.outputs.push_back(output);
     }
 
-    // Add selected coins as input outpoints
-    for (const auto &coin : m_selected_coins) {
-        txTemplate.input_outpoints.push_back(rust::String(std::string(coin.outpoint)));
+    // Add selected coins as input outpoints only when manual selection is active
+    if (!m_auto_coin_selection->isChecked()) {
+        for (const auto &coin : m_selected_coins) {
+            txTemplate.input_outpoints.push_back(rust::String(std::string(coin.outpoint)));
+        }
     }
+    // When auto is checked, leave input_outpoints empty -> Rust auto-selects
 
     return txTemplate;
 }
 
-auto RadioElement::setEnabled(bool enabled) -> void {
-    m_button->setEnabled(enabled);
-    m_value->setEnabled(enabled);
-}
-
-auto RadioElement::checked() -> bool {
-    return m_button->isChecked();
-}
-
 auto Send::setSpendable(bool spendable) -> void {
-    m_simulate_btn->setEnabled(spendable);
+    m_send_button->setEnabled(spendable);
+}
+
+auto Send::updateOutputValidations() -> void {
+    for (auto *out : m_outputs) {
+        out->updateAddressValidation();
+        out->updateAmountValidation();
+    }
+}
+
+auto Send::updateFeeValidation() -> void {
+    QString text = m_fee_value->text();
+    if (text.isEmpty()) {
+        setValidationIndicator(m_fee_indicator, "", false);
+    } else {
+        bool ok = false;
+        double val = text.toDouble(&ok);
+        setValidationIndicator(m_fee_indicator, text, ok && val > 0);
+    }
 }
 
 auto Send::process() -> void {
-    qDebug() << "Send::process()";
+    updateOutputValidations();
+    updateFeeValidation();
+    updateInputsTotal();
+
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
         setSpendable(false);
         setBroadcastable(false);
+        m_fee_estimate_label->setVisible(false);
+        // Clear auto selection when outputs are invalid
+        if (m_auto_coin_selection->isChecked() && !m_auto_selected_outpoints.isEmpty()) {
+            m_auto_selected_outpoints.clear();
+            updateCoinCheckboxes();
+            updateInputsTotal();
+        }
         return;
     }
 
     auto simu = m_controller->simulateTx(txTemp.value());
+
     if (simu.error.empty()) {
         if (simu.is_valid) {
             setSpendable(true);
             m_warning_label->setVisible(false);
+
+            // Display estimated fee
+            m_fee_estimate_label->setText(QString("Fee: %1").arg(toBitcoin(simu.fee)));
+            m_fee_estimate_label->setVisible(true);
+
+            // Store auto-selected outpoints for display when auto mode is active
+            if (m_auto_coin_selection->isChecked()) {
+                QStringList newSelection;
+                for (const auto &op : simu.selected_outpoints) {
+                    QString opStr = QString::fromUtf8(op.data(), op.size());
+                    newSelection.append(opStr);
+                }
+                m_auto_selected_outpoints = newSelection;
+                updateCoinCheckboxes();
+                updateInputsTotal();
+            }
         } else {
             setSpendable(false);
+            m_fee_estimate_label->setVisible(false);
             m_warning_label->setText("Transaction is not valid");
             m_warning_label->setVisible(true);
         }
     } else {
         setSpendable(false);
         setBroadcastable(false);
+        m_fee_estimate_label->setVisible(false);
         m_warning_label->setText(simu.error.c_str());
         m_warning_label->setVisible(true);
     }
 }
 
-auto Send::simulateTransaction() -> void {
-    qDebug() << "Send::simulateTransaction()";
+auto Send::sendTransaction() -> void {
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
-        auto *modal = new qontrol::Modal("Error", "Invalid transaction template");
-        AppController::execModal(modal);
+        AppController::execModal(new qontrol::Modal("Error", "Invalid transaction template."));
         return;
     }
 
-    auto simu = m_controller->simulateTx(txTemp.value());
-    if (simu.error.empty() && simu.is_valid) {
-        QString msg = QString("Fee: %1 BTC\nWeight: %2\nInputs: %3\nInput "
-                              "Total: %4 BTC\nOutput Total: %5 BTC")
-                          .arg(toBitcoin(simu.fee))
-                          .arg(simu.weight)
-                          .arg(simu.input_count)
-                          .arg(toBitcoin(simu.input_total))
-                          .arg(toBitcoin(simu.output_total));
-        auto *modal = new qontrol::Modal("Transaction Simulation", msg);
-        AppController::execModal(modal);
-        setBroadcastable(true);
-    } else {
-        QString error = QString("Simulation failed: %1").arg(QString(simu.error.c_str()));
-        auto *modal = new qontrol::Modal("Error", error);
-        AppController::execModal(modal);
-        setBroadcastable(false);
+    auto &account = m_controller->getAccount();
+    if (!account.has_value()) {
+        AppController::execModal(new qontrol::Modal("Error", "No account loaded."));
+        return;
     }
+
+    // Prepare transaction on main thread (pure computation)
+    auto psbt = account.value()->prepare_transaction(txTemp.value());
+    if (!psbt->is_ok()) {
+        auto error = QString::fromStdString(std::string(psbt->get_psbt_error().c_str()));
+        AppController::execModal(new qontrol::Modal("Prepare Failed", error));
+        return;
+    }
+
+    // Build recipient summary for confirmation modal
+    QStringList recipients;
+    for (auto *out : m_outputs) {
+        QString addr = out->address();
+        if (out->isMax()) {
+            recipients.append(addr + "  (max)");
+        } else {
+            auto amount = out->amount();
+            if (amount.has_value()) {
+                recipients.append(addr + "  " + toBitcoin(amount.value()));
+            }
+        }
+    }
+
+    auto txidPreview = QString::fromStdString(std::string(psbt->get_txid_preview().c_str()));
+    auto fee = m_fee_estimate_label->isVisible()
+                   ? static_cast<uint64_t>(m_fee_value->text().toDouble() > 0 ? m_fee_value->text().toDouble() : 0)
+                   : 0;
+
+    // Use the fee from the last simulation if available
+    auto simu = m_controller->simulateTx(txTemp.value());
+    if (simu.is_valid) {
+        fee = simu.fee;
+    }
+
+    // Store psbt for use in onSendConfirmed
+    m_psbt_result = std::make_optional(std::move(psbt));
+
+    auto *modal = new modal::ConfirmSend(recipients, fee, txidPreview);
+    connect(modal, &modal::ConfirmSend::confirmed, this, &Send::onSendConfirmed, qontrol::UNIQUE);
+    AppController::execModal(modal);
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Send::sendTransaction() -> void {
-    qDebug() << "Send::sendTransaction()";
-    // NOTE: Transaction signing and broadcasting not yet implemented.
-    // This will be implemented in a future phase. The UI and transaction
-    // preparation logic is in place and ready for integration.
-    //
-    // Implementation would involve:
-    // 1. Get transaction template via txTemplate()
-    // 2. Call m_controller->getAccount()->prepare_transaction(txTemplate)
-    // 3. Call m_controller->getAccount()->sign_and_broadcast(psbt_result)
-    // 4. Display success/failure modal with txid
-    auto *modal = new qontrol::Modal(
-        "Not Implemented", "Transaction signing and broadcasting will be implemented in a future "
-                           "phase.\n\n"
-                           "Use the Simulate button to verify transaction details.");
-    AppController::execModal(modal);
+auto Send::onSendConfirmed() -> void {
+    auto &account = m_controller->getAccount();
+    if (!account.has_value() || !m_psbt_result.has_value()) {
+        AppController::execModal(new qontrol::Modal("Error", "Transaction state lost."));
+        return;
+    }
+
+    // Sign on background thread (future-proofed for hardware signing devices)
+    auto *thread = QThread::create([this]() {
+        auto result = m_controller->getAccount().value()->sign_transaction(*m_psbt_result.value());
+        QMetaObject::invokeMethod(this, [this, result]() {
+            onSignResult(result);
+        });
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto Send::onSignResult(TxResult result) -> void {
+    // Clear psbt - no longer needed
+    m_psbt_result = std::nullopt;
+
+    if (!result.is_ok) {
+        auto error = QString::fromStdString(std::string(result.error.c_str()));
+        AppController::execModal(new qontrol::Modal("Signing Failed", error));
+        return;
+    }
+
+    m_signed_tx_hex = QString::fromStdString(std::string(result.value.c_str()));
+
+    // Broadcast on background thread (network I/O)
+    auto signedHex = std::string(result.value.c_str());
+    auto *thread = QThread::create([this, signedHex]() {
+        auto broadcastResult =
+            m_controller->getAccount().value()->broadcast_transaction(rust::String(signedHex));
+        QMetaObject::invokeMethod(this, [this, broadcastResult]() {
+            onBroadcastResult(broadcastResult);
+        });
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto Send::onBroadcastResult(TxResult result) -> void {
+    m_signed_tx_hex.clear();
+
+    if (!result.is_ok) {
+        auto error = QString::fromStdString(std::string(result.error.c_str()));
+        AppController::execModal(new qontrol::Modal("Broadcast Failed", error));
+        return;
+    }
+
+    auto txid = QString::fromStdString(std::string(result.value.c_str()));
+    AppController::execModal(new qontrol::Modal("Transaction Sent", "Txid: " + txid));
+
+    // Refresh coin state
+    m_controller->pollCoins();
 }
 
 auto Send::onOutputDeleteClicked() -> void {
@@ -598,6 +1037,14 @@ auto Send::onOutputMaxToggled() -> void {
     auto *checkbox = qobject_cast<QCheckBox *>(sender());
     if (checkbox != nullptr) {
         int id = checkbox->property("outputId").toInt();
+        auto *output = m_outputs.value(id);
+        if (output != nullptr) {
+            bool isMax = checkbox->isChecked();
+            output->setAmountVisible(!isMax);
+            if (isMax) {
+                output->clearAmount();
+            }
+        }
         outputSetMax(id);
     }
 }

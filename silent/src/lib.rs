@@ -102,8 +102,10 @@ mod ffi {
     pub struct TransactionTemplate {
         /// List of output specifications
         pub outputs: Vec<Output>,
-        /// Fee rate in sat/vbyte
+        /// Fee rate in sat/vbyte (used when fee == 0)
         pub fee_rate: f64,
+        /// Absolute fee in satoshis (takes precedence over fee_rate when > 0)
+        pub fee: u64,
         /// Optional: specific UTXOs to use (empty = automatic selection)
         pub input_outpoints: Vec<String>,
     }
@@ -125,6 +127,8 @@ mod ffi {
         pub input_count: u64,
         /// Error message (empty if valid)
         pub error: String,
+        /// Outpoints selected by coin selection (empty if invalid)
+        pub selected_outpoints: Vec<String>,
     }
 
     /// Result of a transaction operation (sign, broadcast).
@@ -194,6 +198,10 @@ mod ffi {
 
         /// Validate a BIP39 mnemonic string.
         fn validate_mnemonic(mnemonic: String) -> bool;
+
+        /// Validate a recipient address (SP address, legacy Bitcoin address, or hex data).
+        /// Returns empty string if valid, or error message if invalid.
+        fn validate_address(address: String) -> String;
     }
 
     // ===== Config Methods =====
@@ -402,6 +410,18 @@ pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
 /// Validate a BIP39 mnemonic string.
 pub fn validate_mnemonic(mnemonic: String) -> bool {
     bwk_sp::spdk_core::bip39::Mnemonic::parse(&mnemonic).is_ok()
+}
+
+/// Validate a recipient address (SP address, legacy Bitcoin address, or hex data).
+/// Returns empty string if valid, or error message if invalid.
+pub fn validate_address(address: String) -> String {
+    if address.is_empty() {
+        return String::new();
+    }
+    match bwk_sp::spdk_core::RecipientAddress::try_from(address) {
+        Ok(_) => String::new(),
+        Err(e) => e.to_string(),
+    }
 }
 
 // Re-export main types

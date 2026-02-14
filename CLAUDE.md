@@ -92,9 +92,11 @@ to regenerate the C++ headers (`lib/include/silent.h`, `lib/include/cxx.h`).
 
 ## Code Guidelines
 
-See [CODE_GUIDELINES.md](CODE_GUIDELINES.md) for project-specific coding
-conventions: CXX bridge patterns, naming conventions, qontrol framework usage,
-Rust/C++ FFI integration, composite widget patterns, and testing conventions.
+**IMPORTANT: Always read [CODE_GUIDELINES.md](CODE_GUIDELINES.md) before writing any
+code.** These are mandatory project conventions that MUST be strictly followed,
+covering: CXX bridge patterns, naming conventions, qontrol framework usage,
+Rust/C++ FFI integration, composite widget patterns, signal-slot patterns, and
+testing conventions.
 
 ## Key Dependencies
 

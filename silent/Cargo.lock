@@ -82,7 +82,7 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 [[package]]
 name = "backend-blindbit-native-non-async"
 version = "0.1.0"
-source = "git+https://github.com/pythcoiner/spdk.git?rev=81d60d5#81d60d5261509953ba0db9bca4cfba5d773e99cd"
+source = "git+https://github.com/pythcoiner/spdk.git?rev=28b6719#28b6719028f3d7ff1928fa6f5c65618f4f36b172"
 dependencies = [
  "bitcoin 0.1.0",
  "hex",
@@ -153,7 +153,7 @@ version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90dbd31c98227229239363921e60fcf5e558e43ec69094d46fc4996f08d1d5bc"
 dependencies = [
- "bitcoin_hashes 0.14.1",
+ "bitcoin_hashes 0.13.0",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "serde",
@@ -163,7 +163,7 @@ dependencies = [
 [[package]]
 name = "bitcoin"
 version = "0.1.0"
-source = "git+https://github.com/pythcoiner/spdk.git?rev=81d60d5#81d60d5261509953ba0db9bca4cfba5d773e99cd"
+source = "git+https://github.com/pythcoiner/spdk.git?rev=28b6719#28b6719028f3d7ff1928fa6f5c65618f4f36b172"
 dependencies = [
  "bitcoin 0.32.8",
 ]
@@ -258,7 +258,7 @@ dependencies = [
 [[package]]
 name = "bwk-descriptor"
 version = "0.0.1"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=bb7b623#bb7b62322144d9ad695675272631a864f1c64838"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
 dependencies = [
  "bwk-keys",
  "miniscript",
@@ -267,7 +267,7 @@ dependencies = [
 [[package]]
 name = "bwk-keys"
 version = "0.0.1"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=bb7b623#bb7b62322144d9ad695675272631a864f1c64838"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
 dependencies = [
  "bip39",
  "bitcoin 0.32.8",
@@ -278,7 +278,7 @@ dependencies = [
 [[package]]
 name = "bwk-sign"
 version = "0.0.1"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=bb7b623#bb7b62322144d9ad695675272631a864f1c64838"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
 dependencies = [
  "bip39",
  "bwk-descriptor",
@@ -293,10 +293,11 @@ dependencies = [
 [[package]]
 name = "bwk-sp"
 version = "0.1.0"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=88d96a6#88d96a60bea3ff54097b1f91cba24987f26948d6"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
 dependencies = [
  "backend-blindbit-native-non-async",
  "bitcoin 0.32.8",
+ "bwk-tx",
  "getrandom 0.2.17",
  "hex",
  "log",
@@ -309,9 +310,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "bwk-tx"
+version = "0.0.1"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
+dependencies = [
+ "bitcoin 0.32.8",
+ "bwk-descriptor",
+ "miniscript",
+ "rand 0.9.2",
+ "serde",
+ "spdk-core",
+]
+
+[[package]]
 name = "bwk-utils"
 version = "0.0.1"
-source = "git+https://github.com/pythcoiner/bwk.git?rev=bb7b623#bb7b62322144d9ad695675272631a864f1c64838"
+source = "git+https://github.com/pythcoiner/bwk.git?rev=2517f7c#2517f7c6adbb30427dcdafa443b453145f22e776"
 dependencies = [
  "bitcoin 0.32.8",
  "corepc-node",
@@ -439,7 +453,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "768391062ec3812e223bb3031c5b2fcdd6e0e60b816157f21df82fd3e6617dc0"
 dependencies = [
  "anyhow",
- "bitcoin_hashes 0.14.1",
+ "bitcoin_hashes 0.13.0",
  "corepc-client",
  "flate2",
  "log",
@@ -951,6 +965,7 @@ checksum = "487906208f38448e186e3deb02f2b8ef046a9078b0de00bdb28bf4fb9b76951c"
 dependencies = [
  "bech32 0.11.1",
  "bitcoin 0.32.8",
+ "serde",
 ]
 
 [[package]]
@@ -1254,7 +1269,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9465315bc9d4566e1724f0fffcbcc446268cb522e60f9a27bcded6b19c108113"
 dependencies = [
- "bitcoin_hashes 0.14.1",
+ "bitcoin_hashes 0.13.0",
  "rand 0.8.5",
  "secp256k1-sys",
  "serde",
@@ -1326,6 +1341,7 @@ dependencies = [
  "blindbitd",
  "bwk-sign",
  "bwk-sp",
+ "bwk-tx",
  "bwk-utils",
  "cxx",
  "cxx-build",
@@ -1368,7 +1384,7 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 [[package]]
 name = "spdk-core"
 version = "0.1.0"
-source = "git+https://github.com/pythcoiner/spdk.git?rev=81d60d5#81d60d5261509953ba0db9bca4cfba5d773e99cd"
+source = "git+https://github.com/pythcoiner/spdk.git?rev=28b6719#28b6719028f3d7ff1928fa6f5c65618f4f36b172"
 dependencies = [
  "bdk_coin_select",
  "bip39",

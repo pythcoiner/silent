@@ -56,10 +56,10 @@ set(SOURCES
     src/screens/Send.cpp
     src/screens/Settings.h
     src/screens/Settings.cpp
-    src/screens/modals/SelectCoins.h
-    src/screens/modals/SelectCoins.cpp
     src/screens/modals/ConfirmDelete.h
     src/screens/modals/ConfirmDelete.cpp
+    src/screens/modals/ConfirmSend.h
+    src/screens/modals/ConfirmSend.cpp
 )
 
 qt_add_executable(${BIN}
