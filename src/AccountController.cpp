@@ -94,6 +94,7 @@ auto AccountController::pollNotifications() -> void {
                 uint32_t height = parts[0].toUInt(&ok1);
                 uint32_t tip = parts[1].toUInt(&ok2);
                 if (ok1 && ok2) {
+                    qDebug() << "AccountController: Scan progress" << height << "/" << tip;
                     emit scanProgress(height, tip);
                 } else {
                     qWarning() << "Failed to parse scan progress payload:" << payload;

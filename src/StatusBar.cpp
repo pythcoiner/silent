@@ -68,9 +68,10 @@ auto StatusBar::updateConnectionState(bool connected) -> void {
     m_toggle->setChecked(connected);
     m_toggle->blockSignals(false);
 
-    // Update toggle color
+    // Update toggle color and status text
     if (connected) {
         m_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
+        m_status_text->setText("Scanning...");
     } else {
         m_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
         m_status_text->setText("Disconnected");
