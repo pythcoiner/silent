@@ -29,9 +29,6 @@ auto AccountController::init(const QString &account) -> void {
     }
     m_account = std::make_optional(std::move(acc));
 
-    // Start the scanner
-    m_account.value()->start_scanner();
-
     // Initialize the timer that polls notifications every 100ms
     m_notif_timer = new QTimer(this);
     connect(m_notif_timer, &QTimer::timeout, this, &AccountController::poll);
@@ -223,6 +220,12 @@ auto AccountController::simulateTx(TransactionTemplate tx) -> TransactionSimulat
     sim.is_valid = false;
     sim.error = rust::String("Account not initialized");
     return sim;
+}
+
+auto AccountController::startScanner() -> void {
+    if (m_account.has_value()) {
+        m_account.value()->start_scanner();
+    }
 }
 
 auto AccountController::stop() -> void {

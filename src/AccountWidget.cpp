@@ -62,6 +62,9 @@ auto AccountWidget::initUI() -> void {
             &StatusBar::updateWaitingForBlocks);
     connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError);
 
+    // Start scanner after all connections are established
+    m_controller->startScanner();
+
     // Create main vertical layout with content + status bar
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);

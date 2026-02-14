@@ -41,6 +41,7 @@ public slots:
     auto pollNotifications() -> void;
     auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
     auto updateCoinLabel(const QString &outpoint, const QString &label) -> void;
+    auto startScanner() -> void;
     auto stop() -> void;
 
     // Screen button actions
@@ -61,5 +62,5 @@ private:
     QTimer *m_notif_timer = nullptr;
     QTimer *m_coins_timer = nullptr;
     bool m_init = false;
-    bool m_scanner_running = true;
+    bool m_scanner_running = false;
 };
