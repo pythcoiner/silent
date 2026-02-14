@@ -22,6 +22,7 @@ auto Receive::init() -> void {
     if (m_controller != nullptr) {
         m_sp_address = m_controller->getSpAddress();
     }
+    m_btn_copy = new QPushButton("Copy");
 }
 
 auto Receive::doConnect() -> void {
@@ -44,8 +45,6 @@ auto Receive::view() -> void {
     QFont f = addrDisplay->font();
     f.setPointSize(f.pointSize() + 2);
     addrDisplay->setFont(f);
-
-    m_btn_copy = new QPushButton("Copy");
 
     auto *addrRow = (new qontrol::Row)->push(addrLabel)->push(addrDisplay)->pushSpacer();
 
