@@ -10,7 +10,7 @@ doctest = false
 [dependencies]
 # When changing rev, also update flake.lock:
 #   nix --extra-experimental-features 'nix-command flakes' flake update bwk
-bwk-sp = { git = "https://github.com/pythcoiner/bwk.git", rev = "bb7b623"}
+bwk-sp = { git = "https://github.com/pythcoiner/bwk.git", rev = "cd22d60"}
 bitcoin = "0.32"
 cxx = "1.0"
 serde = { version = "1.0", features = ["derive"] }
