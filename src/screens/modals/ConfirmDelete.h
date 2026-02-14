@@ -14,6 +14,9 @@ public:
 signals:
     void confirmed(const QString &name);
 
+public slots:
+    auto onDeleteClicked() -> void;
+
 private:
     auto init() -> void;
     auto doConnect() -> void;

@@ -3,6 +3,7 @@
 #include "AppController.h"
 #include "screens/MenuTab.h"
 #include <algorithm>
+#include <common.h>
 #include <qlogging.h>
 #include <qtabbar.h>
 #include <qtabwidget.h>
@@ -26,14 +27,8 @@ auto MainWindow::initWindow() -> void {
     setCentralWidget(m_tab);
 
     // Connect tab close signal
-    connect(m_tab, &QTabWidget::tabCloseRequested, this, [this](int index) -> void {
-        // Find account name by index
-        if (index >= 0 && index < m_tabs.size()) {
-            auto name = m_tabs.at(index).first;
-            auto *controller = AppController::get();
-            controller->removeAccount(name);
-        }
-    });
+    connect(m_tab, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested,
+            qontrol::UNIQUE);
 
     m_tab->setTabsClosable(true);
     m_init = true;
@@ -102,6 +97,14 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void {
     }
     event->accept();
     Window::closeEvent(event);
+}
+
+auto MainWindow::onTabCloseRequested(int index) -> void {
+    if (index >= 0 && index < m_tabs.size()) {
+        auto name = m_tabs.at(index).first;
+        auto *controller = AppController::get();
+        controller->removeAccount(name);
+    }
 }
 
 MainWindow::~MainWindow() = default;

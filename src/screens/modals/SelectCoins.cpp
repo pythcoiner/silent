@@ -94,18 +94,10 @@ auto SelectCoins::init(const QList<RustCoin> &coins) -> void {
 auto SelectCoins::doConnect() -> void {
     connect(m_label_filter, &QLineEdit::textEdited, this, &SelectCoins::applyFilter,
             qontrol::UNIQUE);
-    connect(m_value_up, &QPushButton::toggled, this, [this]() -> void {
-        if (this->m_value_up->isChecked()) {
-            this->m_value_down->setChecked(false);
-        }
-        this->view();
-    });
-    connect(m_value_down, &QPushButton::toggled, this, [this]() -> void {
-        if (this->m_value_down->isChecked()) {
-            this->m_value_up->setChecked(false);
-        }
-        this->view();
-    });
+    connect(m_value_up, &QPushButton::toggled, this, &SelectCoins::onSortAscendingToggled,
+            qontrol::UNIQUE);
+    connect(m_value_down, &QPushButton::toggled, this, &SelectCoins::onSortDescendingToggled,
+            qontrol::UNIQUE);
     connect(m_abort, &QPushButton::clicked, this, &SelectCoins::onAbort, qontrol::UNIQUE);
     connect(m_ok, &QPushButton::clicked, this, &SelectCoins::onOk, qontrol::UNIQUE);
 }
@@ -331,6 +323,20 @@ auto SelectCoins::checked() -> void {
 
 auto CoinWidget::setChecked(bool checked) -> void {
     m_checkbox->setChecked(checked);
+}
+
+auto SelectCoins::onSortAscendingToggled() -> void {
+    if (m_value_up->isChecked()) {
+        m_value_down->setChecked(false);
+    }
+    view();
+}
+
+auto SelectCoins::onSortDescendingToggled() -> void {
+    if (m_value_down->isChecked()) {
+        m_value_up->setChecked(false);
+    }
+    view();
 }
 
 } // namespace modal

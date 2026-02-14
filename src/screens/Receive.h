@@ -15,6 +15,9 @@ class Receive : public qontrol::Screen {
 public:
     Receive(AccountController *ctrl);
 
+public slots:
+    auto onCopyAddress() -> void;
+
 protected:
     auto init() -> void override;
     auto doConnect() -> void override;

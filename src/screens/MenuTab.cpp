@@ -24,10 +24,30 @@ auto MenuTab::init() -> void {
 }
 
 auto MenuTab::doConnect() -> void {
-    connect(m_create_btn, &QPushButton::clicked, this,
-            []() -> void { AppController::get()->onCreateAccount(); });
+    connect(m_create_btn, &QPushButton::clicked, this, &MenuTab::onCreateClicked, qontrol::UNIQUE);
     connect(AppController::get(), &AppController::accountList, this, &MenuTab::onAccountList,
             qontrol::UNIQUE);
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto MenuTab::onCreateClicked() -> void {
+    AppController::get()->onCreateAccount();
+}
+
+auto MenuTab::onAccountClicked() -> void {
+    auto *btn = qobject_cast<QPushButton *>(sender());
+    if (btn != nullptr) {
+        auto name = btn->property("accountName").toString();
+        AppController::get()->openAccount(name);
+    }
+}
+
+auto MenuTab::onTrashClicked() -> void {
+    auto *btn = qobject_cast<QPushButton *>(sender());
+    if (btn != nullptr) {
+        auto name = btn->property("accountName").toString();
+        AppController::get()->deleteAccount(name);
+    }
 }
 
 auto MenuTab::view() -> void {
@@ -78,10 +98,11 @@ auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
         trashBtn->setIcon(trashBtn->style()->standardIcon(QStyle::SP_TrashIcon));
         trashBtn->setToolTip("Delete wallet");
 
-        connect(btn, &QPushButton::clicked, this,
-                [name]() -> void { AppController::get()->openAccount(name); });
-        connect(trashBtn, &QPushButton::clicked, this,
-                [name]() -> void { AppController::get()->deleteAccount(name); });
+        btn->setProperty("accountName", name);
+        connect(btn, &QPushButton::clicked, this, &MenuTab::onAccountClicked, qontrol::UNIQUE);
+
+        trashBtn->setProperty("accountName", name);
+        connect(trashBtn, &QPushButton::clicked, this, &MenuTab::onTrashClicked, qontrol::UNIQUE);
 
         auto *row = (new qontrol::Row)
                         ->pushSpacer()

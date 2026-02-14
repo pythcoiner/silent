@@ -22,6 +22,9 @@ public:
     auto accountExists(const QString &name) -> bool;
     auto updateTabs() -> void;
 
+public slots:
+    auto onTabCloseRequested(int index) -> void;
+
 protected:
     auto closeEvent(QCloseEvent *event) -> void override;
 

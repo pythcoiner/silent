@@ -105,10 +105,13 @@ OutputW::OutputW(Send *screen, int id) {
                     ->push(labelRow)
                     ->pushSpacer(2 * V_SPACER);
 
-    QObject::connect(m_delete, &QPushButton::clicked, screen,
-                     [screen, id]() -> void { screen->deleteOutput(id); });
-    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen,
-                     [screen, id]() -> void { screen->outputSetMax(id); });
+    m_delete->setProperty("outputId", id);
+    QObject::connect(m_delete, &QPushButton::clicked, screen, &Send::onOutputDeleteClicked,
+                     qontrol::UNIQUE);
+
+    m_max->setProperty("outputId", id);
+    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen, &Send::onOutputMaxToggled,
+                     qontrol::UNIQUE);
 
     m_widget = col;
 }
@@ -581,6 +584,22 @@ auto Send::sendTransaction() -> void {
                            "phase.\n\n"
                            "Use the Simulate button to verify transaction details.");
     AppController::execModal(modal);
+}
+
+auto Send::onOutputDeleteClicked() -> void {
+    auto *btn = qobject_cast<QPushButton *>(sender());
+    if (btn != nullptr) {
+        int id = btn->property("outputId").toInt();
+        deleteOutput(id);
+    }
+}
+
+auto Send::onOutputMaxToggled() -> void {
+    auto *checkbox = qobject_cast<QCheckBox *>(sender());
+    if (checkbox != nullptr) {
+        int id = checkbox->property("outputId").toInt();
+        outputSetMax(id);
+    }
 }
 
 } // namespace screen

@@ -44,18 +44,20 @@ auto CreateAccount::init() -> void {
 }
 
 auto CreateAccount::doConnect() -> void {
-    connect(m_name_input, &QLineEdit::textChanged, this,
-            [this]() -> void { onUpdateCreateButton(); });
-    connect(m_mnemonic_input, &QTextEdit::textChanged, this,
-            [this]() -> void { onUpdateCreateButton(); });
-    connect(m_generate_btn, &QPushButton::clicked, this, &CreateAccount::onGenerate);
+    connect(m_name_input, &QLineEdit::textChanged, this, &CreateAccount::onUpdateCreateButton,
+            qontrol::UNIQUE);
+    connect(m_mnemonic_input, &QTextEdit::textChanged, this, &CreateAccount::onUpdateCreateButton,
+            qontrol::UNIQUE);
+    connect(m_generate_btn, &QPushButton::clicked, this, &CreateAccount::onGenerate,
+            qontrol::UNIQUE);
     connect(m_network_combo, &QComboBox::currentIndexChanged, this,
-            &CreateAccount::onNetworkChanged);
-    connect(m_test_btn, &QPushButton::clicked, this, &CreateAccount::onTestBackend);
-    connect(m_blindbit_input, &QLineEdit::textChanged, this,
-            [this]() -> void { invalidateBackendTest(); });
-    connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate);
-    connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject);
+            &CreateAccount::onNetworkChanged, qontrol::UNIQUE);
+    connect(m_test_btn, &QPushButton::clicked, this, &CreateAccount::onTestBackend,
+            qontrol::UNIQUE);
+    connect(m_blindbit_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateBackendTest,
+            qontrol::UNIQUE);
+    connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate, qontrol::UNIQUE);
+    connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(this, &CreateAccount::createAccount, AppController::get(),
             &AppController::createAccount, qontrol::UNIQUE);
 }

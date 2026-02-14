@@ -27,10 +27,13 @@ auto ConfirmDelete::init() -> void {
 
 auto ConfirmDelete::doConnect() -> void {
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
-    connect(m_delete_btn, &QPushButton::clicked, this, [this]() -> void {
-        emit confirmed(m_name);
-        accept();
-    });
+    connect(m_delete_btn, &QPushButton::clicked, this, &ConfirmDelete::onDeleteClicked,
+            qontrol::UNIQUE);
+}
+
+auto ConfirmDelete::onDeleteClicked() -> void {
+    emit confirmed(m_name);
+    accept();
 }
 
 auto ConfirmDelete::view() -> void {

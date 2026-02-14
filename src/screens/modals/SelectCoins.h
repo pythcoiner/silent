@@ -61,6 +61,8 @@ public slots:
     auto checked() -> void;
     auto onAbort() -> void;
     auto onOk() -> void;
+    auto onSortAscendingToggled() -> void;
+    auto onSortDescendingToggled() -> void;
 
 private:
     int m_amount_width = 150;

@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <Qontrol>
+#include <common.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
 
@@ -24,6 +25,11 @@ auto Receive::init() -> void {
 }
 
 auto Receive::doConnect() -> void {
+    connect(m_btn_copy, &QPushButton::clicked, this, &Receive::onCopyAddress, qontrol::UNIQUE);
+}
+
+auto Receive::onCopyAddress() -> void {
+    QApplication::clipboard()->setText(QString(m_sp_address.c_str()));
 }
 
 auto Receive::view() -> void {
@@ -40,8 +46,6 @@ auto Receive::view() -> void {
     addrDisplay->setFont(f);
 
     m_btn_copy = new QPushButton("Copy");
-    connect(m_btn_copy, &QPushButton::clicked,
-            [addrQStr]() -> void { QApplication::clipboard()->setText(addrQStr); });
 
     auto *addrRow = (new qontrol::Row)->push(addrLabel)->push(addrDisplay)->pushSpacer();
 

@@ -77,6 +77,8 @@ public slots:
     auto outputSetMax(int id) -> void;
     auto deleteOutput(int id) -> void;
     auto addOutput() -> void;
+    auto onOutputDeleteClicked() -> void;
+    auto onOutputMaxToggled() -> void;
     auto clearOutputs() -> void;
     auto updateRadio() -> void;
     auto setBroadcastable(bool broadcastable) -> void;

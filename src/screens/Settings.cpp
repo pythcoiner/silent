@@ -71,7 +71,8 @@ auto Settings::doConnect() -> void {
             &Settings::updateToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, this, &Settings::onScanProgress,
             qontrol::UNIQUE);
-    connect(m_blindbit_url, &QLineEdit::textChanged, this, [this]() -> void { invalidateBackendTest(); });
+    connect(m_blindbit_url, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
+            qontrol::UNIQUE);
 }
 
 auto Settings::actionSave() -> void {

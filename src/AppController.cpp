@@ -93,6 +93,7 @@ auto AppController::openAccount(const QString &name) -> void {
     listAccounts();
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const)
 auto AppController::deleteAccount(const QString &name) -> void {
     auto *modal = new ConfirmDelete(name);
     connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);

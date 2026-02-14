@@ -15,6 +15,9 @@ signals:
 
 public slots:
     auto onAccountList(const QList<QString> &accounts) -> void;
+    auto onCreateClicked() -> void;
+    auto onAccountClicked() -> void;
+    auto onTrashClicked() -> void;
 
 private:
     auto init() -> void;
