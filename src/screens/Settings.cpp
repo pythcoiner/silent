@@ -201,10 +201,10 @@ auto Settings::onBackendInfoReady(BackendInfo info) -> void {
     }
 
     bool networkMatch = (info.network == m_current_network);
+    m_blindbit_url->setText(QString::fromStdString(std::string(info.url.c_str())));
+
     m_backend_verified = networkMatch;
     updateButtons();
-
-    m_blindbit_url->setText(QString::fromStdString(std::string(info.url.c_str())));
     m_info_network->setText(networkStr);
     m_current_height = info.height;
     m_info_height->setText(QString::number(info.height));
