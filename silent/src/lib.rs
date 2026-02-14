@@ -352,7 +352,10 @@ pub fn init_logging(level: LogLevel) {
         LogLevel::Trace => log::LevelFilter::Trace,
         _ => log::LevelFilter::Info,
     };
-    env_logger::Builder::new().filter_level(filter).init();
+    env_logger::Builder::new()
+        .filter_level(filter)
+        .filter_module("ureq", log::LevelFilter::Info)
+        .init();
 }
 
 /// Generate a new 12-word BIP39 mnemonic.
@@ -405,6 +408,6 @@ pub fn validate_mnemonic(mnemonic: String) -> bool {
 pub use account::{new_account, Account, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use ffi::{
-    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output,
-    TransactionSimulation, TransactionTemplate,
+    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,
+    TransactionTemplate,
 };
