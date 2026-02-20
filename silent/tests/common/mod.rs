@@ -44,6 +44,7 @@ pub fn create_test_account(account_name: &str, blindbit_url: &str) -> Account {
         Network::Regtest,
         TEST_MNEMONIC.to_string(),
         blindbit_url.to_string(),
+        String::new(),
         Some(546),
     );
     Account::new(config).expect("Account creation should succeed")

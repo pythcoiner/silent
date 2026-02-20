@@ -61,6 +61,9 @@ pub struct Config {
     pub mnemonic: String,
     /// Blindbit server URL
     pub blindbit_url: String,
+    /// P2P node address for broadcasting (e.g. "127.0.0.1:8333")
+    #[serde(default)]
+    pub p2p_node: String,
     /// Optional dust limit in satoshis
     pub dust_limit: Option<u64>,
     /// Base directory for account data
@@ -95,6 +98,7 @@ impl Config {
         network: Network,
         mnemonic: String,
         blindbit_url: String,
+        p2p_node: String,
         dust_limit: Option<u64>,
     ) -> Self {
         let data_dir = datadir();
@@ -103,6 +107,7 @@ impl Config {
             network,
             mnemonic,
             blindbit_url,
+            p2p_node,
             dust_limit,
             data_dir,
         }
@@ -196,6 +201,16 @@ impl Config {
         self.blindbit_url = url;
     }
 
+    /// Get P2P node address.
+    pub fn get_p2p_node(&self) -> String {
+        self.p2p_node.clone()
+    }
+
+    /// Set P2P node address.
+    pub fn set_p2p_node(&mut self, node: String) {
+        self.p2p_node = node;
+    }
+
     /// Get dust limit.
     pub fn get_dust_limit(&self) -> u64 {
         self.dust_limit.unwrap_or(0)
@@ -281,6 +296,7 @@ pub fn new_config(
     network: Network,
     mnemonic: String,
     blindbit_url: String,
+    p2p_node: String,
     dust_limit: u64,
 ) -> Box<Config> {
     let dust = if dust_limit > 0 {
@@ -293,6 +309,7 @@ pub fn new_config(
         network,
         mnemonic,
         blindbit_url,
+        p2p_node,
         dust,
     ))
 }
@@ -318,6 +335,7 @@ pub fn config_from_file(account_name: String) -> Box<Config> {
             Box::new(Config::new(
                 account_name,
                 Network::Signet,
+                String::new(),
                 String::new(),
                 String::new(),
                 None,

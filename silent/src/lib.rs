@@ -142,6 +142,15 @@ mod ffi {
         pub value: String,
     }
 
+    /// Result of a connection test.
+    #[derive(Debug, Clone)]
+    pub struct ConnectionResult {
+        /// Whether the connection succeeded.
+        pub is_ok: bool,
+        /// Error message (empty if is_ok is true).
+        pub error: String,
+    }
+
     /// Backend server information result.
     #[derive(Debug, Clone)]
     pub struct BackendInfo {
@@ -202,6 +211,10 @@ mod ffi {
         /// Validate a recipient address (SP address, legacy Bitcoin address, or hex data).
         /// Returns empty string if valid, or error message if invalid.
         fn validate_address(address: String) -> String;
+
+        /// Test P2P node connectivity.
+        /// Blocking call - attempts to connect and perform version handshake.
+        fn test_p2p_node(address: String, network: Network) -> ConnectionResult;
     }
 
     // ===== Config Methods =====
@@ -213,6 +226,7 @@ mod ffi {
             network: Network,
             mnemonic: String,
             blindbit_url: String,
+            p2p_node: String,
             dust_limit: u64,
         ) -> Box<Config>;
 
@@ -245,6 +259,12 @@ mod ffi {
 
         /// Set BlindBit URL.
         fn set_blindbit_url(self: &mut Config, url: String);
+
+        /// Get P2P node address.
+        fn get_p2p_node(self: &Config) -> String;
+
+        /// Set P2P node address.
+        fn set_p2p_node(self: &mut Config, node: String);
 
         /// Get dust limit (0 means not set).
         fn get_dust_limit(self: &Config) -> u64;
@@ -421,6 +441,47 @@ pub fn validate_address(address: String) -> String {
     match bwk_sp::spdk_core::RecipientAddress::try_from(address) {
         Ok(_) => String::new(),
         Err(e) => e.to_string(),
+    }
+}
+
+/// Test P2P node connectivity by attempting a version handshake.
+pub fn test_p2p_node(address: String, network: Network) -> ffi::ConnectionResult {
+    use std::net::SocketAddr;
+    use std::time::Duration;
+
+    log::info!("test_p2p_node()");
+    let addr: SocketAddr = match address.parse() {
+        Ok(a) => a,
+        Err(e) => {
+            return ffi::ConnectionResult {
+                is_ok: false,
+                error: format!("Invalid address '{address}': {e}"),
+            }
+        }
+    };
+
+    let btc_network: bitcoin::Network = network.into();
+
+    log::info!("test_p2p_node() create client");
+    let mut client = match bwk_p2p::Client::new(addr, btc_network)
+        .timeout(Duration::from_secs(1))
+        .connect()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            return ffi::ConnectionResult {
+                is_ok: false,
+                error: format!("Connection failed: {e}"),
+            }
+        }
+    };
+
+    log::info!("test_p2p_node() stop client");
+    client.stop();
+
+    ffi::ConnectionResult {
+        is_ok: true,
+        error: String::new(),
     }
 }
 

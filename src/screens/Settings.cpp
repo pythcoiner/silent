@@ -30,6 +30,7 @@ auto Settings::init() -> void {
 
         // Store config values to populate UI later
         m_current_url = QString::fromStdString(std::string(config->get_blindbit_url().c_str()));
+        m_current_p2p_node = QString::fromStdString(std::string(config->get_p2p_node().c_str()));
         m_current_network = config->get_network();
     }
 
@@ -41,6 +42,13 @@ auto Settings::init() -> void {
     m_blindbit_url->setEnabled(!m_controller->isScannerRunning());
 
     m_btn_test = new QPushButton("Test");
+
+    m_p2p_node = new QLineEdit;
+    m_p2p_node->setFixedWidth(3 * INPUT_WIDTH);
+    m_p2p_node->setPlaceholderText("127.0.0.1:8333");
+    m_p2p_node->setText(m_current_p2p_node);
+
+    m_btn_test_p2p = new QPushButton("Test");
 
     m_network_selector = new QComboBox;
     m_network_selector->addItem("Regtest", static_cast<int>(Network::Regtest));
@@ -73,6 +81,9 @@ auto Settings::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_blindbit_url, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
             qontrol::UNIQUE);
+    connect(m_btn_test_p2p, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
+    connect(m_p2p_node, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
+            qontrol::UNIQUE);
 }
 
 auto Settings::actionSave() -> void {
@@ -95,6 +106,10 @@ auto Settings::actionSave() -> void {
     auto url = m_blindbit_url->text().toStdString();
     config->set_blindbit_url(rust::String(url));
 
+    // Update P2P node address
+    auto p2pNode = m_p2p_node->text().trimmed().toStdString();
+    config->set_p2p_node(rust::String(p2pNode));
+
     // Update network
     int networkIndex = m_network_selector->currentIndex();
     auto network = static_cast<Network>(m_network_selector->itemData(networkIndex).toInt());
@@ -105,8 +120,6 @@ auto Settings::actionSave() -> void {
 
     m_current_url = m_blindbit_url->text();
 
-    auto *modal = new qontrol::Modal("Settings", "Settings saved successfully");
-    AppController::execModal(modal);
     emit configSaved();
 }
 
@@ -231,6 +244,50 @@ auto Settings::invalidateBackendTest() -> void {
     updateButtons();
 }
 
+auto Settings::actionTestP2p() -> void {
+    auto addr = m_p2p_node->text().trimmed();
+    if (addr.isEmpty()) {
+        auto *modal = new qontrol::Modal("Error", "P2P node address is empty");
+        AppController::execModal(modal);
+        return;
+    }
+
+    m_btn_test_p2p->setEnabled(false);
+    m_btn_test_p2p->setText("Testing...");
+
+    auto network = m_current_network;
+    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
+        auto result = ::test_p2p_node(rust::String(addr), network);
+        QMetaObject::invokeMethod(this, [this, result]() -> void {
+            m_btn_test_p2p->setEnabled(true);
+            m_btn_test_p2p->setText("Test");
+            onP2pTestReady(result);
+        });
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto Settings::onP2pTestReady(ConnectionResult result) -> void {
+    if (!result.is_ok) {
+        m_p2p_verified = false;
+        updateButtons();
+        AppController::execModal(
+            new qontrol::Modal("P2P Test Failed",
+                               QString("Failed to connect to P2P node:\n%1")
+                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        return;
+    }
+
+    m_p2p_verified = true;
+    updateButtons();
+}
+
+auto Settings::invalidateP2pTest() -> void {
+    m_p2p_verified = false;
+    updateButtons();
+}
+
 auto Settings::clearBackendInfo() -> void {
     m_info_network->setText("--");
     m_info_height->setText("--");
@@ -240,7 +297,7 @@ auto Settings::clearBackendInfo() -> void {
 
 auto Settings::updateButtons() -> void {
     bool connected = m_controller->isScannerRunning();
-    m_btn_save->setEnabled(m_backend_verified && !connected);
+    m_btn_save->setEnabled(m_backend_verified && m_p2p_verified);
     m_btn_toggle->setEnabled(m_backend_verified || connected);
     m_blindbit_url->setEnabled(!connected);
     m_btn_test->setEnabled(!connected);
@@ -269,6 +326,16 @@ auto Settings::view() -> void {
                        ->push(m_blindbit_url)
                        ->pushSpacer(H_SPACER)
                        ->push(m_btn_test)
+                       ->pushSpacer();
+
+    auto *p2pLabel = new QLabel("P2P Node:");
+    p2pLabel->setFixedWidth(LABEL_WIDTH);
+
+    auto *p2pRow = (new qontrol::Row)
+                       ->push(p2pLabel)
+                       ->push(m_p2p_node)
+                       ->pushSpacer(H_SPACER)
+                       ->push(m_btn_test_p2p)
                        ->pushSpacer();
 
     auto *networkLabel = new QLabel("Network:");
@@ -307,6 +374,8 @@ auto Settings::view() -> void {
     auto *col = (new qontrol::Column)
                     ->pushSpacer(50)
                     ->push(urlRow)
+                    ->pushSpacer(V_SPACER)
+                    ->push(p2pRow)
                     ->pushSpacer(V_SPACER)
                     ->push(networkRow)
                     ->pushSpacer(20)

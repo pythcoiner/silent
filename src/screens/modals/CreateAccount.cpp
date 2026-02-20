@@ -35,7 +35,11 @@ auto CreateAccount::init() -> void {
     m_blindbit_input->setPlaceholderText("http://localhost:8080");
     m_blindbit_input->setText("http://localhost:8080");
 
+    m_p2p_input = new QLineEdit();
+    m_p2p_input->setPlaceholderText("127.0.0.1:18444");
+
     m_test_btn = new QPushButton("Test");
+    m_test_p2p_btn = new QPushButton("Test");
 
     m_create_btn = new QPushButton("Create");
     m_create_btn->setEnabled(false);
@@ -55,6 +59,10 @@ auto CreateAccount::doConnect() -> void {
     connect(m_test_btn, &QPushButton::clicked, this, &CreateAccount::onTestBackend,
             qontrol::UNIQUE);
     connect(m_blindbit_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateBackendTest,
+            qontrol::UNIQUE);
+    connect(m_test_p2p_btn, &QPushButton::clicked, this, &CreateAccount::onTestP2p,
+            qontrol::UNIQUE);
+    connect(m_p2p_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateP2pTest,
             qontrol::UNIQUE);
     connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate, qontrol::UNIQUE);
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
@@ -87,6 +95,13 @@ auto CreateAccount::view() -> void {
                        ->pushSpacer(H_SPACER)
                        ->push(m_test_btn);
 
+    auto *p2pRow = (new qontrol::Row)
+                       ->push(new QLabel("P2P Node:"))
+                       ->pushSpacer(H_SPACER)
+                       ->push(m_p2p_input)
+                       ->pushSpacer(H_SPACER)
+                       ->push(m_test_p2p_btn);
+
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_cancel_btn)
@@ -105,6 +120,8 @@ auto CreateAccount::view() -> void {
                     ->pushSpacer(V_SPACER)
                     ->push(urlRow)
                     ->pushSpacer(V_SPACER)
+                    ->push(p2pRow)
+                    ->pushSpacer(V_SPACER)
                     ->push(buttonRow);
 
     setMainWidget(margin(col));
@@ -119,9 +136,10 @@ auto CreateAccount::onCreate() -> void {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
     auto blindbitUrl = m_blindbit_input->text().trimmed();
+    auto p2pNode = m_p2p_input->text().trimmed();
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
 
-    emit createAccount(name, mnemonic, network, blindbitUrl);
+    emit createAccount(name, mnemonic, network, blindbitUrl, p2pNode);
     accept();
 }
 
@@ -131,6 +149,7 @@ auto CreateAccount::onNetworkChanged() -> void {
 
     m_generate_btn->setEnabled(!isMainnet);
     invalidateBackendTest();
+    invalidateP2pTest();
 }
 
 auto CreateAccount::onTestBackend() -> void {
@@ -219,6 +238,49 @@ auto CreateAccount::invalidateBackendTest() -> void {
     onUpdateCreateButton();
 }
 
+auto CreateAccount::onTestP2p() -> void {
+    auto addr = m_p2p_input->text().trimmed();
+    if (addr.isEmpty()) {
+        AppController::execModal(
+            new qontrol::Modal("Invalid Input", "P2P node address cannot be empty."));
+        return;
+    }
+
+    m_test_p2p_btn->setEnabled(false);
+    m_test_p2p_btn->setText("Testing...");
+
+    auto network = static_cast<Network>(m_network_combo->currentData().toInt());
+    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
+        auto result = ::test_p2p_node(rust::String(addr), network);
+        QMetaObject::invokeMethod(this, [this, result]() -> void { onP2pTestReady(result); });
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto CreateAccount::onP2pTestReady(ConnectionResult result) -> void {
+    m_test_p2p_btn->setEnabled(true);
+    m_test_p2p_btn->setText("Test");
+
+    if (!result.is_ok) {
+        m_p2p_verified = false;
+        onUpdateCreateButton();
+        AppController::execModal(
+            new qontrol::Modal("P2P Test Failed",
+                               QString("Failed to connect to P2P node:\n%1")
+                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        return;
+    }
+
+    m_p2p_verified = true;
+    onUpdateCreateButton();
+}
+
+auto CreateAccount::invalidateP2pTest() -> void {
+    m_p2p_verified = false;
+    onUpdateCreateButton();
+}
+
 auto CreateAccount::onUpdateCreateButton() -> void {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
@@ -242,7 +304,7 @@ auto CreateAccount::onUpdateCreateButton() -> void {
         return;
     }
 
-    m_create_btn->setEnabled(m_backend_verified);
+    m_create_btn->setEnabled(m_backend_verified && m_p2p_verified);
 }
 
 auto CreateAccount::generateMnemonic() -> QString { // NOLINT

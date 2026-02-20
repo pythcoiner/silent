@@ -2,7 +2,9 @@
 //!
 //! Wraps bwk-sp::Account with CXX-compatible interface for C++ bindings.
 
+use std::net::SocketAddr;
 use std::sync::mpsc;
+use std::time::Duration;
 
 use bwk_sp::spdk_core::{
     self, bip39, RecipientAddress, SilentPaymentUnsignedTransaction, SpClient,
@@ -20,6 +22,8 @@ struct AccountInner {
     account: SpAccount,
     receiver: Option<mpsc::Receiver<SpNotification>>,
     client: SpClient,
+    network: bitcoin::Network,
+    p2p_node: String,
 }
 
 /// Account wrapping bwk-sp::Account.
@@ -62,6 +66,8 @@ impl Account {
             account,
             receiver,
             client,
+            network,
+            p2p_node: config.p2p_node.clone(),
         })
     }
 
@@ -549,7 +555,7 @@ impl Account {
         }
     }
 
-    /// Broadcast a signed transaction to the network.
+    /// Broadcast a signed transaction to the network via P2P.
     pub fn broadcast_transaction(&self, signed_tx_hex: String) -> TxResult {
         use bitcoin::consensus::encode::deserialize_hex;
         use bitcoin::Transaction;
@@ -573,17 +579,20 @@ impl Account {
             }
         };
 
-        match inner.account.broadcast(&tx) {
-            Ok(txid) => TxResult {
-                is_ok: true,
-                error: String::new(),
-                value: txid.to_string(),
-            },
-            Err(e) => TxResult {
+        let txid = tx.compute_txid();
+
+        if let Err(e) = broadcast_via_p2p(&inner.p2p_node, inner.network, tx) {
+            return TxResult {
                 is_ok: false,
                 error: format!("Broadcast failed: {e}"),
                 value: String::new(),
-            },
+            };
+        }
+
+        TxResult {
+            is_ok: true,
+            error: String::new(),
+            value: txid.to_string(),
         }
     }
 
@@ -608,19 +617,62 @@ impl Account {
             }
         };
 
-        match inner.account.sign_and_broadcast(unsigned_tx) {
-            Ok(txid) => TxResult {
-                is_ok: true,
-                error: String::new(),
-                value: txid.to_string(),
-            },
-            Err(e) => TxResult {
+        let signed_tx = match inner.account.sign_transaction(unsigned_tx) {
+            Ok(tx) => tx,
+            Err(e) => {
+                return TxResult {
+                    is_ok: false,
+                    error: format!("Signing failed: {e}"),
+                    value: String::new(),
+                }
+            }
+        };
+
+        let txid = signed_tx.compute_txid();
+
+        if let Err(e) = broadcast_via_p2p(&inner.p2p_node, inner.network, signed_tx) {
+            return TxResult {
                 is_ok: false,
-                error: format!("Sign and broadcast failed: {e}"),
+                error: format!("Broadcast failed: {e}"),
                 value: String::new(),
-            },
+            };
+        }
+
+        TxResult {
+            is_ok: true,
+            error: String::new(),
+            value: txid.to_string(),
         }
     }
+}
+
+/// Broadcast a transaction via the P2P network.
+fn broadcast_via_p2p(
+    p2p_node: &str,
+    network: bitcoin::Network,
+    tx: bitcoin::Transaction,
+) -> Result<(), String> {
+    if p2p_node.is_empty() {
+        return Err("P2P node address not configured".to_string());
+    }
+
+    let addr: SocketAddr = p2p_node
+        .parse()
+        .map_err(|e| format!("Invalid P2P node address '{p2p_node}': {e}"))?;
+
+    let mut client = bwk_p2p::Client::new(addr, network)
+        .timeout(Duration::from_secs(30))
+        .connect()
+        .map_err(|e| format!("P2P connection failed: {e}"))?;
+
+    let result = client.broadcast_tx(tx).map_err(|e| format!("P2P broadcast failed: {e}"));
+
+    // Give the peer time to receive the tx before closing the connection.
+    // broadcast_tx() only writes to the TCP stream; stop() would close it immediately.
+    std::thread::sleep(Duration::from_millis(500));
+
+    client.stop();
+    result
 }
 
 /// Convert bwk-sp::Notification to Silent Notification.

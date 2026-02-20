@@ -30,7 +30,7 @@ public slots:
     auto listAccounts() -> void;
     auto onCreateAccount() -> void;
     auto createAccount(const QString &name, const QString &mnemonic, Network network,
-                       const QString &blindbit_url) -> void;
+                       const QString &blindbit_url, const QString &p2p_node) -> void;
     auto onAccountCreated(const QString &name) -> void;
     auto openAccount(const QString &name) -> void;
     auto deleteAccount(const QString &name) -> void;

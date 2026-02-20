@@ -71,11 +71,12 @@ auto AppController::onCreateAccount() -> void {
 }
 
 auto AppController::createAccount(const QString &name, const QString &mnemonic, Network network,
-                                  const QString &blindbit_url) -> void {
+                                  const QString &blindbit_url, const QString &p2p_node) -> void {
     // Create config with default dust limit of 546 sats
     auto config =
         new_config(rust::String(name.toStdString()), network, rust::String(mnemonic.toStdString()),
-                   rust::String(blindbit_url.toStdString()), 546);
+                   rust::String(blindbit_url.toStdString()), rust::String(p2p_node.toStdString()),
+                   546);
 
     // Save config to file
     config->to_file();
