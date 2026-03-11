@@ -90,6 +90,7 @@ target_link_libraries(${BIN}
     crypto
     pthread
     dl
+    udev
 )
 
 set_target_properties(${BIN} PROPERTIES
