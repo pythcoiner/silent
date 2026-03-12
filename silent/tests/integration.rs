@@ -12,7 +12,7 @@ use std::time::Duration;
 
 use common::{
     cleanup_test_account, create_test_account, fund_sp_wallet, setup_blindbitd, test_account_name,
-    wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
+    wait_for_notification, wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
 };
 
 // ===== Test Helpers =====
@@ -287,6 +287,193 @@ fn test_wallet_restore_from_mnemonic() {
     );
 
     cleanup_test_account(&account_name);
+}
+
+// ===== Self-Send Tests =====
+
+#[test]
+fn test_self_send_produces_two_coins() {
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account = create_test_account(&account_name, &url);
+
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+    assert_eq!(account.balance(), 0, "New wallet should have zero balance");
+
+    // Fund the wallet
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
+
+    assert!(
+        wait_for_notification(&mut account, NotificationFlag::NewOutput, 30),
+        "Should receive NewOutput notification"
+    );
+
+    let balance = account.balance();
+    assert!(balance > 0, "Balance should be positive after funding");
+
+    let coins_before = account.coins();
+    let unspent_before: Vec<_> = coins_before.iter().filter(|c| !c.spent).collect();
+    assert_eq!(unspent_before.len(), 1, "Should have exactly 1 unspent coin");
+
+    // Self-send: send half the balance to own SP address
+    use silent::{Output, TransactionTemplate};
+
+    let send_amount = balance / 2;
+    let tx_template = TransactionTemplate {
+        outputs: vec![Output {
+            address: account.sp_address(),
+            amount: send_amount,
+            label: String::from("self send"),
+            max: false,
+        }],
+        fee_rate: 0.0,
+        fee: 1000,
+        input_outpoints: vec![],
+    };
+
+    // Simulate
+    let simulation = account.simulate_transaction(tx_template.clone());
+    assert!(
+        simulation.is_valid,
+        "Simulation should succeed: {}",
+        simulation.error
+    );
+
+    // Prepare
+    let psbt = account.prepare_transaction(tx_template);
+    assert!(
+        psbt.is_ok(),
+        "Prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
+
+    // Sign
+    let signed = account.sign_transaction(&psbt);
+    assert!(signed.is_ok, "Sign should succeed: {}", signed.error);
+
+    // === SPENDING CHECK ===
+    // Deserialize the signed tx and inspect outputs
+    let tx: bitcoin::Transaction =
+        bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
+    assert_eq!(
+        tx.output.len(),
+        2,
+        "SPENDING BUG: self-send transaction should have 2 outputs (receive + change), got {}",
+        tx.output.len()
+    );
+
+    // Verify both outputs are valid P2TR scripts with distinct keys
+    for (i, out) in tx.output.iter().enumerate() {
+        let script = out.script_pubkey.as_bytes();
+        assert!(
+            out.script_pubkey.is_p2tr(),
+            "Output {i} is not P2TR: {:?}",
+            out.script_pubkey
+        );
+        assert!(
+            out.value.to_sat() > 330,
+            "Output {i} is dust: {} sats",
+            out.value.to_sat()
+        );
+        eprintln!(
+            "Output {i}: value={} sats, script={:?}, pubkey={:x?}",
+            out.value.to_sat(),
+            out.script_pubkey,
+            &script[2..34],
+        );
+    }
+
+    // Both outputs should have different script pubkeys
+    assert_ne!(
+        tx.output[0].script_pubkey, tx.output[1].script_pubkey,
+        "Both outputs have the same script_pubkey — SP derivation may be broken"
+    );
+
+    // Broadcast via bitcoind and mine
+    bitcoind
+        .send_raw_transaction(&tx)
+        .expect("broadcast should succeed");
+    bwk_test::generate_blocks(bitcoind, 1);
+
+    let tx_height =
+        bwk_test::get_tx_height(bitcoind, tx.compute_txid()).expect("get tx height") as u32;
+    wait_for_sync_and_index(&url, tx_height);
+
+    // Wait for scanner to detect the new outputs
+    let mut new_output_count = 0;
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(30);
+    loop {
+        if start.elapsed() > timeout {
+            break;
+        }
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == NotificationFlag::NewOutput {
+                new_output_count += 1;
+                if new_output_count >= 2 {
+                    break;
+                }
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    // === RESULTS ===
+    let coins_after = account.coins();
+    let unspent_after: Vec<_> = coins_after.iter().filter(|c| !c.spent).collect();
+
+    // Report what the scanner found vs what the tx contains
+    let expected_change = balance - send_amount - 1000; // balance - send - fee
+    eprintln!("Transaction txid: {}", tx.compute_txid());
+    eprintln!("Send amount: {send_amount}, Expected change: {expected_change}");
+    eprintln!("Tx outputs: [0]={} sats, [1]={} sats", tx.output[0].value.to_sat(), tx.output[1].value.to_sat());
+    eprintln!("NewOutput notifications received: {new_output_count}");
+    eprintln!("Coins after scan:");
+    for coin in &coins_after {
+        eprintln!(
+            "  {} value={} spent={} height={}",
+            coin.outpoint, coin.value, coin.spent, coin.height
+        );
+    }
+    if unspent_after.len() == 1 {
+        let found = &unspent_after[0];
+        let found_is_receive = found.value == send_amount;
+        let found_is_change = found.value == expected_change;
+        eprintln!(
+            "Scanner found: {} sats (is_receive={}, is_change={})",
+            found.value, found_is_receive, found_is_change
+        );
+        if found_is_receive {
+            eprintln!("MISSING: change output ({expected_change} sats) — change address derivation may be wrong");
+        } else if found_is_change {
+            eprintln!("MISSING: receive output ({send_amount} sats) — receive address derivation may be wrong");
+        } else {
+            eprintln!("MISSING: found value {} matches neither receive nor change", found.value);
+        }
+    }
+
+    assert_eq!(
+        unspent_after.len(),
+        2,
+        "Should have 2 unspent coins after self-send, got {}",
+        unspent_after.len(),
+    );
+
+    account.stop_scanner();
+    cleanup_test_account(&account_name);
+    drop(bbd);
 }
 
 // ===== Signet Testing =====
