@@ -243,7 +243,14 @@ auto AccountController::stop() -> void {
 
 auto AccountController::getCoins() -> rust::Vec<RustCoin> {
     if (m_account.has_value()) {
-        return m_account.value()->coins();
+        auto all = m_account.value()->coins();
+        rust::Vec<RustCoin> spendable;
+        for (auto &coin : all) {
+            if (!coin.spent) {
+                spendable.push_back(std::move(coin));
+            }
+        }
+        return spendable;
     }
     return rust::Vec<RustCoin>();
 }
