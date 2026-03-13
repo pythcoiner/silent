@@ -409,6 +409,7 @@ CARGO_EOF
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           # Add Windows system libraries after the silent_rust line in target_link_libraries
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32/; }' CMakeLists.txt
         '';
@@ -528,6 +529,10 @@ LDWRAPPER
           export AR_${cargoEnvPrefix}="${llvmPkgs.llvm}/bin/llvm-ar"
           export CARGO_TARGET_${envPrefix}_LINKER="$TMPDIR/macos-cross/cc-${rustTriple}"
           export SDKROOT="${sdkRoot}"
+
+          # openssl-sys needs these for cross-compilation
+          export AR="${llvmPkgs.llvm}/bin/llvm-ar"
+          export RANLIB="${llvmPkgs.llvm}/bin/llvm-ranlib"
         '';
 
       # Generate CMake toolchain file + wrapper scripts for macOS GUI cross-compilation
@@ -636,6 +641,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
@@ -672,6 +678,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
