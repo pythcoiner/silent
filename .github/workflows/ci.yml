@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - name: rustfmt
+        run: cargo fmt --manifest-path silent/Cargo.toml -- --check
+      - name: clippy
+        run: cargo clippy --manifest-path silent/Cargo.toml -- -D warnings
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - name: tests
+        run: cargo test --manifest-path silent/Cargo.toml
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Build Linux
+        run: nix build .#linux
+      - name: Build Windows
+        run: nix build .#windows
+      - name: Build macOS ARM
+        run: nix build .#aarch64-apple-darwin
+      - name: Build macOS x86_64
+        run: nix build .#x86_64-apple-darwin
