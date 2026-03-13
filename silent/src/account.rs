@@ -286,16 +286,10 @@ impl Account {
             builder.add_output(recip);
         }
         if has_max {
-            if !tx_template.input_outpoints.is_empty() || output_total == 0 {
-                let addr = max_addr.unwrap();
-                let mut recip = SpRecipientAddress::new(addr, 0, network);
-                recip.amount = bwk_tx::Amount::Max(None);
-                builder.add_output(recip);
-            } else {
-                return Err(AccountError::Transaction(
-                    "max cannot be combined with other outputs".to_string(),
-                ));
-            }
+            let addr = max_addr.unwrap();
+            let mut recip = SpRecipientAddress::new(addr, 0, network);
+            recip.amount = bwk_tx::Amount::Max(None);
+            builder.add_output(recip);
         }
 
         // Handle inputs
