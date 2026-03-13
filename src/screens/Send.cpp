@@ -145,7 +145,7 @@ OutputW::OutputW(Send *screen, int id) {
                      qontrol::UNIQUE);
 
     m_max->setProperty("outputId", id);
-    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen, &Send::onOutputMaxToggled,
+    QObject::connect(m_max, &QCheckBox::stateChanged, screen, &Send::onOutputMaxToggled,
                      qontrol::UNIQUE);
 
     m_widget = col;
@@ -435,7 +435,7 @@ auto Send::inputsView() -> QWidget * {
             }
         }
         checkbox->setChecked(isSelected);
-        connect(checkbox, &QCheckBox::checkStateChanged, this, &Send::onCoinToggled,
+        connect(checkbox, &QCheckBox::stateChanged, this, &Send::onCoinToggled,
                 qontrol::UNIQUE);
 
         auto *outpointField = new QLineEdit(shortenOutpoint(outpoint));
