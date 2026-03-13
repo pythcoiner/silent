@@ -286,15 +286,18 @@ pub fn fund_sp_wallet(
     let taproot_addr = tr_derivator.receive_at(0);
 
     // Build derivation path for index 0
-    let path = tr_path(network, ChildNumber::from_hardened_idx(0).expect("child number"))
-        .expect("tr_path");
+    let path = tr_path(
+        network,
+        ChildNumber::from_hardened_idx(0).expect("child number"),
+    )
+    .expect("tr_path");
     let path = path.child(ChildNumber::from_normal_idx(0).expect("child number"));
     let path = path.child(ChildNumber::from_normal_idx(0).expect("child number"));
     let sk = tr_signer.private_key_at(&path);
 
     // Fund the taproot address
-    let fund_txid = bwk_test::send(bitcoind, taproot_addr.clone(), amount_btc)
-        .expect("fund taproot address");
+    let fund_txid =
+        bwk_test::send(bitcoind, taproot_addr.clone(), amount_btc).expect("fund taproot address");
     bwk_test::generate_blocks(bitcoind, 2);
 
     let current_height = bwk_test::get_height(bitcoind);
@@ -312,9 +315,8 @@ pub fn fund_sp_wallet(
     };
 
     // Create SP transaction
-    let recipient_pubkey =
-        generate_recipient_pubkey(sk, outpoint, &txout, sp_address, &secp)
-            .expect("generate recipient pubkey");
+    let recipient_pubkey = generate_recipient_pubkey(sk, outpoint, &txout, sp_address, &secp)
+        .expect("generate recipient pubkey");
     let sp_tx = swap_to_sp(
         sk,
         outpoint,
@@ -366,15 +368,17 @@ pub fn fund_sp_wallet_at_index(
         .expect("derivator");
     let taproot_addr = tr_derivator.receive_at(derivation_index);
 
-    let path = tr_path(network, ChildNumber::from_hardened_idx(0).expect("child number"))
-        .expect("tr_path");
+    let path = tr_path(
+        network,
+        ChildNumber::from_hardened_idx(0).expect("child number"),
+    )
+    .expect("tr_path");
     let path = path.child(ChildNumber::from_normal_idx(0).expect("child number"));
-    let path =
-        path.child(ChildNumber::from_normal_idx(derivation_index).expect("child number"));
+    let path = path.child(ChildNumber::from_normal_idx(derivation_index).expect("child number"));
     let sk = tr_signer.private_key_at(&path);
 
-    let fund_txid = bwk_test::send(bitcoind, taproot_addr.clone(), amount_btc)
-        .expect("fund taproot address");
+    let fund_txid =
+        bwk_test::send(bitcoind, taproot_addr.clone(), amount_btc).expect("fund taproot address");
     bwk_test::generate_blocks(bitcoind, 2);
 
     let current_height = bwk_test::get_height(bitcoind);
@@ -390,9 +394,8 @@ pub fn fund_sp_wallet_at_index(
         vout: index as u32,
     };
 
-    let recipient_pubkey =
-        generate_recipient_pubkey(sk, outpoint, &txout, sp_address, &secp)
-            .expect("generate recipient pubkey");
+    let recipient_pubkey = generate_recipient_pubkey(sk, outpoint, &txout, sp_address, &secp)
+        .expect("generate recipient pubkey");
     let sp_tx = swap_to_sp(
         sk,
         outpoint,
