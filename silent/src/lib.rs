@@ -188,6 +188,9 @@ mod ffi {
 
         /// Result wrapper for unsigned transactions.
         type PsbtResult;
+
+        /// Notification receiver for blocking recv in a dedicated thread.
+        type NotificationReceiver;
     }
 
     // ===== Utility Functions =====
@@ -295,6 +298,9 @@ mod ffi {
         /// Try to receive a notification (non-blocking).
         fn try_recv(self: &mut Account) -> Box<Poll>;
 
+        /// Take ownership of the notification receiver for use in a dedicated thread.
+        fn take_receiver(self: &mut Account) -> Box<NotificationReceiver>;
+
         /// Get account name.
         fn name(self: &Account) -> String;
 
@@ -353,6 +359,14 @@ mod ffi {
 
         /// Get error message (if any).
         fn get_error(self: &Poll) -> String;
+    }
+
+    // ===== NotificationReceiver Methods =====
+
+    extern "Rust" {
+        /// Blocking receive — waits for the next notification.
+        /// Returns Poll with is_some()=false when the channel disconnects.
+        fn recv(self: &NotificationReceiver) -> Box<Poll>;
     }
 
     // ===== PsbtResult Methods =====
@@ -486,7 +500,7 @@ pub fn test_p2p_node(address: String, network: Network) -> ffi::ConnectionResult
 }
 
 // Re-export main types
-pub use account::{new_account, Account, Poll, PsbtResult};
+pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use ffi::{
     BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,

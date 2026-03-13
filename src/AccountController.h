@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
-#include <QTimer>
+#include <QThread>
 #include <Qontrol>
 #include <optional>
 #include <silent.h>
@@ -36,9 +36,8 @@ signals:
 public slots:
     auto loadPanel(const QString &name) -> void;
     auto insertPanel(qontrol::Panel *panel) -> void;
-    auto poll() -> void;
     auto pollCoins() -> void;
-    auto pollNotifications() -> void;
+    auto handleNotification(Notification notif) -> void;
     auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
     auto updateCoinLabel(const QString &outpoint, const QString &label) -> void;
     auto startScanner() -> void;
@@ -59,8 +58,7 @@ private:
     QHash<QString, qontrol::Panel *> m_panels;
     AccountWidget *m_widget;
     std::optional<rust::Box<Account>> m_account = std::nullopt;
-    QTimer *m_notif_timer = nullptr;
-    QTimer *m_coins_timer = nullptr;
+    QThread *m_notif_thread = nullptr;
     bool m_init = false;
     bool m_scanner_running = false;
 };

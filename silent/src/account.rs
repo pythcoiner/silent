@@ -114,6 +114,17 @@ impl Account {
         }
     }
 
+    /// Take ownership of the notification receiver for use in a dedicated thread.
+    /// Can only be called once; subsequent calls will panic.
+    pub fn take_receiver(&mut self) -> Box<NotificationReceiver> {
+        let inner = self.inner.as_mut().expect("Account not initialized");
+        let receiver = inner
+            .receiver
+            .take()
+            .expect("Notification receiver already taken");
+        Box::new(NotificationReceiver { receiver })
+    }
+
     /// Get account name.
     pub fn name(&self) -> String {
         match &self.inner {
@@ -655,6 +666,26 @@ pub fn new_account(account_name: String) -> Box<Account> {
                 inner: None,
                 error,
             })
+        }
+    }
+}
+
+/// Notification receiver that owns the mpsc channel.
+/// Designed to be used from a dedicated thread with blocking recv().
+pub struct NotificationReceiver {
+    receiver: mpsc::Receiver<SpNotification>,
+}
+
+impl NotificationReceiver {
+    /// Blocking receive — blocks until a notification arrives.
+    /// Returns Poll::err when the channel disconnects (sender dropped).
+    pub fn recv(&self) -> Box<Poll> {
+        match self.receiver.recv() {
+            Ok(notif) => {
+                let notification = convert_notification(notif);
+                Box::new(Poll::ok(notification))
+            }
+            Err(_) => Box::new(Poll::err("Notification channel disconnected")),
         }
     }
 }

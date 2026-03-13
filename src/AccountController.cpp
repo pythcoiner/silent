@@ -7,7 +7,6 @@
 #include "screens/Settings.h"
 #include "silent.h"
 #include <qlogging.h>
-#include <qtimer.h>
 #include <string>
 #include <utility>
 
@@ -29,15 +28,20 @@ auto AccountController::init(const QString &account) -> void {
     }
     m_account = std::make_optional(std::move(acc));
 
-    // Initialize the timer that polls notifications every 100ms
-    m_notif_timer = new QTimer(this);
-    connect(m_notif_timer, &QTimer::timeout, this, &AccountController::poll);
-    m_notif_timer->start(100);
-
-    // Initialize the timer that polls coins every 1000ms
-    m_coins_timer = new QTimer(this);
-    connect(m_coins_timer, &QTimer::timeout, this, &AccountController::pollCoins);
-    m_coins_timer->start(1000);
+    // Take the notification receiver and spawn a blocking listener thread
+    auto receiver = m_account.value()->take_receiver();
+    m_notif_thread = QThread::create([this, recv = std::move(receiver)]() {
+        while (true) {
+            auto poll = recv->recv();
+            if (!poll->is_some()) {
+                break;
+            }
+            auto notif = poll->get_notification();
+            QMetaObject::invokeMethod(this, [this, notif]() { handleNotification(notif); });
+        }
+    });
+    connect(m_notif_thread, &QThread::finished, m_notif_thread, &QThread::deleteLater);
+    m_notif_thread->start();
 
     m_init = true;
 }
@@ -61,10 +65,6 @@ auto AccountController::screen(const QString &screen) -> std::optional<qontrol::
     return std::nullopt;
 }
 
-auto AccountController::poll() -> void {
-    pollNotifications();
-}
-
 auto AccountController::pollCoins() -> void {
     if (m_account.has_value()) {
         auto coinState = m_account.value()->spendable_coins();
@@ -75,101 +75,67 @@ auto AccountController::pollCoins() -> void {
     }
 }
 
-auto AccountController::pollNotifications() -> void {
-    if (!m_account.has_value())
-        return;
+auto AccountController::handleNotification(Notification notif) -> void {
+    auto flag = notif.flag;
 
-    auto poll = m_account.value()->try_recv();
-    while (poll->is_some()) {
-        auto notif = poll->get_notification();
-        auto flag = notif.flag;
-
-        switch (flag) {
-        case NotificationFlag::ScanProgress: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            auto parts = payload.split(",");
-            if (parts.size() == 2) {
-                bool ok1 = false;
-                bool ok2 = false;
-                uint32_t height = parts[0].toUInt(&ok1);
-                uint32_t tip = parts[1].toUInt(&ok2);
-                if (ok1 && ok2) {
-                    // qDebug() << "AccountController: Scan progress" << height << "/" << tip;
-                    emit scanProgress(height, tip);
-                } else {
-                    // qWarning() << "Failed to parse scan progress payload:" << payload;
-                    emit scanProgress(0, 0);
-                }
+    switch (flag) {
+    case NotificationFlag::ScanProgress: {
+        auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+        auto parts = payload.split(",");
+        if (parts.size() == 2) {
+            bool ok1 = false;
+            bool ok2 = false;
+            uint32_t height = parts[0].toUInt(&ok1);
+            uint32_t tip = parts[1].toUInt(&ok2);
+            if (ok1 && ok2) {
+                emit scanProgress(height, tip);
             } else {
-                // qWarning() << "Invalid scan progress payload format:" << payload;
                 emit scanProgress(0, 0);
             }
-            break;
+        } else {
+            emit scanProgress(0, 0);
         }
-        case NotificationFlag::NewOutput:
-        case NotificationFlag::OutputSpent:
-            pollCoins();
-            break;
-        case NotificationFlag::FailStartScanning: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            // qWarning() << "AccountController: Failed to start scanning:" << payload;
-            emit scanError(notif.payload);
-            break;
+        break;
+    }
+    case NotificationFlag::NewOutput:
+    case NotificationFlag::OutputSpent:
+        pollCoins();
+        break;
+    case NotificationFlag::FailStartScanning:
+        emit scanError(notif.payload);
+        break;
+    case NotificationFlag::FailScan:
+        emit scanError(notif.payload);
+        break;
+    case NotificationFlag::StartingScan:
+        m_scanner_running = true;
+        emit scannerStateChanged(true);
+        break;
+    case NotificationFlag::ScanStarted:
+        m_scanner_running = true;
+        emit scannerStateChanged(true);
+        break;
+    case NotificationFlag::StoppingScan:
+        break;
+    case NotificationFlag::ScanCompleted:
+        break;
+    case NotificationFlag::ScanStopped:
+        m_scanner_running = false;
+        emit scannerStateChanged(false);
+        break;
+    case NotificationFlag::WaitingForBlocks: {
+        auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+        bool ok = false;
+        uint32_t tipHeight = payload.toUInt(&ok);
+        if (ok) {
+            emit waitingForBlocks(tipHeight);
         }
-        case NotificationFlag::FailScan: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            // qWarning() << "AccountController: Scan failed:" << payload;
-            emit scanError(notif.payload);
-            break;
-        }
-        case NotificationFlag::StartingScan:
-            // qDebug() << "AccountController: Starting scan";
-            m_scanner_running = true;
-            emit scannerStateChanged(true);
-            break;
-        case NotificationFlag::ScanStarted: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            // qDebug() << "AccountController: Scan started, range:" << payload;
-            m_scanner_running = true;
-            emit scannerStateChanged(true);
-            break;
-        }
-        case NotificationFlag::StoppingScan:
-            // qDebug() << "AccountController: Stopping scan";
-            break;
-        case NotificationFlag::ScanCompleted:
-            // qDebug() << "AccountController: Scan completed";
-            pollCoins();
-            break;
-        case NotificationFlag::ScanStopped:
-            // qDebug() << "AccountController: Scanner stopped";
-            m_scanner_running = false;
-            emit scannerStateChanged(false);
-            break;
-        case NotificationFlag::WaitingForBlocks: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            bool ok = false;
-            uint32_t tipHeight = payload.toUInt(&ok);
-            if (ok) {
-                // qDebug() << "AccountController: Waiting for blocks at tip" << tipHeight;
-                emit waitingForBlocks(tipHeight);
-            }
-            break;
-        }
-        case NotificationFlag::NewBlocksDetected: {
-            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
-            auto parts = payload.split(",");
-            if (parts.size() == 2) {
-                // qDebug() << "AccountController: New blocks" << parts[0] << "->" << parts[1];
-            }
-            break;
-        }
-        default:
-            // qDebug() << "AccountController: Unknown notification type";
-            break;
-        }
-
-        poll = m_account.value()->try_recv();
+        break;
+    }
+    case NotificationFlag::NewBlocksDetected:
+        break;
+    default:
+        break;
     }
 }
 
@@ -230,14 +196,12 @@ auto AccountController::startScanner() -> void {
 }
 
 auto AccountController::stop() -> void {
-    if (m_notif_timer != nullptr) {
-        m_notif_timer->stop();
-    }
-    if (m_coins_timer != nullptr) {
-        m_coins_timer->stop();
-    }
     if (m_account.has_value()) {
         m_account.value()->stop_scanner();
+    }
+    // Thread exits when the channel disconnects (sender dropped by stop_scanner)
+    if (m_notif_thread != nullptr && m_notif_thread->isRunning()) {
+        m_notif_thread->wait(5000);
     }
 }
 
