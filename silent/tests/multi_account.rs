@@ -447,6 +447,87 @@ fn test_max_send_entire_balance() {
 }
 
 #[test]
+fn test_max_output_combined_with_fixed_outputs() {
+    let (bbd, mut bitcoind_node) = setup_blindbitd();
+    let bitcoind = &mut bitcoind_node.client;
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(bitcoind, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account = create_test_account(&account_name, &url);
+
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+
+    // Fund the wallet
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
+
+    // Wait for NewOutput
+    let mut funded = false;
+    for _ in 0..300 {
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == silent::NotificationFlag::NewOutput {
+                funded = true;
+                break;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+    assert!(funded, "Should receive NewOutput notification");
+
+    let balance = account.balance();
+    assert!(balance > 0, "Balance should be non-zero after funding");
+
+    // Combine a fixed output with a max output (no manual coin selection)
+    let addr = account.sp_address();
+    let fixed_amount = 1_000_000;
+    let tx_template = TransactionTemplate {
+        outputs: vec![
+            Output {
+                address: addr.clone(),
+                amount: fixed_amount,
+                label: String::new(),
+                max: false,
+            },
+            Output {
+                address: addr,
+                amount: 0,
+                label: String::new(),
+                max: true,
+            },
+        ],
+        fee_rate: 1.0,
+        fee: 0,
+        input_outpoints: vec![],
+    };
+
+    let simulation = account.simulate_transaction(tx_template);
+    assert!(
+        simulation.is_valid,
+        "Max combined with fixed outputs should succeed: {}",
+        simulation.error
+    );
+
+    // Max output should get balance - fixed_amount - fee
+    let expected_output = balance.saturating_sub(simulation.fee);
+    assert_eq!(
+        simulation.output_total, expected_output,
+        "Total output should equal balance minus fee"
+    );
+
+    account.stop_scanner();
+    cleanup_test_account(&account_name);
+    drop(bbd);
+}
+
+#[test]
 fn test_multiple_outputs_single_transaction() {
     let account_name = test_account_name();
     let config = create_test_config(account_name.clone());
