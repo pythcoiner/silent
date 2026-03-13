@@ -6,8 +6,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
-use bwk_sp::Config as SpConfig;
 use bitcoin::Network as BtcNetwork;
+use bwk_sp::Config as SpConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::ffi::Network;
