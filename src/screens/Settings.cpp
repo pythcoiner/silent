@@ -84,6 +84,8 @@ auto Settings::doConnect() -> void {
     connect(m_btn_test_p2p, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
     connect(m_p2p_node, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
             qontrol::UNIQUE);
+    connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady, qontrol::UNIQUE);
+    connect(this, &Settings::p2pTestReady, this, &Settings::onP2pTestReady, qontrol::UNIQUE);
 }
 
 auto Settings::actionSave() -> void {
@@ -162,11 +164,7 @@ auto Settings::actionTestBackend() -> void {
 
     auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
-        QMetaObject::invokeMethod(this, [this, info]() -> void {
-            m_btn_test->setEnabled(true);
-            m_btn_test->setText("Test");
-            onBackendInfoReady(info);
-        });
+        emit backendInfoReady(info);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
@@ -179,13 +177,16 @@ auto Settings::fetchBackendInfo() -> void {
 
     auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
-        QMetaObject::invokeMethod(this, [this, info]() -> void { onBackendInfoReady(info); });
+        emit backendInfoReady(info);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 }
 
 auto Settings::onBackendInfoReady(BackendInfo info) -> void {
+    m_btn_test->setEnabled(true);
+    m_btn_test->setText("Test");
+
     if (!info.is_ok) {
         m_backend_verified = false;
         clearBackendInfo();
@@ -258,17 +259,16 @@ auto Settings::actionTestP2p() -> void {
     auto network = m_current_network;
     auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
         auto result = ::test_p2p_node(rust::String(addr), network);
-        QMetaObject::invokeMethod(this, [this, result]() -> void {
-            m_btn_test_p2p->setEnabled(true);
-            m_btn_test_p2p->setText("Test");
-            onP2pTestReady(result);
-        });
+        emit p2pTestReady(result);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 }
 
 auto Settings::onP2pTestReady(ConnectionResult result) -> void {
+    m_btn_test_p2p->setEnabled(true);
+    m_btn_test_p2p->setText("Test");
+
     if (!result.is_ok) {
         m_p2p_verified = false;
         updateButtons();

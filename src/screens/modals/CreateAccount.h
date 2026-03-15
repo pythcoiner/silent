@@ -16,6 +16,8 @@ public:
 signals:
     void createAccount(const QString &name, const QString &mnemonic, Network network,
                        const QString &blindbit_url, const QString &p2p_node);
+    void backendInfoReady(BackendInfo info);
+    void p2pTestReady(ConnectionResult result);
 
 private slots:
     auto onGenerate() -> void;

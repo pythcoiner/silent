@@ -65,6 +65,8 @@ public:
     Send(AccountController *ctrl);
 
 signals:
+    void signReady(TxResult result);
+    void broadcastReady(TxResult result);
 
 public slots:
     auto outputSetMax(int id) -> void;

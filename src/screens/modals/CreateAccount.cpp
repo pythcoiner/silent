@@ -69,6 +69,10 @@ auto CreateAccount::doConnect() -> void {
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(this, &CreateAccount::createAccount, AppController::get(),
             &AppController::createAccount, qontrol::UNIQUE);
+    connect(this, &CreateAccount::backendInfoReady, this, &CreateAccount::onBackendInfoReady,
+            qontrol::UNIQUE);
+    connect(this, &CreateAccount::p2pTestReady, this, &CreateAccount::onP2pTestReady,
+            qontrol::UNIQUE);
 }
 
 auto CreateAccount::view() -> void {
@@ -167,7 +171,7 @@ auto CreateAccount::onTestBackend() -> void {
 
     auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
-        QMetaObject::invokeMethod(this, [this, info]() -> void { onBackendInfoReady(info); });
+        emit backendInfoReady(info);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
@@ -272,7 +276,7 @@ auto CreateAccount::onTestP2p() -> void {
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
     auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
         auto result = ::test_p2p_node(rust::String(addr), network);
-        QMetaObject::invokeMethod(this, [this, result]() -> void { onP2pTestReady(result); });
+        emit p2pTestReady(result);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();

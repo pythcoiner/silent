@@ -32,6 +32,7 @@ signals:
     void waitingForBlocks(uint32_t tip_height);
     void scanError(rust::String error);
     void scannerStateChanged(bool running);
+    void notificationReceived(Notification notif);
 
 public slots:
     auto loadPanel(const QString &name) -> void;

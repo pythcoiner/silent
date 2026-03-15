@@ -20,6 +20,8 @@ public:
 
 signals:
     void configSaved();
+    void backendInfoReady(BackendInfo info);
+    void p2pTestReady(ConnectionResult result);
 
 public slots:
     auto actionSave() -> void;

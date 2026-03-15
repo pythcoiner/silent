@@ -5,7 +5,8 @@
 #include "screens/Receive.h"
 #include "screens/Send.h"
 #include "screens/Settings.h"
-#include "silent.h"
+#include <Qontrol>
+#include <common.h>
 #include <qlogging.h>
 #include <string>
 #include <utility>
@@ -29,6 +30,8 @@ auto AccountController::init(const QString &account) -> void {
     m_account = std::make_optional(std::move(acc));
 
     // Take the notification receiver and spawn a blocking listener thread
+    connect(this, &AccountController::notificationReceived, this,
+            &AccountController::handleNotification, qontrol::UNIQUE);
     auto receiver = m_account.value()->take_receiver();
     m_notif_thread = QThread::create([this, recv = std::move(receiver)]() {
         while (true) {
@@ -37,7 +40,7 @@ auto AccountController::init(const QString &account) -> void {
                 break;
             }
             auto notif = poll->get_notification();
-            QMetaObject::invokeMethod(this, [this, notif]() { handleNotification(notif); });
+            emit notificationReceived(notif);
         }
     });
     connect(m_notif_thread, &QThread::finished, m_notif_thread, &QThread::deleteLater);

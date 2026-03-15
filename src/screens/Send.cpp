@@ -145,7 +145,7 @@ OutputW::OutputW(Send *screen, int id) {
                      qontrol::UNIQUE);
 
     m_max->setProperty("outputId", id);
-    QObject::connect(m_max, &QCheckBox::stateChanged, screen, &Send::onOutputMaxToggled,
+    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen, &Send::onOutputMaxToggled,
                      qontrol::UNIQUE);
 
     m_widget = col;
@@ -302,6 +302,8 @@ auto Send::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_fee_toggle, &QCheckBox::toggled, this, &Send::onFeeToggled, qontrol::UNIQUE);
     connect(m_fee_value, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
+    connect(this, &Send::signReady, this, &Send::onSignResult, qontrol::UNIQUE);
+    connect(this, &Send::broadcastReady, this, &Send::onBroadcastResult, qontrol::UNIQUE);
 }
 
 auto Send::view() -> void {
@@ -435,7 +437,7 @@ auto Send::inputsView() -> QWidget * {
             }
         }
         checkbox->setChecked(isSelected);
-        connect(checkbox, &QCheckBox::stateChanged, this, &Send::onCoinToggled,
+        connect(checkbox, &QCheckBox::checkStateChanged, this, &Send::onCoinToggled,
                 qontrol::UNIQUE);
 
         auto *outpointField = new QLineEdit(shortenOutpoint(outpoint));
@@ -1005,9 +1007,7 @@ auto Send::onSendConfirmed() -> void {
     // Sign on background thread (future-proofed for hardware signing devices)
     auto *thread = QThread::create([this]() {
         auto result = m_controller->getAccount().value()->sign_transaction(*m_psbt_result.value());
-        QMetaObject::invokeMethod(this, [this, result]() {
-            onSignResult(result);
-        });
+        emit signReady(result);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
@@ -1031,9 +1031,7 @@ auto Send::onSignResult(TxResult result) -> void {
     auto *thread = QThread::create([this, signedHex]() {
         auto broadcastResult =
             m_controller->getAccount().value()->broadcast_transaction(rust::String(signedHex));
-        QMetaObject::invokeMethod(this, [this, broadcastResult]() {
-            onBroadcastResult(broadcastResult);
-        });
+        emit broadcastReady(broadcastResult);
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
