@@ -137,6 +137,18 @@ auto AccountController::handleNotification(Notification notif) -> void {
     }
     case NotificationFlag::NewBlocksDetected:
         break;
+    case NotificationFlag::CoinUpdate:
+    case NotificationFlag::AddressTipChanged:
+        pollCoins();
+        break;
+    case NotificationFlag::ElectrumStarted:
+    case NotificationFlag::ElectrumConnected:
+        break;
+    case NotificationFlag::ElectrumError:
+        emit scanError(notif.payload);
+        break;
+    case NotificationFlag::ElectrumStopped:
+        break;
     default:
         break;
     }

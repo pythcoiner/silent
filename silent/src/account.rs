@@ -6,9 +6,10 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use bwk_sp::spdk_core::RecipientAddress;
+use bwk::TxListenerNotif;
 use bwk_sp::{
-    Account as SpAccount, AccountError, Notification as SpNotification, ScanMode,
-    SpRecipientAddress,
+    Account as SpAccount, AccountError, Notification as BwkNotification, ScanMode,
+    SpNotification, SpRecipientAddress,
 };
 
 use crate::config::Config;
@@ -20,7 +21,7 @@ use crate::ffi::{
 /// Valid account state (created successfully).
 struct AccountInner {
     account: SpAccount,
-    receiver: Option<mpsc::Receiver<SpNotification>>,
+    receiver: Option<mpsc::Receiver<BwkNotification>>,
     network: bitcoin::Network,
     electrum_url: String,
 }
@@ -790,8 +791,40 @@ fn broadcast_via_electrum(
     Err(msg)
 }
 
-/// Convert bwk-sp::Notification to Silent Notification.
-fn convert_notification(sp_notif: SpNotification) -> Notification {
+/// Convert unified bwk Notification to Silent FFI Notification.
+fn convert_notification(notif: BwkNotification) -> Notification {
+    match notif {
+        BwkNotification::Sp(sp) => convert_sp_notification(sp),
+        BwkNotification::CoinUpdate => Notification {
+            flag: NotificationFlag::CoinUpdate,
+            payload: String::new(),
+        },
+        BwkNotification::Electrum(e) => convert_electrum_notification(e),
+        BwkNotification::AddressTipChanged => Notification {
+            flag: NotificationFlag::AddressTipChanged,
+            payload: String::new(),
+        },
+        BwkNotification::Error(e) => Notification {
+            flag: NotificationFlag::ElectrumError,
+            payload: format!("{e:?}"),
+        },
+        BwkNotification::Stopped => Notification {
+            flag: NotificationFlag::ElectrumStopped,
+            payload: String::new(),
+        },
+        BwkNotification::InvalidElectrumConfig => Notification {
+            flag: NotificationFlag::ElectrumError,
+            payload: "Invalid Electrum configuration".to_string(),
+        },
+        BwkNotification::InvalidLookAhead => Notification {
+            flag: NotificationFlag::ElectrumError,
+            payload: "Invalid look-ahead value".to_string(),
+        },
+    }
+}
+
+/// Convert SP-specific notification to Silent FFI Notification.
+fn convert_sp_notification(sp_notif: SpNotification) -> Notification {
     match sp_notif {
         SpNotification::StartingScan => Notification {
             flag: NotificationFlag::StartingScan,
@@ -847,6 +880,28 @@ fn convert_notification(sp_notif: SpNotification) -> Notification {
     }
 }
 
+/// Convert Electrum listener notification to Silent FFI Notification.
+fn convert_electrum_notification(notif: TxListenerNotif) -> Notification {
+    match notif {
+        TxListenerNotif::Started => Notification {
+            flag: NotificationFlag::ElectrumStarted,
+            payload: String::new(),
+        },
+        TxListenerNotif::Connected(url) => Notification {
+            flag: NotificationFlag::ElectrumConnected,
+            payload: url,
+        },
+        TxListenerNotif::Error(msg) => Notification {
+            flag: NotificationFlag::ElectrumError,
+            payload: msg,
+        },
+        TxListenerNotif::Stopped => Notification {
+            flag: NotificationFlag::ElectrumStopped,
+            payload: String::new(),
+        },
+    }
+}
+
 // CXX FFI functions
 
 /// Create a new account.
@@ -875,7 +930,7 @@ pub fn new_account(account_name: String) -> Box<Account> {
 /// Notification receiver that owns the mpsc channel.
 /// Designed to be used from a dedicated thread with blocking recv().
 pub struct NotificationReceiver {
-    receiver: mpsc::Receiver<SpNotification>,
+    receiver: mpsc::Receiver<BwkNotification>,
 }
 
 impl NotificationReceiver {

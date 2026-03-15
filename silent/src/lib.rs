@@ -44,6 +44,12 @@ mod ffi {
         OutputSpent,
         WaitingForBlocks,
         NewBlocksDetected,
+        CoinUpdate,
+        AddressTipChanged,
+        ElectrumStarted,
+        ElectrumConnected,
+        ElectrumError,
+        ElectrumStopped,
     }
 
     // ===== Shared Structs =====
