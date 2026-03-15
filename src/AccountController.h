@@ -54,12 +54,15 @@ public slots:
         return m_scanner_running;
     }
 
+    [[nodiscard]] auto etaSecs() const -> uint64_t;
+
 private:
     QPointer<qontrol::Panel> m_current_panel;
     QHash<QString, qontrol::Panel *> m_panels;
     AccountWidget *m_widget;
     std::optional<rust::Box<Account>> m_account = std::nullopt;
     QThread *m_notif_thread = nullptr;
+    rust::Box<SyncEstimator> m_estimator = new_sync_estimator();
     bool m_init = false;
     bool m_scanner_running = false;
 };

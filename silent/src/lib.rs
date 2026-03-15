@@ -4,6 +4,7 @@
 
 pub mod account;
 pub mod config;
+pub mod sync_estimator;
 
 #[cxx::bridge]
 mod ffi {
@@ -212,6 +213,9 @@ mod ffi {
 
         /// Notification receiver for blocking recv in a dedicated thread.
         type NotificationReceiver;
+
+        /// EMA-based sync time estimator.
+        type SyncEstimator;
     }
 
     // ===== Utility Functions =====
@@ -433,6 +437,22 @@ mod ffi {
 
         /// Get transaction ID preview (only valid if is_ok()).
         fn get_txid_preview(self: &PsbtResult) -> String;
+    }
+
+    // ===== SyncEstimator Methods =====
+
+    extern "Rust" {
+        /// Create a new SyncEstimator with default EMA alpha.
+        fn new_sync_estimator() -> Box<SyncEstimator>;
+
+        /// Update estimator state from a ScanProgress notification.
+        fn update(self: &mut SyncEstimator, current: u32, end: u32);
+
+        /// Get estimated remaining seconds (0 if no estimate yet).
+        fn estimate_secs(self: &SyncEstimator) -> u64;
+
+        /// Reset estimator state (on scan start/stop).
+        fn reset(self: &mut SyncEstimator);
     }
 }
 
@@ -683,6 +703,7 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
 // Re-export main types
 pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
+pub use sync_estimator::{new_sync_estimator, SyncEstimator};
 pub use ffi::{
     BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, RegtestDefaults,
     TransactionSimulation, TransactionTemplate,

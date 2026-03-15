@@ -78,6 +78,10 @@ auto AccountController::pollCoins() -> void {
     }
 }
 
+auto AccountController::etaSecs() const -> uint64_t {
+    return m_estimator->estimate_secs();
+}
+
 auto AccountController::handleNotification(Notification notif) -> void {
     auto flag = notif.flag;
 
@@ -91,6 +95,7 @@ auto AccountController::handleNotification(Notification notif) -> void {
             uint32_t height = parts[0].toUInt(&ok1);
             uint32_t tip = parts[1].toUInt(&ok2);
             if (ok1 && ok2) {
+                m_estimator->update(height, tip);
                 emit scanProgress(height, tip);
             } else {
                 emit scanProgress(0, 0);
@@ -112,6 +117,7 @@ auto AccountController::handleNotification(Notification notif) -> void {
         break;
     case NotificationFlag::StartingScan:
         m_scanner_running = true;
+        m_estimator->reset();
         emit scannerStateChanged(true);
         break;
     case NotificationFlag::ScanStarted:
@@ -124,6 +130,7 @@ auto AccountController::handleNotification(Notification notif) -> void {
         break;
     case NotificationFlag::ScanStopped:
         m_scanner_running = false;
+        m_estimator->reset();
         emit scannerStateChanged(false);
         break;
     case NotificationFlag::WaitingForBlocks: {

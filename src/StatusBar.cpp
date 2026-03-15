@@ -6,6 +6,19 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+static auto formatEta(uint64_t secs) -> QString {
+    auto hours = secs / 3600;
+    auto mins = (secs % 3600) / 60;
+    auto s = secs % 60;
+    if (hours > 0) {
+        return QString("~%1h %2m").arg(hours).arg(mins);
+    }
+    if (mins > 0) {
+        return QString("~%1m %2s").arg(mins).arg(s);
+    }
+    return QString("~%1s").arg(s);
+}
+
 StatusBar::StatusBar(AccountController *controller, QWidget *parent)
     : QWidget(parent),
       m_controller(controller) {
@@ -82,7 +95,12 @@ auto StatusBar::updateConnectionState(bool connected) -> void {
 
 auto StatusBar::updateScanProgress(uint32_t height, uint32_t tip) -> void {
     if (height < tip) {
-        m_status_text->setText(QString("Scanning... %1 / %2").arg(height).arg(tip));
+        auto eta = m_controller->etaSecs();
+        QString text = QString("Scanning... %1 / %2").arg(height).arg(tip);
+        if (eta > 0) {
+            text += QString(" \u2022 %1").arg(formatEta(eta));
+        }
+        m_status_text->setText(text);
     } else {
         // Synced
         m_status_text->setText(QString("Connected to blindbit-oracle at %1").arg(m_blindbit_url));
