@@ -4,3 +4,4 @@ lib/
 silent/target/
 result
 .cache/
+release-artifacts/

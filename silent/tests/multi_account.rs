@@ -613,7 +613,10 @@ fn test_manual_coin_selection() {
         }
         thread::sleep(Duration::from_millis(100));
     }
-    assert!(output_count >= 2, "Should receive two NewOutput notifications");
+    assert!(
+        output_count >= 2,
+        "Should receive two NewOutput notifications"
+    );
 
     let coins = account.coins();
     let spendable: Vec<_> = coins.iter().filter(|c| !c.spent).collect();

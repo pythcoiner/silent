@@ -281,10 +281,7 @@ fn test_wallet_restore_from_mnemonic() {
     let account2 = Account::new(config2).expect("Restored account creation should succeed");
     let addr2 = account2.sp_address();
 
-    assert_eq!(
-        addr1, addr2,
-        "Restored wallet should have same SP address"
-    );
+    assert_eq!(addr1, addr2, "Restored wallet should have same SP address");
 
     cleanup_test_account(&account_name);
 }
@@ -323,7 +320,11 @@ fn test_self_send_produces_two_coins() {
 
     let coins_before = account.coins();
     let unspent_before: Vec<_> = coins_before.iter().filter(|c| !c.spent).collect();
-    assert_eq!(unspent_before.len(), 1, "Should have exactly 1 unspent coin");
+    assert_eq!(
+        unspent_before.len(),
+        1,
+        "Should have exactly 1 unspent coin"
+    );
 
     // Self-send: send half the balance to own SP address
     use silent::{Output, TransactionTemplate};
@@ -438,7 +439,11 @@ fn test_self_send_produces_two_coins() {
     let expected_change = balance - send_amount - 1000; // balance - send - fee
     eprintln!("Transaction txid: {}", tx.compute_txid());
     eprintln!("Send amount: {send_amount}, Expected change: {expected_change}");
-    eprintln!("Tx outputs: [0]={} sats, [1]={} sats", tx.output[0].value.to_sat(), tx.output[1].value.to_sat());
+    eprintln!(
+        "Tx outputs: [0]={} sats, [1]={} sats",
+        tx.output[0].value.to_sat(),
+        tx.output[1].value.to_sat()
+    );
     eprintln!("NewOutput notifications received: {new_output_count}");
     eprintln!("Coins after scan:");
     for coin in &coins_after {
@@ -460,7 +465,10 @@ fn test_self_send_produces_two_coins() {
         } else if found_is_change {
             eprintln!("MISSING: receive output ({send_amount} sats) — receive address derivation may be wrong");
         } else {
-            eprintln!("MISSING: found value {} matches neither receive nor change", found.value);
+            eprintln!(
+                "MISSING: found value {} matches neither receive nor change",
+                found.value
+            );
         }
     }
 
@@ -493,10 +501,7 @@ fn test_signet_connection() {
 
     let mut account = Account::new(config).expect("Account creation should succeed");
 
-    assert!(
-        account.start_scanner(),
-        "Signet scanner should start"
-    );
+    assert!(account.start_scanner(), "Signet scanner should start");
 
     let scan_completed = wait_for_scan_complete(&mut account, 30);
     assert!(scan_completed, "Scan should complete within timeout");
@@ -526,10 +531,7 @@ fn test_connection_loss_retry() {
     let account_name = test_account_name();
     let mut account = create_test_account(&account_name, &url);
 
-    assert!(
-        account.start_scanner(),
-        "Initial start should succeed"
-    );
+    assert!(account.start_scanner(), "Initial start should succeed");
     assert!(
         wait_for_scan_complete(&mut account, 30),
         "Initial scan should complete"

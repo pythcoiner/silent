@@ -7,7 +7,10 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use bwk_sp::spdk_core::RecipientAddress;
-use bwk_sp::{Account as SpAccount, AccountError, Notification as SpNotification, ScanMode, SpRecipientAddress};
+use bwk_sp::{
+    Account as SpAccount, AccountError, Notification as SpNotification, ScanMode,
+    SpRecipientAddress,
+};
 
 use crate::config::Config;
 use crate::ffi::{
@@ -299,9 +302,7 @@ impl Account {
             for outpoint_str in &tx_template.input_outpoints {
                 let outpoint = parse_outpoint(outpoint_str)?;
                 let entry = all_coins.get(&outpoint).ok_or_else(|| {
-                    AccountError::Transaction(format!(
-                        "Coin {outpoint_str} not found in wallet"
-                    ))
+                    AccountError::Transaction(format!("Coin {outpoint_str} not found in wallet"))
                 })?;
                 if !entry.is_spendable() {
                     return Err(AccountError::Transaction(format!(
@@ -317,9 +318,7 @@ impl Account {
             // Auto coin selection
             let coins = builder.select_coins(output_total, feerate_msats_vb);
             if coins.is_empty() {
-                return Err(AccountError::Transaction(
-                    "Insufficient funds".to_string(),
-                ));
+                return Err(AccountError::Transaction("Insufficient funds".to_string()));
             }
             for coin in coins {
                 builder.add_input(coin);
@@ -566,7 +565,9 @@ fn broadcast_via_p2p(
         .connect()
         .map_err(|e| format!("P2P connection failed: {e}"))?;
 
-    let result = client.broadcast_tx(tx).map_err(|e| format!("P2P broadcast failed: {e}"));
+    let result = client
+        .broadcast_tx(tx)
+        .map_err(|e| format!("P2P broadcast failed: {e}"));
 
     // Give the peer time to receive the tx before closing the connection.
     // broadcast_tx() only writes to the TCP stream; stop() would close it immediately.
@@ -642,10 +643,7 @@ pub fn new_account(account_name: String) -> Box<Account> {
         Err(e) => {
             let error = format!("failed to load config: {e}");
             log::error!("{error}");
-            return Box::new(Account {
-                inner: None,
-                error,
-            });
+            return Box::new(Account { inner: None, error });
         }
     };
     match Account::new_inner(config) {
@@ -656,10 +654,7 @@ pub fn new_account(account_name: String) -> Box<Account> {
         Err(e) => {
             let error = format!("Failed to create account: {e}");
             log::error!("{error}");
-            Box::new(Account {
-                inner: None,
-                error,
-            })
+            Box::new(Account { inner: None, error })
         }
     }
 }
@@ -787,10 +782,7 @@ fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, AccountError> {
 }
 
 /// Convert an SpCoinEntry to a bwk_tx::Coin for use with TxBuilder.
-fn sp_coin_entry_to_coin(
-    outpoint: bitcoin::OutPoint,
-    entry: &bwk_sp::SpCoinEntry,
-) -> bwk_tx::Coin {
+fn sp_coin_entry_to_coin(outpoint: bitcoin::OutPoint, entry: &bwk_sp::SpCoinEntry) -> bwk_tx::Coin {
     const TR_KEYSPEND_SATISFACTION_WEIGHT: u64 = 66;
     bwk_tx::Coin {
         txout: bitcoin::TxOut {

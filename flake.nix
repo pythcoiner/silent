@@ -59,9 +59,13 @@
       cargoVendorDir = pkgs.rustPlatform.importCargoLock {
         lockFile = ./silent/Cargo.lock;
         outputHashes = {
-          # Update these on first build — nix will report the correct hashes
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
-          "ureq-3.1.3" = "sha256-8CNOMAB/tdN1fmrHrwxX+mYVnDrBQIAMuvLuhu13Hbw=";
+          "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
+          "bwk-sp-0.1.0" = "sha256-j9qUiIUGuHDI4kFZbUcgkEQH+zSS/bfhUrrtacG4i5Y=";
+          "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
+          "blindbitd-0.0.1" = "sha256-E+R92nf6WKepvaNUtBOP6LN1EM3c/tGiQNdqyF8tuLI=";
+          "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
+          "bitcoin-0.32.8" = "sha256-U1zAufR3Dirxc9gPSGGpyf9HBHEuSNoXxaAyt1Yx5vE=";
         };
       };
 
@@ -104,6 +108,30 @@ git = "https://github.com/pythcoiner/ureq.git"
 branch = "gzip"
 replace-with = "vendored-sources"
 
+[source."git+https://github.com/pythcoiner/bwk.git?rev=9cb5c21"]
+git = "https://github.com/pythcoiner/bwk.git"
+rev = "9cb5c21"
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
+git = "https://github.com/pythcoiner/spdk.git"
+rev = "f00f559"
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/pythcoiner/blindbitd.git"]
+git = "https://github.com/pythcoiner/blindbitd.git"
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/pythcoiner/corepc.git?branch=bip375"]
+git = "https://github.com/pythcoiner/corepc.git"
+branch = "bip375"
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/pythcoiner/rust-bitcoin.git?rev=d7998651"]
+git = "https://github.com/pythcoiner/rust-bitcoin.git"
+rev = "d7998651"
+replace-with = "vendored-sources"
+
 [source.vendored-sources]
 directory = "${cargoVendorDir}"
 CARGO_EOF
@@ -144,6 +172,7 @@ CARGO_EOF
           buildInputs = (with pkgs; [
             openssl
             openssl.dev
+            systemd.dev
           ]) ++ extraBuildInputs;
 
           buildPhase = ''
@@ -210,6 +239,7 @@ CARGO_EOF
           buildInputs = (with pkgs; [
             openssl
             openssl.dev
+            systemd.dev
           ]) ++ extraBuildInputs;
 
           buildPhase = ''
@@ -379,6 +409,7 @@ CARGO_EOF
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           # Add Windows system libraries after the silent_rust line in target_link_libraries
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32/; }' CMakeLists.txt
         '';
@@ -498,6 +529,10 @@ LDWRAPPER
           export AR_${cargoEnvPrefix}="${llvmPkgs.llvm}/bin/llvm-ar"
           export CARGO_TARGET_${envPrefix}_LINKER="$TMPDIR/macos-cross/cc-${rustTriple}"
           export SDKROOT="${sdkRoot}"
+
+          # openssl-sys needs these for cross-compilation
+          export AR="${llvmPkgs.llvm}/bin/llvm-ar"
+          export RANLIB="${llvmPkgs.llvm}/bin/llvm-ranlib"
         '';
 
       # Generate CMake toolchain file + wrapper scripts for macOS GUI cross-compilation
@@ -606,6 +641,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
@@ -642,6 +678,7 @@ TOOLCHAIN
           sed -i '/^\s*crypto$/d' CMakeLists.txt
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
+          sed -i '/^\s*udev$/d' CMakeLists.txt
           sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1"-framework Security"\n\1"-framework SystemConfiguration"\n\1"-framework CoreFoundation"/; }' CMakeLists.txt
         '';
       };
