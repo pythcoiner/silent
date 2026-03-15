@@ -6,7 +6,7 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use bwk_sp::spdk_core::RecipientAddress;
-use bwk::TxListenerNotif;
+use bwk_sp::bwk::TxListenerNotif;
 use bwk_sp::{
     Account as SpAccount, AccountError, Notification as BwkNotification, ScanMode,
     SpNotification, SpRecipientAddress,
@@ -212,7 +212,7 @@ impl Account {
                     label: entry.label(),
                     spent: matches!(
                         entry.status(),
-                        bwk_tx::CoinStatus::Spent | bwk_tx::CoinStatus::BeingSpend
+                        bwk_sp::bwk_tx::CoinStatus::Spent | bwk_sp::bwk_tx::CoinStatus::BeingSpend
                     ),
                 });
             }
@@ -309,7 +309,7 @@ impl Account {
     fn build_tx_builder(
         inner: &AccountInner,
         tx_template: &TransactionTemplate,
-    ) -> Result<bwk_tx::TxBuilder, AccountError> {
+    ) -> Result<bwk_sp::bwk_tx::TxBuilder, AccountError> {
         let network = inner.network;
         let mut has_max = false;
         let mut max_addr = None;
@@ -352,7 +352,7 @@ impl Account {
         if has_max {
             let addr = max_addr.unwrap();
             let mut recip = SpRecipientAddress::new(addr, 0, network);
-            recip.amount = bwk_tx::Amount::Max(None);
+            recip.amount = bwk_sp::bwk_tx::Amount::Max(None);
             builder.add_output(recip);
         }
 
@@ -735,7 +735,7 @@ fn broadcast_via_electrum(
     tx: &bitcoin::Transaction,
 ) -> Result<(), String> {
     use bitcoin::consensus::encode::serialize_hex;
-    use bwk_electrum::electrum::{request::Request, response::Response};
+    use bwk_sp::bwk::bwk_electrum::electrum::{request::Request, response::Response};
     use std::collections::HashMap;
 
     if electrum_url.is_empty() {
@@ -746,7 +746,7 @@ fn broadcast_via_electrum(
     let host = host.ok_or("Invalid electrum URL: missing host")?;
     let port = port.ok_or("Invalid electrum URL: missing port")?;
 
-    let mut client = bwk_electrum::raw_client::Client::new_tcp(&host, port);
+    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_tcp(&host, port);
     client.try_connect(Some(Duration::from_secs(10))).map_err(|e| {
         let msg = format!("Connection to {electrum_url} failed:\n{e}");
         log::error!("{msg}");
@@ -1049,10 +1049,10 @@ fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, AccountError> {
     Ok(bitcoin::OutPoint { txid, vout })
 }
 
-/// Convert an SpCoinEntry to a bwk_tx::Coin for use with TxBuilder.
-fn sp_coin_entry_to_coin(outpoint: bitcoin::OutPoint, entry: &bwk_sp::SpCoinEntry) -> bwk_tx::Coin {
+/// Convert an SpCoinEntry to a bwk_sp::bwk_tx::Coin for use with TxBuilder.
+fn sp_coin_entry_to_coin(outpoint: bitcoin::OutPoint, entry: &bwk_sp::SpCoinEntry) -> bwk_sp::bwk_tx::Coin {
     const TR_KEYSPEND_SATISFACTION_WEIGHT: u64 = 66;
-    bwk_tx::Coin {
+    bwk_sp::bwk_tx::Coin {
         txout: bitcoin::TxOut {
             value: entry.amount(),
             script_pubkey: entry.script().clone(),
@@ -1060,10 +1060,10 @@ fn sp_coin_entry_to_coin(outpoint: bitcoin::OutPoint, entry: &bwk_sp::SpCoinEntr
         outpoint,
         height: Some(entry.height() as u64),
         sequence: bitcoin::Sequence::ENABLE_RBF_NO_LOCKTIME,
-        status: bwk_tx::CoinStatus::Confirmed,
+        status: bwk_sp::bwk_tx::CoinStatus::Confirmed,
         label: None,
         satisfaction_size: TR_KEYSPEND_SATISFACTION_WEIGHT,
-        spend_info: bwk_tx::CoinSpendInfo::Sp {
+        spend_info: bwk_sp::bwk_tx::CoinSpendInfo::Sp {
             derivation: bitcoin::bip32::DerivationPath::default(),
             tweak: *entry.tweak(),
         },

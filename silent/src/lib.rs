@@ -576,7 +576,7 @@ pub fn test_electrum(address: String) -> ffi::ConnectionResult {
         }
     };
 
-    let mut client = bwk_electrum::raw_client::Client::new_tcp(&host, port)
+    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_tcp(&host, port)
         .read_timeout(Some(Duration::from_secs(5)))
         .write_timeout(Some(Duration::from_secs(5)));
 
@@ -587,7 +587,7 @@ pub fn test_electrum(address: String) -> ffi::ConnectionResult {
         };
     }
 
-    let request = bwk_electrum::electrum::request::Request::version(
+    let request = bwk_sp::bwk::bwk_electrum::electrum::request::Request::version(
         "silent".to_string(),
         "1.4".to_string(),
     );
