@@ -18,6 +18,7 @@ use bwk_utils::test::corepc_node;
 
 use silent::{Account, Config, Network};
 
+
 // ===== Constants =====
 
 /// Standard test mnemonic (BIP39 test vector).
@@ -339,6 +340,40 @@ pub fn fund_sp_wallet(
     wait_for_sync_and_index(bbd_url, sp_height);
 
     sp_height
+}
+
+// ===== Electrum Helpers =====
+
+/// Create a BlindbitD instance with electrs enabled.
+/// Returns (BlindbitD, bitcoind_node, electrum_url).
+pub fn setup_blindbitd_with_electrum() -> (BlindbitD, corepc_node::Node, String) {
+    let mut bbd = BlindbitD::new().expect("failed to start BlindbitD");
+    let electrum_url = bbd
+        .electrsd
+        .as_ref()
+        .expect("electrsd not available")
+        .electrum_url
+        .clone();
+    let bitcoind_node = bbd.bitcoin().expect("failed to get bitcoind");
+    (bbd, bitcoind_node, electrum_url)
+}
+
+/// Create a Silent Account with electrum URL configured (enables sub-accounts).
+pub fn create_test_account_with_electrum(
+    account_name: &str,
+    blindbit_url: &str,
+    electrum_url: &str,
+) -> Account {
+    let config = Config::new(
+        account_name.to_string(),
+        Network::Regtest,
+        TEST_MNEMONIC.to_string(),
+        blindbit_url.to_string(),
+        String::new(),
+        electrum_url.to_string(),
+        Some(546),
+    );
+    Account::new(config).expect("Account creation should succeed")
 }
 
 /// Fund an SP wallet a second time at a different derivation index.

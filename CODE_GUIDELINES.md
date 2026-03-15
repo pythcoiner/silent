@@ -569,6 +569,10 @@ assert!(sp_addr.len() >= 100, "SP address should be at least 100 characters, got
 {}", sp_addr.len());
 ```
 
+**Temporary directories:** Use the `temp-dir` crate (`TempDir::new()`) for temporary
+directories in tests. Never use `std::env::temp_dir()` directly. The caller must hold
+the `TempDir` handle for the lifetime it's needed — do not leak or forget it.
+
 **Test sections** are grouped with comment headers:
 ```rust
 // ===== Wallet Creation and Config Tests =====

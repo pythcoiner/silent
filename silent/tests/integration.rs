@@ -11,8 +11,9 @@ use std::thread;
 use std::time::Duration;
 
 use common::{
-    cleanup_test_account, create_test_account, fund_sp_wallet, setup_blindbitd, test_account_name,
-    wait_for_notification, wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
+    cleanup_test_account, create_test_account, create_test_account_with_electrum, fund_sp_wallet,
+    setup_blindbitd, setup_blindbitd_with_electrum, test_account_name, wait_for_notification,
+    wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
 };
 
 // ===== Test Helpers =====
@@ -482,6 +483,193 @@ fn test_self_send_produces_two_coins() {
         unspent_after.len(),
     );
 
+    account.stop_scanner();
+    cleanup_test_account(&account_name);
+    drop(bbd);
+}
+
+// ===== Multi-Address-Type Send Tests =====
+
+#[test]
+fn test_send_to_sp_segwit_taproot() {
+    let (bbd, mut bitcoind_node, electrum_url) = setup_blindbitd_with_electrum();
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(&mut bitcoind_node.client, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    // Create account with electrum (enables sub-accounts)
+    let account_name = test_account_name();
+    let mut account = create_test_account_with_electrum(&account_name, &url, &electrum_url);
+    assert!(
+        account.has_sub_accounts(),
+        "Account should have sub-accounts when electrum is configured"
+    );
+
+    // Start scanner and wait for initial sync
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+    assert_eq!(account.balance(), 0, "New wallet should have zero balance");
+
+    // Fund the wallet with an SP transaction
+    let bitcoind = &mut bitcoind_node.client;
+    fund_sp_wallet(bitcoind, &url, TEST_MNEMONIC, 0.1);
+
+    assert!(
+        wait_for_notification(&mut account, NotificationFlag::NewOutput, 30),
+        "Should receive NewOutput notification for initial funding"
+    );
+
+    let balance = account.balance();
+    assert!(balance > 0, "Balance should be positive after funding");
+    eprintln!("Initial balance: {balance} sats");
+
+    // Generate sub-account addresses
+    let segwit_addr = account.new_segwit_addr();
+    let taproot_addr = account.new_taproot_addr();
+    assert!(
+        segwit_addr.starts_with("bcrt1q"),
+        "Segwit address should start with bcrt1q, got {segwit_addr}"
+    );
+    assert!(
+        taproot_addr.starts_with("bcrt1p"),
+        "Taproot address should start with bcrt1p, got {taproot_addr}"
+    );
+
+    // Build tx with 3 outputs: SP (self-send) + segwit + taproot
+    use silent::{Output, TransactionTemplate};
+
+    let quarter = balance / 4;
+    let tx_template = TransactionTemplate {
+        outputs: vec![
+            Output {
+                address: account.sp_address(),
+                amount: quarter,
+                label: String::from("sp self-send"),
+                max: false,
+            },
+            Output {
+                address: segwit_addr.clone(),
+                amount: quarter,
+                label: String::from("segwit"),
+                max: false,
+            },
+            Output {
+                address: taproot_addr.clone(),
+                amount: quarter,
+                label: String::from("taproot"),
+                max: false,
+            },
+        ],
+        fee_rate: 0.0,
+        fee: 1000,
+        input_outpoints: vec![],
+    };
+
+    // Simulate
+    let simulation = account.simulate_transaction(tx_template.clone());
+    assert!(
+        simulation.is_valid,
+        "Simulation should succeed: {}",
+        simulation.error
+    );
+
+    // Prepare
+    let psbt = account.prepare_transaction(tx_template);
+    assert!(
+        psbt.is_ok(),
+        "Prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
+
+    // Sign
+    let signed = account.sign_transaction(&psbt);
+    assert!(signed.is_ok, "Sign should succeed: {}", signed.error);
+
+    // Inspect the signed tx
+    let tx: bitcoin::Transaction =
+        bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
+    assert!(
+        tx.output.len() >= 3,
+        "Transaction should have at least 3 outputs (SP + segwit + taproot), got {}",
+        tx.output.len()
+    );
+
+    eprintln!("Transaction txid: {}", tx.compute_txid());
+    for (i, out) in tx.output.iter().enumerate() {
+        eprintln!(
+            "  Output {i}: value={} sats, script={:?}",
+            out.value.to_sat(),
+            out.script_pubkey
+        );
+    }
+
+    // Broadcast via bitcoind and mine
+    bitcoind
+        .send_raw_transaction(&tx)
+        .expect("broadcast should succeed");
+    bwk_test::generate_blocks(bitcoind, 1);
+
+    let tx_height =
+        bwk_test::get_tx_height(bitcoind, tx.compute_txid()).expect("get tx height") as u32;
+    wait_for_sync_and_index(&url, tx_height);
+
+    // Wait for scanner to detect the SP output(s)
+    let mut new_output_count = 0;
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(30);
+    loop {
+        if start.elapsed() > timeout {
+            break;
+        }
+        let poll = account.try_recv();
+        if poll.is_some() {
+            let notif = poll.get_notification();
+            if notif.flag == NotificationFlag::NewOutput {
+                new_output_count += 1;
+            }
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+    eprintln!("NewOutput notifications received: {new_output_count}");
+
+    // Poll coins until at least 3 unspent coins appear (SP + segwit + taproot)
+    // Sub-account coins are detected via electrum subscription
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(30);
+    loop {
+        let coins = account.coins();
+        let unspent: Vec<_> = coins.iter().filter(|c| !c.spent).collect();
+        if unspent.len() >= 3 {
+            break;
+        }
+        if start.elapsed() > timeout {
+            break;
+        }
+        thread::sleep(Duration::from_millis(500));
+    }
+
+    // Report final coin state
+    let coins = account.coins();
+    eprintln!("All coins after send:");
+    for coin in &coins {
+        eprintln!(
+            "  {} value={} spent={} height={}",
+            coin.outpoint, coin.value, coin.spent, coin.height
+        );
+    }
+
+    let unspent: Vec<_> = coins.iter().filter(|c| !c.spent).collect();
+    assert!(
+        unspent.len() >= 3,
+        "Expected at least 3 unspent coins (SP + segwit + taproot), got {}",
+        unspent.len()
+    );
+
+    // Cleanup
     account.stop_scanner();
     cleanup_test_account(&account_name);
     drop(bbd);
