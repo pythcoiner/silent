@@ -364,10 +364,20 @@ pub fn create_test_account_with_electrum(
     blindbit_url: &str,
     electrum_url: &str,
 ) -> Account {
+    create_test_account_with_electrum_mnemonic(account_name, blindbit_url, electrum_url, TEST_MNEMONIC)
+}
+
+/// Create a Silent Account with electrum URL and custom mnemonic.
+pub fn create_test_account_with_electrum_mnemonic(
+    account_name: &str,
+    blindbit_url: &str,
+    electrum_url: &str,
+    mnemonic: &str,
+) -> Account {
     let config = Config::new(
         account_name.to_string(),
         Network::Regtest,
-        TEST_MNEMONIC.to_string(),
+        mnemonic.to_string(),
         blindbit_url.to_string(),
         String::new(),
         electrum_url.to_string(),

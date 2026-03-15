@@ -11,8 +11,9 @@ use std::thread;
 use std::time::Duration;
 
 use common::{
-    cleanup_test_account, create_test_account, create_test_account_with_electrum, fund_sp_wallet,
-    setup_blindbitd, setup_blindbitd_with_electrum, test_account_name, wait_for_notification,
+    cleanup_test_account, create_test_account, create_test_account_with_electrum,
+    create_test_account_with_electrum_mnemonic, fund_sp_wallet, setup_blindbitd,
+    setup_blindbitd_with_electrum, test_account_name, wait_for_notification,
     wait_for_scan_complete, wait_for_sync_and_index, TEST_MNEMONIC,
 };
 
@@ -670,6 +671,195 @@ fn test_send_to_sp_segwit_taproot() {
     );
 
     // Cleanup
+    account.stop_scanner();
+    cleanup_test_account(&account_name);
+    drop(bbd);
+}
+
+// ===== Mixed-Input Signing Tests =====
+
+/// Regression test: spending from mixed inputs (SP + segwit + taproot sub-accounts)
+/// must produce valid witnesses for ALL inputs.
+///
+/// Bug: segwit sub-account inputs were not being signed, resulting in empty witnesses
+/// and "Witness program hash mismatch" rejection on broadcast.
+#[test]
+fn test_mixed_input_signing() {
+    let mnemonic = "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
+
+    let (bbd, mut bitcoind_node, electrum_url) = setup_blindbitd_with_electrum();
+    let url = bbd.url();
+
+    bwk_test::generate_blocks(&mut bitcoind_node.client, 101);
+    wait_for_sync_and_index(&url, 101);
+
+    let account_name = test_account_name();
+    let mut account =
+        create_test_account_with_electrum_mnemonic(&account_name, &url, &electrum_url, mnemonic);
+    assert!(
+        account.has_sub_accounts(),
+        "Account should have sub-accounts when electrum is configured"
+    );
+
+    assert!(account.start_scanner(), "Scanner should start");
+    assert!(
+        wait_for_scan_complete(&mut account, 30),
+        "Initial scan should complete"
+    );
+
+    // Step 1: Fund with SP coin (1 BTC)
+    let bitcoind = &mut bitcoind_node.client;
+    fund_sp_wallet(bitcoind, &url, mnemonic, 1.0);
+
+    assert!(
+        wait_for_notification(&mut account, NotificationFlag::NewOutput, 30),
+        "Should receive SP NewOutput"
+    );
+    let sp_balance = account.balance();
+    assert!(sp_balance > 0, "SP balance should be positive");
+    eprintln!("SP balance: {sp_balance} sats");
+
+    // Step 2: Send to segwit + taproot sub-account addresses to create sub-account coins
+    let segwit_addr = account.new_segwit_addr();
+    let taproot_addr = account.new_taproot_addr();
+
+    use silent::{Output, TransactionTemplate};
+
+    let tx_template = TransactionTemplate {
+        outputs: vec![
+            Output {
+                address: segwit_addr.clone(),
+                amount: 20_000_000, // 0.2 BTC to segwit
+                label: String::from("segwit fund"),
+                max: false,
+            },
+            Output {
+                address: taproot_addr.clone(),
+                amount: 30_000_000, // 0.3 BTC to taproot
+                label: String::from("taproot fund"),
+                max: false,
+            },
+        ],
+        fee_rate: 0.0,
+        fee: 1000,
+        input_outpoints: vec![],
+    };
+
+    let simulation = account.simulate_transaction(tx_template.clone());
+    assert!(
+        simulation.is_valid,
+        "Simulation should succeed: {}",
+        simulation.error
+    );
+
+    let psbt = account.prepare_transaction(tx_template);
+    assert!(psbt.is_ok(), "Prepare should succeed: {}", psbt.get_psbt_error());
+
+    let signed = account.sign_transaction(&psbt);
+    assert!(signed.is_ok, "Sign should succeed: {}", signed.error);
+
+    let tx: bitcoin::Transaction =
+        bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
+
+    // Broadcast first tx (SP → segwit + taproot + SP change)
+    bitcoind
+        .send_raw_transaction(&tx)
+        .expect("first broadcast should succeed");
+    bwk_test::generate_blocks(bitcoind, 1);
+
+    let tx_height =
+        bwk_test::get_tx_height(bitcoind, tx.compute_txid()).expect("get tx height") as u32;
+    wait_for_sync_and_index(&url, tx_height);
+
+    // Wait for SP change output
+    wait_for_notification(&mut account, NotificationFlag::NewOutput, 30);
+
+    // Wait for sub-account coins to appear via electrum
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(30);
+    loop {
+        let coins = account.coins();
+        let unspent: Vec<_> = coins.iter().filter(|c| !c.spent).collect();
+        // Need at least 3 unspent: SP change + segwit + taproot
+        if unspent.len() >= 3 {
+            break;
+        }
+        if start.elapsed() > timeout {
+            break;
+        }
+        thread::sleep(Duration::from_millis(500));
+    }
+
+    let coins = account.coins();
+    let unspent: Vec<_> = coins.iter().filter(|c| !c.spent).collect();
+    eprintln!("Coins before mixed spend:");
+    for coin in &unspent {
+        eprintln!("  {} value={}", coin.outpoint, coin.value);
+    }
+    assert!(
+        unspent.len() >= 3,
+        "Expected at least 3 unspent coins (SP + segwit + taproot), got {}",
+        unspent.len()
+    );
+
+    // Step 3: Spend ALL coins (mixed inputs) — max send to a segwit address
+    let dest_addr = account.new_segwit_addr();
+    let tx_template2 = TransactionTemplate {
+        outputs: vec![Output {
+            address: dest_addr,
+            amount: 0,
+            label: String::new(),
+            max: true,
+        }],
+        fee_rate: 1.0,
+        fee: 0,
+        input_outpoints: vec![], // auto-select all
+    };
+
+    let simulation2 = account.simulate_transaction(tx_template2.clone());
+    assert!(
+        simulation2.is_valid,
+        "Mixed-input simulation should succeed: {}",
+        simulation2.error
+    );
+
+    let psbt2 = account.prepare_transaction(tx_template2);
+    assert!(
+        psbt2.is_ok(),
+        "Mixed-input prepare should succeed: {}",
+        psbt2.get_psbt_error()
+    );
+
+    let signed2 = account.sign_transaction(&psbt2);
+    assert!(
+        signed2.is_ok,
+        "Mixed-input sign should succeed: {}",
+        signed2.error
+    );
+
+    // Step 4: Verify ALL inputs have witnesses
+    let tx2: bitcoin::Transaction =
+        bitcoin::consensus::encode::deserialize_hex(&signed2.value).expect("valid tx hex");
+
+    eprintln!("Mixed-input tx: {} inputs, {} outputs", tx2.input.len(), tx2.output.len());
+    for (i, input) in tx2.input.iter().enumerate() {
+        eprintln!(
+            "  Input [{i}] {} witness_items={}",
+            input.previous_output,
+            input.witness.len()
+        );
+        assert!(
+            !input.witness.is_empty(),
+            "SIGNING BUG: input [{i}] {} has empty witness",
+            input.previous_output
+        );
+    }
+
+    // Step 5: Broadcast via bitcoind to confirm validity
+    bitcoind
+        .send_raw_transaction(&tx2)
+        .expect("mixed-input broadcast should succeed");
+
     account.stop_scanner();
     cleanup_test_account(&account_name);
     drop(bbd);
