@@ -136,10 +136,10 @@ impl Account {
         }
     }
 
-    /// Get balance in satoshis.
+    /// Get balance in satoshis (SP + sub-accounts).
     pub fn balance(&self) -> u64 {
         match &self.inner {
-            Some(inner) => inner.account.balance(),
+            Some(inner) => inner.account.total_balance(),
             None => 0,
         }
     }
@@ -152,12 +152,45 @@ impl Account {
         }
     }
 
-    /// Get all coins (both spent and unspent).
+    /// Check if the account has sub-accounts (segwit + taproot).
+    pub fn has_sub_accounts(&self) -> bool {
+        match &self.inner {
+            Some(inner) => inner.account.sub_accounts().len() >= 2,
+            None => false,
+        }
+    }
+
+    /// Generate a new segwit (wpkh) receiving address from sub-account index 0.
+    pub fn new_segwit_addr(&mut self) -> String {
+        let Some(inner) = &mut self.inner else {
+            return String::new();
+        };
+        let subs = inner.account.sub_accounts_mut();
+        if subs.is_empty() {
+            return String::new();
+        }
+        subs[0].new_addr().address.assume_checked().to_string()
+    }
+
+    /// Generate a new taproot receiving address from sub-account index 1.
+    pub fn new_taproot_addr(&mut self) -> String {
+        let Some(inner) = &mut self.inner else {
+            return String::new();
+        };
+        let subs = inner.account.sub_accounts_mut();
+        if subs.len() < 2 {
+            return String::new();
+        }
+        subs[1].new_addr().address.assume_checked().to_string()
+    }
+
+    /// Get all coins (both spent and unspent, SP + sub-accounts).
     pub fn coins(&self) -> Vec<RustCoin> {
         let Some(inner) = &self.inner else {
             return vec![];
         };
-        inner
+        // SP coins
+        let mut all_coins: Vec<RustCoin> = inner
             .account
             .coins()
             .into_iter()
@@ -168,19 +201,47 @@ impl Account {
                 label: inner.account.get_coin_label(&outpoint).unwrap_or_default(),
                 spent: !entry.is_spendable(),
             })
-            .collect()
+            .collect();
+        // Sub-account coins (segwit, taproot)
+        for sub in inner.account.sub_accounts() {
+            for (outpoint, entry) in sub.coins() {
+                all_coins.push(RustCoin {
+                    outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
+                    value: entry.amount_sat(),
+                    height: entry.height().unwrap_or(0) as u32,
+                    label: entry.label(),
+                    spent: matches!(
+                        entry.status(),
+                        bwk_tx::CoinStatus::Spent | bwk_tx::CoinStatus::BeingSpend
+                    ),
+                });
+            }
+        }
+        all_coins
     }
 
-    /// Get spendable coins summary.
+    /// Get spendable coins summary (SP + sub-accounts).
     pub fn spendable_coins(&self) -> CoinState {
         match &self.inner {
             Some(inner) => {
-                let coin_state = inner.account.spendable_coins();
+                let sp_state = inner.account.spendable_coins();
+                let mut confirmed_count = sp_state.confirmed_coins as u64;
+                let mut confirmed_balance = sp_state.confirmed_balance;
+                let mut unconfirmed_count = sp_state.unconfirmed_coins as u64;
+                let mut unconfirmed_balance = sp_state.unconfirmed_balance;
+                // Add sub-account coins
+                for sub in inner.account.sub_accounts() {
+                    let sub_state = sub.spendable_coins();
+                    confirmed_count += sub_state.confirmed_coins as u64;
+                    confirmed_balance += sub_state.confirmed_balance;
+                    unconfirmed_count += sub_state.unconfirmed_coins as u64;
+                    unconfirmed_balance += sub_state.unconfirmed_balance;
+                }
                 CoinState {
-                    confirmed_count: coin_state.confirmed_coins as u64,
-                    confirmed_balance: coin_state.confirmed_balance,
-                    unconfirmed_count: coin_state.unconfirmed_coins as u64,
-                    unconfirmed_balance: coin_state.unconfirmed_balance,
+                    confirmed_count,
+                    confirmed_balance,
+                    unconfirmed_count,
+                    unconfirmed_balance,
                 }
             }
             None => CoinState {

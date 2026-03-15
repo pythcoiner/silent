@@ -19,6 +19,7 @@ fn test_list_accounts_after_create_delete() {
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
+        String::new(),
         Some(546),
     );
     alice_config.to_file();
@@ -30,6 +31,7 @@ fn test_list_accounts_after_create_delete() {
         Network::Regtest,
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
+        String::new(),
         String::new(),
         Some(546),
     );

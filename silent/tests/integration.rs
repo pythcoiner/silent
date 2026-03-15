@@ -25,6 +25,7 @@ fn create_test_config(account_name: String) -> Config {
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
+        String::new(),
         Some(546),
     )
 }
@@ -263,6 +264,7 @@ fn test_wallet_restore_from_mnemonic() {
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
+        String::new(),
         Some(546),
     );
     let account1 = Account::new(config1).expect("First account creation should succeed");
@@ -275,6 +277,7 @@ fn test_wallet_restore_from_mnemonic() {
         Network::Regtest,
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
+        String::new(),
         String::new(),
         Some(546),
     );
@@ -495,6 +498,7 @@ fn test_signet_connection() {
         Network::Signet,
         TEST_MNEMONIC.to_string(),
         "https://blindbit-signet.example.com".to_string(),
+        String::new(),
         String::new(),
         Some(546),
     );

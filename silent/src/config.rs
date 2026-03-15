@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use bitcoin::Network as BtcNetwork;
+use bwk_sign::hot_signer::HotSigner;
+use bwk_sp::SubAccountConfig;
 use bwk_sp::Config as SpConfig;
 use serde::{Deserialize, Serialize};
 
@@ -64,6 +66,9 @@ pub struct Config {
     /// P2P node address for broadcasting (e.g. "127.0.0.1:8333")
     #[serde(default)]
     pub p2p_node: String,
+    /// Electrum server address (host:port) for sub-account syncing
+    #[serde(default)]
+    pub electrum_url: String,
     /// Optional dust limit in satoshis
     pub dust_limit: Option<u64>,
     /// Base directory for account data
@@ -99,6 +104,7 @@ impl Config {
         mnemonic: String,
         blindbit_url: String,
         p2p_node: String,
+        electrum_url: String,
         dust_limit: Option<u64>,
     ) -> Self {
         let data_dir = datadir();
@@ -108,6 +114,7 @@ impl Config {
             mnemonic,
             blindbit_url,
             p2p_node,
+            electrum_url,
             dust_limit,
             data_dir,
         }
@@ -168,6 +175,39 @@ impl Config {
         );
         config.set_dust_limit(self.dust_limit);
         config.set_birthday_height(Some(1));
+
+        // Generate sub-account descriptors when electrum is configured
+        if !self.electrum_url.is_empty() {
+            let btc_network: BtcNetwork = self.network.into();
+            let (electrum_host, electrum_port) = parse_electrum_url(&self.electrum_url);
+
+            // wpkh (BIP84 segwit) sub-account — index 0
+            if let Ok(wpkh_signer) =
+                HotSigner::new_wpkh_from_mnemonics(btc_network, &self.mnemonic)
+            {
+                if let Some(descriptor) = wpkh_signer.descriptors().into_iter().next() {
+                    config.descriptors.push(SubAccountConfig {
+                        descriptor,
+                        electrum_url: electrum_host.clone(),
+                        electrum_port,
+                    });
+                }
+            }
+
+            // tr (BIP86 taproot) sub-account — index 1
+            if let Ok(tr_signer) =
+                HotSigner::new_taproot_from_mnemonics(btc_network, &self.mnemonic)
+            {
+                if let Some(descriptor) = tr_signer.descriptors().into_iter().next() {
+                    config.descriptors.push(SubAccountConfig {
+                        descriptor,
+                        electrum_url: electrum_host,
+                        electrum_port,
+                    });
+                }
+            }
+        }
+
         config.enable_persist(true)
     }
 
@@ -209,6 +249,16 @@ impl Config {
     /// Set P2P node address.
     pub fn set_p2p_node(&mut self, node: String) {
         self.p2p_node = node;
+    }
+
+    /// Get Electrum URL.
+    pub fn get_electrum_url(&self) -> String {
+        self.electrum_url.clone()
+    }
+
+    /// Set Electrum URL.
+    pub fn set_electrum_url(&mut self, url: String) {
+        self.electrum_url = url;
     }
 
     /// Get dust limit.
@@ -288,6 +338,19 @@ pub enum ConfigError {
     Parse(String),
 }
 
+/// Parse "host:port" into separate components for SubAccountConfig.
+fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
+    if url.is_empty() {
+        return (None, None);
+    }
+    if let Some((host, port_str)) = url.rsplit_once(':') {
+        if let Ok(port) = port_str.parse::<u16>() {
+            return (Some(host.to_string()), Some(port));
+        }
+    }
+    (Some(url.to_string()), None)
+}
+
 // CXX FFI functions
 
 /// Create a new config.
@@ -297,6 +360,7 @@ pub fn new_config(
     mnemonic: String,
     blindbit_url: String,
     p2p_node: String,
+    electrum_url: String,
     dust_limit: u64,
 ) -> Box<Config> {
     let dust = if dust_limit > 0 {
@@ -310,6 +374,7 @@ pub fn new_config(
         mnemonic,
         blindbit_url,
         p2p_node,
+        electrum_url,
         dust,
     ))
 }
@@ -335,6 +400,7 @@ pub fn config_from_file(account_name: String) -> Box<Config> {
             Box::new(Config::new(
                 account_name,
                 Network::Signet,
+                String::new(),
                 String::new(),
                 String::new(),
                 String::new(),

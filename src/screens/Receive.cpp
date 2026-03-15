@@ -21,16 +21,81 @@ auto Receive::init() -> void {
     // Get SP address from controller
     if (m_controller != nullptr) {
         m_sp_address = m_controller->getSpAddress();
+        m_has_sub_accounts = m_controller->getAccount().has_value() &&
+                             m_controller->getAccount().value()->has_sub_accounts();
     }
     m_btn_copy = new QPushButton("Copy");
+
+    if (m_has_sub_accounts) {
+        m_segwit_addr_display = new QLabel("");
+        m_segwit_addr_display->setFixedWidth(600);
+        m_segwit_addr_display->setWordWrap(true);
+
+        m_btn_new_segwit = new QPushButton("Generate");
+        m_btn_copy_segwit = new QPushButton("Copy");
+
+        m_taproot_addr_display = new QLabel("");
+        m_taproot_addr_display->setFixedWidth(600);
+        m_taproot_addr_display->setWordWrap(true);
+
+        m_btn_new_taproot = new QPushButton("Generate");
+        m_btn_copy_taproot = new QPushButton("Copy");
+    }
 }
 
 auto Receive::doConnect() -> void {
     connect(m_btn_copy, &QPushButton::clicked, this, &Receive::onCopyAddress, qontrol::UNIQUE);
+
+    if (m_has_sub_accounts) {
+        connect(m_btn_new_segwit, &QPushButton::clicked, this, &Receive::onNewSegwitAddr,
+                qontrol::UNIQUE);
+        connect(m_btn_copy_segwit, &QPushButton::clicked, this, &Receive::onCopySegwitAddr,
+                qontrol::UNIQUE);
+        connect(m_btn_new_taproot, &QPushButton::clicked, this, &Receive::onNewTaprootAddr,
+                qontrol::UNIQUE);
+        connect(m_btn_copy_taproot, &QPushButton::clicked, this, &Receive::onCopyTaprootAddr,
+                qontrol::UNIQUE);
+    }
 }
 
 auto Receive::onCopyAddress() -> void {
     QApplication::clipboard()->setText(QString(m_sp_address.c_str()));
+}
+
+auto Receive::onNewSegwitAddr() -> void {
+    if (m_controller == nullptr) {
+        return;
+    }
+    auto &account = m_controller->getAccount();
+    if (!account.has_value()) {
+        return;
+    }
+    auto addr = account.value()->new_segwit_addr();
+    m_segwit_addr_display->setText(QString::fromStdString(std::string(addr.c_str())));
+}
+
+auto Receive::onCopySegwitAddr() -> void {
+    if (m_segwit_addr_display != nullptr) {
+        QApplication::clipboard()->setText(m_segwit_addr_display->text());
+    }
+}
+
+auto Receive::onNewTaprootAddr() -> void {
+    if (m_controller == nullptr) {
+        return;
+    }
+    auto &account = m_controller->getAccount();
+    if (!account.has_value()) {
+        return;
+    }
+    auto addr = account.value()->new_taproot_addr();
+    m_taproot_addr_display->setText(QString::fromStdString(std::string(addr.c_str())));
+}
+
+auto Receive::onCopyTaprootAddr() -> void {
+    if (m_taproot_addr_display != nullptr) {
+        QApplication::clipboard()->setText(m_taproot_addr_display->text());
+    }
 }
 
 auto Receive::view() -> void {
@@ -54,8 +119,49 @@ auto Receive::view() -> void {
                     ->pushSpacer(50)
                     ->push(addrRow)
                     ->pushSpacer(20)
-                    ->push(btnRow)
-                    ->pushSpacer();
+                    ->push(btnRow);
+
+    if (m_has_sub_accounts) {
+        // Segwit address section
+        auto *segwitLabel = new QLabel("Segwit Address:");
+        segwitLabel->setFixedWidth(200);
+
+        auto *segwitAddrRow =
+            (new qontrol::Row)->push(segwitLabel)->push(m_segwit_addr_display)->pushSpacer();
+
+        auto *segwitBtnRow = (new qontrol::Row)
+                                 ->pushSpacer()
+                                 ->push(m_btn_new_segwit)
+                                 ->pushSpacer(H_SPACER)
+                                 ->push(m_btn_copy_segwit)
+                                 ->pushSpacer();
+
+        col->pushSpacer(30)
+            ->push(segwitAddrRow)
+            ->pushSpacer(10)
+            ->push(segwitBtnRow);
+
+        // Taproot address section
+        auto *taprootLabel = new QLabel("Taproot Address:");
+        taprootLabel->setFixedWidth(200);
+
+        auto *taprootAddrRow =
+            (new qontrol::Row)->push(taprootLabel)->push(m_taproot_addr_display)->pushSpacer();
+
+        auto *taprootBtnRow = (new qontrol::Row)
+                                  ->pushSpacer()
+                                  ->push(m_btn_new_taproot)
+                                  ->pushSpacer(H_SPACER)
+                                  ->push(m_btn_copy_taproot)
+                                  ->pushSpacer();
+
+        col->pushSpacer(30)
+            ->push(taprootAddrRow)
+            ->pushSpacer(10)
+            ->push(taprootBtnRow);
+    }
+
+    col->pushSpacer();
 
     auto *oldWidget = m_main_widget;
     m_main_widget = margin(col);

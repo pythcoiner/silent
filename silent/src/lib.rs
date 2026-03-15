@@ -234,6 +234,10 @@ mod ffi {
         /// Blocking call - attempts to connect and perform version handshake.
         fn test_p2p_node(address: String, network: Network) -> ConnectionResult;
 
+        /// Test Electrum server connectivity.
+        /// Blocking call - attempts TCP connect and server.version handshake.
+        fn test_electrum(address: String) -> ConnectionResult;
+
         /// Fetch default regtest infrastructure addresses from minta API.
         /// Blocking HTTP call - should be called from a background thread.
         fn get_regtest_defaults() -> RegtestDefaults;
@@ -249,6 +253,7 @@ mod ffi {
             mnemonic: String,
             blindbit_url: String,
             p2p_node: String,
+            electrum_url: String,
             dust_limit: u64,
         ) -> Box<Config>;
 
@@ -287,6 +292,12 @@ mod ffi {
 
         /// Set P2P node address.
         fn set_p2p_node(self: &mut Config, node: String);
+
+        /// Get Electrum URL.
+        fn get_electrum_url(self: &Config) -> String;
+
+        /// Set Electrum URL.
+        fn set_electrum_url(self: &mut Config, url: String);
 
         /// Get dust limit (0 means not set).
         fn get_dust_limit(self: &Config) -> u64;
@@ -328,6 +339,15 @@ mod ffi {
 
         /// Get the Silent Payment address.
         fn sp_address(self: &Account) -> String;
+
+        /// Check if the account has sub-accounts (segwit + taproot).
+        fn has_sub_accounts(self: &Account) -> bool;
+
+        /// Generate a new segwit (wpkh) receiving address.
+        fn new_segwit_addr(self: &mut Account) -> String;
+
+        /// Generate a new taproot receiving address.
+        fn new_taproot_addr(self: &mut Account) -> String;
 
         /// Get all coins (spent and unspent).
         fn coins(self: &Account) -> Vec<RustCoin>;
@@ -515,6 +535,65 @@ pub fn test_p2p_node(address: String, network: Network) -> ffi::ConnectionResult
     ffi::ConnectionResult {
         is_ok: true,
         error: String::new(),
+    }
+}
+
+/// Test Electrum server connectivity by attempting a TCP connect and server.version handshake.
+pub fn test_electrum(address: String) -> ffi::ConnectionResult {
+    use std::time::Duration;
+
+    log::info!("test_electrum()");
+
+    let (host, port) = match address.rsplit_once(':') {
+        Some((h, p)) => match p.parse::<u16>() {
+            Ok(port) => (h.to_string(), port),
+            Err(e) => {
+                return ffi::ConnectionResult {
+                    is_ok: false,
+                    error: format!("Invalid port in '{address}': {e}"),
+                }
+            }
+        },
+        None => {
+            return ffi::ConnectionResult {
+                is_ok: false,
+                error: format!("Invalid address format '{address}': expected host:port"),
+            }
+        }
+    };
+
+    let mut client = bwk_electrum::raw_client::Client::new_tcp(&host, port)
+        .read_timeout(Some(Duration::from_secs(5)))
+        .write_timeout(Some(Duration::from_secs(5)));
+
+    if let Err(e) = client.try_connect(Some(Duration::from_secs(5))) {
+        return ffi::ConnectionResult {
+            is_ok: false,
+            error: format!("Connection failed: {e}"),
+        };
+    }
+
+    let request = bwk_electrum::electrum::request::Request::version(
+        "silent".to_string(),
+        "1.4".to_string(),
+    );
+
+    if let Err(e) = client.try_send(&request) {
+        return ffi::ConnectionResult {
+            is_ok: false,
+            error: format!("Failed to send version request: {e}"),
+        };
+    }
+
+    match client.recv_str() {
+        Ok(_) => ffi::ConnectionResult {
+            is_ok: true,
+            error: String::new(),
+        },
+        Err(e) => ffi::ConnectionResult {
+            is_ok: false,
+            error: format!("No response from server: {e}"),
+        },
     }
 }
 

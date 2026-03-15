@@ -42,6 +42,11 @@ auto CreateAccount::init() -> void {
     m_test_btn = new QPushButton("Test");
     m_test_p2p_btn = new QPushButton("Test");
 
+    m_electrum_input = new QLineEdit();
+    m_electrum_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
+
+    m_test_electrum_btn = new QPushButton("Test");
+
     m_create_btn = new QPushButton("Create");
     m_create_btn->setEnabled(false);
 
@@ -65,6 +70,10 @@ auto CreateAccount::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_p2p_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateP2pTest,
             qontrol::UNIQUE);
+    connect(m_test_electrum_btn, &QPushButton::clicked, this, &CreateAccount::onTestElectrum,
+            qontrol::UNIQUE);
+    connect(m_electrum_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateElectrumTest,
+            qontrol::UNIQUE);
     connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate, qontrol::UNIQUE);
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(this, &CreateAccount::createAccount, AppController::get(),
@@ -72,6 +81,8 @@ auto CreateAccount::doConnect() -> void {
     connect(this, &CreateAccount::backendInfoReady, this, &CreateAccount::onBackendInfoReady,
             qontrol::UNIQUE);
     connect(this, &CreateAccount::p2pTestReady, this, &CreateAccount::onP2pTestReady,
+            qontrol::UNIQUE);
+    connect(this, &CreateAccount::electrumTestReady, this, &CreateAccount::onElectrumTestReady,
             qontrol::UNIQUE);
 }
 
@@ -107,6 +118,13 @@ auto CreateAccount::view() -> void {
                        ->pushSpacer(H_SPACER)
                        ->push(m_test_p2p_btn);
 
+    auto *electrumRow = (new qontrol::Row)
+                            ->push(new QLabel("Electrum:"))
+                            ->pushSpacer(H_SPACER)
+                            ->push(m_electrum_input)
+                            ->pushSpacer(H_SPACER)
+                            ->push(m_test_electrum_btn);
+
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_cancel_btn)
@@ -127,6 +145,8 @@ auto CreateAccount::view() -> void {
                     ->pushSpacer(V_SPACER)
                     ->push(p2pRow)
                     ->pushSpacer(V_SPACER)
+                    ->push(electrumRow)
+                    ->pushSpacer(V_SPACER)
                     ->push(buttonRow);
 
     setMainWidget(margin(col));
@@ -142,9 +162,10 @@ auto CreateAccount::onCreate() -> void {
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
     auto blindbitUrl = m_blindbit_input->text().trimmed();
     auto p2pNode = m_p2p_input->text().trimmed();
+    auto electrumUrl = m_electrum_input->text().trimmed();
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
 
-    emit createAccount(name, mnemonic, network, blindbitUrl, p2pNode);
+    emit createAccount(name, mnemonic, network, blindbitUrl, p2pNode, electrumUrl);
     accept();
 }
 
@@ -155,6 +176,7 @@ auto CreateAccount::onNetworkChanged() -> void {
     m_generate_btn->setEnabled(!isMainnet);
     invalidateBackendTest();
     invalidateP2pTest();
+    invalidateElectrumTest();
     applyRegtestDefaults();
 }
 
@@ -252,8 +274,10 @@ auto CreateAccount::applyRegtestDefaults() -> void {
 
     m_blindbit_input->setText(defaults.value().blindbit_url);
     m_p2p_input->setText(defaults.value().p2p_node);
+    m_electrum_input->setText(defaults.value().electrum_url);
     m_backend_verified = true;
     m_p2p_verified = true;
+    m_electrum_verified = true;
     onUpdateCreateButton();
 }
 
@@ -305,6 +329,48 @@ auto CreateAccount::invalidateP2pTest() -> void {
     onUpdateCreateButton();
 }
 
+auto CreateAccount::onTestElectrum() -> void {
+    auto addr = m_electrum_input->text().trimmed();
+    if (addr.isEmpty()) {
+        AppController::execModal(
+            new qontrol::Modal("Invalid Input", "Electrum address cannot be empty."));
+        return;
+    }
+
+    m_test_electrum_btn->setEnabled(false);
+    m_test_electrum_btn->setText("Testing...");
+
+    auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
+        auto result = ::test_electrum(rust::String(addr));
+        emit electrumTestReady(result);
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto CreateAccount::onElectrumTestReady(ConnectionResult result) -> void {
+    m_test_electrum_btn->setEnabled(true);
+    m_test_electrum_btn->setText("Test");
+
+    if (!result.is_ok) {
+        m_electrum_verified = false;
+        onUpdateCreateButton();
+        AppController::execModal(
+            new qontrol::Modal("Electrum Test Failed",
+                               QString("Failed to connect to Electrum server:\n%1")
+                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        return;
+    }
+
+    m_electrum_verified = true;
+    onUpdateCreateButton();
+}
+
+auto CreateAccount::invalidateElectrumTest() -> void {
+    m_electrum_verified = false;
+    onUpdateCreateButton();
+}
+
 auto CreateAccount::onUpdateCreateButton() -> void {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
@@ -328,7 +394,7 @@ auto CreateAccount::onUpdateCreateButton() -> void {
         return;
     }
 
-    m_create_btn->setEnabled(m_backend_verified && m_p2p_verified);
+    m_create_btn->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
 }
 
 auto CreateAccount::generateMnemonic() -> QString { // NOLINT

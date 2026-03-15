@@ -15,9 +15,11 @@ public:
 
 signals:
     void createAccount(const QString &name, const QString &mnemonic, Network network,
-                       const QString &blindbit_url, const QString &p2p_node);
+                       const QString &blindbit_url, const QString &p2p_node,
+                       const QString &electrum_url);
     void backendInfoReady(BackendInfo info);
     void p2pTestReady(ConnectionResult result);
+    void electrumTestReady(ConnectionResult result);
 
 private slots:
     auto onGenerate() -> void;
@@ -25,6 +27,7 @@ private slots:
     auto onNetworkChanged() -> void;
     auto onTestBackend() -> void;
     auto onTestP2p() -> void;
+    auto onTestElectrum() -> void;
     auto onUpdateCreateButton() -> void;
 
 private:
@@ -36,6 +39,8 @@ private:
     auto onBackendInfoReady(BackendInfo info) -> void;
     auto invalidateP2pTest() -> void;
     auto onP2pTestReady(ConnectionResult result) -> void;
+    auto invalidateElectrumTest() -> void;
+    auto onElectrumTestReady(ConnectionResult result) -> void;
     auto generateMnemonic() -> QString;
 
     QLineEdit *m_name_input = nullptr;
@@ -46,8 +51,11 @@ private:
     QLineEdit *m_p2p_input = nullptr;
     QPushButton *m_test_btn = nullptr;
     QPushButton *m_test_p2p_btn = nullptr;
+    QLineEdit *m_electrum_input = nullptr;
+    QPushButton *m_test_electrum_btn = nullptr;
     QPushButton *m_create_btn = nullptr;
     QPushButton *m_cancel_btn = nullptr;
     bool m_backend_verified = false;
     bool m_p2p_verified = false;
+    bool m_electrum_verified = false;
 };
