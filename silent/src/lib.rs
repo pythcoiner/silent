@@ -385,6 +385,14 @@ mod ffi {
         /// Sign and broadcast a transaction in one step.
         /// Returns TxResult with txid in value.
         fn sign_and_broadcast(self: &Account, psbt_result: &PsbtResult) -> TxResult;
+
+        /// Log all details of a failed broadcast for debugging/reproduction.
+        /// Called after broadcast_transaction returns an error.
+        fn log_failed_broadcast(
+            self: &Account,
+            tx_template: TransactionTemplate,
+            signed_tx_hex: String,
+        );
     }
 
     // ===== Poll Methods =====

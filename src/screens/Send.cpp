@@ -988,19 +988,24 @@ auto Send::sendTransaction() -> void {
         fee = simu.fee;
     }
 
-    // Store psbt for use in onSendConfirmed
+    // Store psbt and tx template for use in onSendConfirmed / logging
     m_psbt_result = std::make_optional(std::move(psbt));
+    m_tx_template = txTemp;
 
-    auto *modal = new modal::ConfirmSend(recipients, fee, txidPreview);
-    connect(modal, &modal::ConfirmSend::confirmed, this, &Send::onSendConfirmed, qontrol::UNIQUE);
-    AppController::execModal(modal);
+    m_confirm_modal = new modal::ConfirmSend(recipients, fee, txidPreview);
+    connect(m_confirm_modal, &modal::ConfirmSend::confirmed, this, &Send::onSendConfirmed,
+            qontrol::UNIQUE);
+    AppController::execModal(m_confirm_modal);
+    m_confirm_modal = nullptr;
 }
 
 auto Send::onSendConfirmed() -> void {
     qDebug() << "Send::onSendConfirmed()";
     auto &account = m_controller->getAccount();
     if (!account.has_value() || !m_psbt_result.has_value()) {
-        AppController::execModal(new qontrol::Modal("Error", "Transaction state lost."));
+        if (m_confirm_modal != nullptr) {
+            m_confirm_modal->setResult(false, "Transaction state lost.");
+        }
         return;
     }
 
@@ -1020,7 +1025,10 @@ auto Send::onSignResult(TxResult result) -> void {
 
     if (!result.is_ok) {
         auto error = QString::fromStdString(std::string(result.error.c_str()));
-        AppController::execModal(new qontrol::Modal("Signing Failed", error));
+        m_tx_template = std::nullopt;
+        if (m_confirm_modal != nullptr) {
+            m_confirm_modal->setResult(false, "Signing Failed: " + error);
+        }
         return;
     }
 
@@ -1039,16 +1047,27 @@ auto Send::onSignResult(TxResult result) -> void {
 
 auto Send::onBroadcastResult(TxResult result) -> void {
     qDebug() << "Send::onBroadcastResult() ok:" << result.is_ok;
-    m_signed_tx_hex.clear();
 
-    if (!result.is_ok) {
-        auto error = QString::fromStdString(std::string(result.error.c_str()));
-        AppController::execModal(new qontrol::Modal("Broadcast Failed", error));
-        return;
+    if (!result.is_ok && m_tx_template.has_value() && !m_signed_tx_hex.isEmpty()) {
+        auto &account = m_controller->getAccount();
+        if (account.has_value()) {
+            account.value()->log_failed_broadcast(
+                m_tx_template.value(), m_signed_tx_hex.toStdString());
+        }
     }
 
-    auto txid = QString::fromStdString(std::string(result.value.c_str()));
-    AppController::execModal(new qontrol::Modal("Transaction Sent", "Txid: " + txid));
+    m_signed_tx_hex.clear();
+    m_tx_template = std::nullopt;
+
+    if (m_confirm_modal != nullptr) {
+        if (result.is_ok) {
+            auto txid = QString::fromStdString(std::string(result.value.c_str()));
+            m_confirm_modal->setResult(true, txid);
+        } else {
+            auto error = QString::fromStdString(std::string(result.error.c_str()));
+            m_confirm_modal->setResult(false, error);
+        }
+    }
 
     // Refresh coin state
     m_controller->pollCoins();

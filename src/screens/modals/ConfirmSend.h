@@ -20,6 +20,8 @@ signals:
 
 public slots:
     auto onConfirmClicked() -> void;
+    auto setBroadcasting() -> void;
+    auto setResult(bool ok, const QString &message) -> void;
 
 protected:
     auto init() -> void;
@@ -33,6 +35,8 @@ private:
     QLabel *m_details_label = nullptr;
     QPushButton *m_cancel_btn = nullptr;
     QPushButton *m_confirm_btn = nullptr;
+    QLabel *m_status_label = nullptr;
+    QPushButton *m_ok_btn = nullptr;
 };
 
 } // namespace modal

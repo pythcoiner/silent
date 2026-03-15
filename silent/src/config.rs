@@ -339,7 +339,7 @@ pub enum ConfigError {
 }
 
 /// Parse "host:port" into separate components for SubAccountConfig.
-fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
+pub(crate) fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
     if url.is_empty() {
         return (None, None);
     }

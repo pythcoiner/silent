@@ -14,6 +14,9 @@
 #include <silent.h>
 
 class AccountController;
+namespace modal {
+class ConfirmSend;
+}
 
 namespace screen {
 class Send;
@@ -140,11 +143,13 @@ private:
 
     bool m_broadcastable = false;
     std::optional<rust::Box<PsbtResult>> m_psbt_result = std::nullopt;
+    std::optional<TransactionTemplate> m_tx_template = std::nullopt;
     QString m_signed_tx_hex;
     QList<RustCoin> m_selected_coins;
     QStringList m_auto_selected_outpoints;
     QHash<QString, QCheckBox *> m_coin_checkboxes;
     CoinState m_last_coin_state{};
+    modal::ConfirmSend *m_confirm_modal = nullptr;
 };
 
 } // namespace screen

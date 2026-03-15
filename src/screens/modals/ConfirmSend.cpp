@@ -31,18 +31,46 @@ auto ConfirmSend::init() -> void {
 
     m_cancel_btn = new QPushButton("Cancel");
     m_confirm_btn = new QPushButton("Confirm");
+
+    m_status_label = new QLabel("Broadcasting...");
+    m_status_label->setAlignment(Qt::AlignCenter);
+    m_status_label->setWordWrap(true);
+    m_status_label->setVisible(false);
+
+    m_ok_btn = new QPushButton("OK");
+    m_ok_btn->setVisible(false);
 }
 
 auto ConfirmSend::doConnect() -> void {
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(m_confirm_btn, &QPushButton::clicked, this, &ConfirmSend::onConfirmClicked,
             qontrol::UNIQUE);
+    connect(m_ok_btn, &QPushButton::clicked, this, &QDialog::accept, qontrol::UNIQUE);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto ConfirmSend::onConfirmClicked() -> void {
+    setBroadcasting();
     emit confirmed();
-    accept();
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto ConfirmSend::setBroadcasting() -> void {
+    m_cancel_btn->setVisible(false);
+    m_confirm_btn->setVisible(false);
+    m_status_label->setVisible(true);
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto ConfirmSend::setResult(bool ok, const QString &message) -> void {
+    m_details_label->setVisible(false);
+    if (ok) {
+        m_status_label->setText("Transaction Sent\n\nTxid: " + message);
+    } else {
+        m_status_label->setText("Broadcast Failed\n\n" + message);
+    }
+    m_status_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_ok_btn->setVisible(true);
 }
 
 auto ConfirmSend::view() -> void {
@@ -53,11 +81,18 @@ auto ConfirmSend::view() -> void {
                           ->push(m_confirm_btn)
                           ->pushSpacer();
 
+    auto *okRow = (new qontrol::Row)
+                      ->pushSpacer()
+                      ->push(m_ok_btn)
+                      ->pushSpacer();
+
     auto *col = (new qontrol::Column)
                     ->pushSpacer(20)
                     ->push(m_details_label)
                     ->pushSpacer(20)
+                    ->push(m_status_label)
                     ->push(buttonRow)
+                    ->push(okRow)
                     ->pushSpacer();
 
     setMainWidget(margin(col));

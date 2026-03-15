@@ -2,7 +2,6 @@
 //!
 //! Wraps bwk-sp::Account with CXX-compatible interface for C++ bindings.
 
-use std::net::SocketAddr;
 use std::sync::mpsc;
 use std::time::Duration;
 
@@ -23,7 +22,7 @@ struct AccountInner {
     account: SpAccount,
     receiver: Option<mpsc::Receiver<SpNotification>>,
     network: bitcoin::Network,
-    p2p_node: String,
+    electrum_url: String,
 }
 
 /// Account wrapping bwk-sp::Account.
@@ -61,7 +60,7 @@ impl Account {
             account,
             receiver,
             network,
-            p2p_node: config.p2p_node.clone(),
+            electrum_url: config.electrum_url.clone(),
         })
     }
 
@@ -542,10 +541,10 @@ impl Account {
 
         let txid = tx.compute_txid();
 
-        if let Err(e) = broadcast_via_p2p(&inner.p2p_node, inner.network, tx) {
+        if let Err(e) = broadcast_via_electrum(&inner.electrum_url, &tx) {
             return TxResult {
                 is_ok: false,
-                error: format!("Broadcast failed: {e}"),
+                error: e,
                 value: String::new(),
             };
         }
@@ -591,10 +590,10 @@ impl Account {
 
         let txid = signed_tx.compute_txid();
 
-        if let Err(e) = broadcast_via_p2p(&inner.p2p_node, inner.network, signed_tx) {
+        if let Err(e) = broadcast_via_electrum(&inner.electrum_url, &signed_tx) {
             return TxResult {
                 is_ok: false,
-                error: format!("Broadcast failed: {e}"),
+                error: e,
                 value: String::new(),
             };
         }
@@ -605,37 +604,190 @@ impl Account {
             value: txid.to_string(),
         }
     }
+    /// Log all details of a failed broadcast for debugging/reproduction.
+    /// Called from C++ as a separate step after broadcast_transaction returns an error.
+    pub fn log_failed_broadcast(
+        &self,
+        tx_template: TransactionTemplate,
+        signed_tx_hex: String,
+    ) {
+        use bitcoin::consensus::encode::deserialize_hex;
+        use bitcoin::Transaction;
+
+        let Some(inner) = &self.inner else {
+            log::error!("log_failed_broadcast: account not initialized");
+            return;
+        };
+
+        let tx: Transaction = match deserialize_hex(&signed_tx_hex) {
+            Ok(tx) => tx,
+            Err(e) => {
+                log::error!("log_failed_broadcast: cannot decode tx hex: {e}");
+                log::error!("signed_tx_hex: {signed_tx_hex}");
+                return;
+            }
+        };
+
+        log_failed_broadcast_impl(inner, &tx, &signed_tx_hex, &tx_template);
+    }
 }
 
-/// Broadcast a transaction via the P2P network.
-fn broadcast_via_p2p(
-    p2p_node: &str,
-    network: bitcoin::Network,
-    tx: bitcoin::Transaction,
-) -> Result<(), String> {
-    if p2p_node.is_empty() {
-        return Err("P2P node address not configured".to_string());
+/// Log all transaction details on broadcast failure for debugging.
+fn log_failed_broadcast_impl(
+    inner: &AccountInner,
+    tx: &bitcoin::Transaction,
+    signed_tx_hex: &str,
+    tx_template: &TransactionTemplate,
+) {
+    let sp_coins = inner.account.coins();
+    let subs = inner.account.sub_accounts();
+
+    log::error!("=== BROADCAST FAILED ===");
+
+    // Transaction template (original intent)
+    log::error!("tx_template: fee_rate={} fee={}", tx_template.fee_rate, tx_template.fee);
+    for (i, out) in tx_template.outputs.iter().enumerate() {
+        log::error!(
+            "  tmpl_output[{i}]: address={} amount={} label={} max={}",
+            out.address, out.amount, out.label, out.max
+        );
+    }
+    if !tx_template.input_outpoints.is_empty() {
+        log::error!("  tmpl_inputs: {:?}", tx_template.input_outpoints);
+    } else {
+        log::error!("  tmpl_inputs: auto");
     }
 
-    let addr: SocketAddr = p2p_node
-        .parse()
-        .map_err(|e| format!("Invalid P2P node address '{p2p_node}': {e}"))?;
+    // Signed transaction details
+    log::error!("txid: {}", tx.compute_txid());
+    log::error!("version: {}", tx.version);
+    log::error!("lock_time: {}", tx.lock_time);
 
-    let mut client = bwk_p2p::Client::new(addr, network)
-        .timeout(Duration::from_secs(30))
-        .connect()
-        .map_err(|e| format!("P2P connection failed: {e}"))?;
+    // Inputs
+    log::error!("inputs ({}):", tx.input.len());
+    let mut input_total: u64 = 0;
+    for (i, input) in tx.input.iter().enumerate() {
+        let outpoint = input.previous_output;
 
-    let result = client
-        .broadcast_tx(tx)
-        .map_err(|e| format!("P2P broadcast failed: {e}"));
+        // Determine source and value from wallet coins
+        let (source, value) = if let Some(entry) = sp_coins.get(&outpoint) {
+            ("sp", entry.amount_sat())
+        } else {
+            let mut found = ("unknown", 0u64);
+            for (sub_idx, sub) in subs.iter().enumerate() {
+                if let Some(entry) = sub.coins().get(&outpoint) {
+                    let name = match sub_idx {
+                        0 => "segwit",
+                        1 => "taproot",
+                        _ => "unknown_sub",
+                    };
+                    found = (name, entry.amount_sat());
+                    break;
+                }
+            }
+            found
+        };
+        input_total += value;
 
-    // Give the peer time to receive the tx before closing the connection.
-    // broadcast_tx() only writes to the TCP stream; stop() would close it immediately.
-    std::thread::sleep(Duration::from_millis(500));
+        let witness_len = input.witness.len();
+        let script_sig_len = input.script_sig.len();
+        log::error!(
+            "  [{i}] {outpoint} source={source} value={value} \
+             sequence={} witness_items={witness_len} script_sig_len={script_sig_len}",
+            input.sequence
+        );
+        // Log witness hex for each item
+        for (w, item) in input.witness.iter().enumerate() {
+            use std::fmt::Write;
+            let item_hex = item.iter().fold(String::new(), |mut s, b| {
+                let _ = write!(s, "{b:02x}");
+                s
+            });
+            log::error!("      witness[{w}]: ({} bytes) {item_hex}", item.len());
+        }
+    }
 
-    client.stop();
-    result
+    // Outputs
+    log::error!("outputs ({}):", tx.output.len());
+    let mut output_total: u64 = 0;
+    for (i, output) in tx.output.iter().enumerate() {
+        let value = output.value.to_sat();
+        output_total += value;
+        log::error!(
+            "  [{i}] value={value} script_pubkey={}",
+            output.script_pubkey.to_hex_string()
+        );
+    }
+
+    // Summary
+    let fee = input_total.saturating_sub(output_total);
+    log::error!("input_total={input_total} output_total={output_total} fee={fee}");
+
+    // Raw hex
+    log::error!("signed_tx_hex: {signed_tx_hex}");
+    log::error!("=== END BROADCAST FAILED ===");
+}
+
+/// Broadcast a transaction via Electrum server.
+fn broadcast_via_electrum(
+    electrum_url: &str,
+    tx: &bitcoin::Transaction,
+) -> Result<(), String> {
+    use bitcoin::consensus::encode::serialize_hex;
+    use bwk_electrum::electrum::{request::Request, response::Response};
+    use std::collections::HashMap;
+
+    if electrum_url.is_empty() {
+        return Err("Electrum server address not configured".to_string());
+    }
+
+    let (host, port) = crate::config::parse_electrum_url(electrum_url);
+    let host = host.ok_or("Invalid electrum URL: missing host")?;
+    let port = port.ok_or("Invalid electrum URL: missing port")?;
+
+    let mut client = bwk_electrum::raw_client::Client::new_tcp(&host, port);
+    client.try_connect(Some(Duration::from_secs(10))).map_err(|e| {
+        let msg = format!("Connection to {electrum_url} failed:\n{e}");
+        log::error!("{msg}");
+        msg
+    })?;
+
+    let raw_tx = serialize_hex(tx);
+    let request = Request::tx_broadcast(raw_tx);
+    client.try_send(&request).map_err(|e| {
+        let msg = format!("Failed to send to {electrum_url}:\n{e}");
+        log::error!("{msg}");
+        msg
+    })?;
+
+    let req_id = request.id;
+    let mut index = HashMap::new();
+    index.insert(req_id, request);
+
+    let responses = client.recv(&index).map_err(|e| {
+        let msg = format!("No response from {electrum_url}:\n{e}");
+        log::error!("{msg}");
+        msg
+    })?;
+
+    for r in responses {
+        match r {
+            Response::TxBroadcast(resp) if resp.id == req_id => return Ok(()),
+            Response::Error(e) if e.id == req_id => {
+                let msg = format!(
+                    "Server {electrum_url} rejected transaction:\n{}",
+                    e.error.message
+                );
+                log::error!("{msg}");
+                return Err(msg);
+            }
+            _ => {}
+        }
+    }
+
+    let msg = format!("Unexpected response from {electrum_url}");
+    log::error!("{msg}");
+    Err(msg)
 }
 
 /// Convert bwk-sp::Notification to Silent Notification.
