@@ -151,6 +151,21 @@ mod ffi {
         pub error: String,
     }
 
+    /// Default regtest infrastructure addresses fetched from minta API.
+    #[derive(Debug, Clone)]
+    pub struct RegtestDefaults {
+        /// Whether the fetch succeeded.
+        pub is_ok: bool,
+        /// Error message (empty if is_ok is true).
+        pub error: String,
+        /// BlindBit server URL (with http:// prefix).
+        pub blindbit_url: String,
+        /// P2P node address (host:port).
+        pub p2p_node: String,
+        /// Electrum server address (host:port).
+        pub electrum_url: String,
+    }
+
     /// Backend server information result.
     #[derive(Debug, Clone)]
     pub struct BackendInfo {
@@ -218,6 +233,10 @@ mod ffi {
         /// Test P2P node connectivity.
         /// Blocking call - attempts to connect and perform version handshake.
         fn test_p2p_node(address: String, network: Network) -> ConnectionResult;
+
+        /// Fetch default regtest infrastructure addresses from minta API.
+        /// Blocking HTTP call - should be called from a background thread.
+        fn get_regtest_defaults() -> RegtestDefaults;
     }
 
     // ===== Config Methods =====
@@ -499,10 +518,79 @@ pub fn test_p2p_node(address: String, network: Network) -> ffi::ConnectionResult
     }
 }
 
+/// Fetch default regtest infrastructure addresses from minta.pythcoiner.dev.
+pub fn get_regtest_defaults() -> RegtestDefaults {
+    let url = "http://minta.pythcoiner.dev/api/status";
+
+    let mut response = match ureq::get(url).call() {
+        Ok(r) => r,
+        Err(e) => {
+            log::warn!("failed to fetch regtest defaults: {e}");
+            return RegtestDefaults {
+                is_ok: false,
+                error: format!("HTTP request failed: {e}"),
+                blindbit_url: String::new(),
+                p2p_node: String::new(),
+                electrum_url: String::new(),
+            };
+        }
+    };
+
+    let body: String = match response.body_mut().read_to_string() {
+        Ok(s) => s,
+        Err(e) => {
+            log::warn!("failed to read regtest defaults response: {e}");
+            return RegtestDefaults {
+                is_ok: false,
+                error: format!("Failed to read response: {e}"),
+                blindbit_url: String::new(),
+                p2p_node: String::new(),
+                electrum_url: String::new(),
+            };
+        }
+    };
+
+    let json: serde_json::Value = match serde_json::from_str(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            log::warn!("failed to parse regtest defaults JSON: {e}");
+            return RegtestDefaults {
+                is_ok: false,
+                error: format!("JSON parse failed: {e}"),
+                blindbit_url: String::new(),
+                p2p_node: String::new(),
+                electrum_url: String::new(),
+            };
+        }
+    };
+
+    let blindbit_connect = json["blindbit_connect"].as_str().unwrap_or_default();
+    let p2p_connect = json["p2p_connect"].as_str().unwrap_or_default();
+    let electrum_connect = json["electrum_connect"].as_str().unwrap_or_default();
+
+    if blindbit_connect.is_empty() || p2p_connect.is_empty() {
+        return RegtestDefaults {
+            is_ok: false,
+            error: "Missing fields in API response".to_string(),
+            blindbit_url: String::new(),
+            p2p_node: String::new(),
+            electrum_url: String::new(),
+        };
+    }
+
+    RegtestDefaults {
+        is_ok: true,
+        error: String::new(),
+        blindbit_url: format!("http://{blindbit_connect}"),
+        p2p_node: p2p_connect.to_string(),
+        electrum_url: electrum_connect.to_string(),
+    }
+}
+
 // Re-export main types
 pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use ffi::{
-    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, TransactionSimulation,
-    TransactionTemplate,
+    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, RegtestDefaults,
+    TransactionSimulation, TransactionTemplate,
 };

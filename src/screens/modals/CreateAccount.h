@@ -29,6 +29,7 @@ private:
     auto init() -> void;
     auto doConnect() -> void;
     auto view() -> void;
+    auto applyRegtestDefaults() -> void;
     auto invalidateBackendTest() -> void;
     auto onBackendInfoReady(BackendInfo info) -> void;
     auto invalidateP2pTest() -> void;

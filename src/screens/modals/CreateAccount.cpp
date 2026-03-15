@@ -11,6 +11,7 @@ CreateAccount::CreateAccount(QWidget *parent) {
     init();
     doConnect();
     view();
+    applyRegtestDefaults();
 }
 
 auto CreateAccount::init() -> void {
@@ -150,6 +151,7 @@ auto CreateAccount::onNetworkChanged() -> void {
     m_generate_btn->setEnabled(!isMainnet);
     invalidateBackendTest();
     invalidateP2pTest();
+    applyRegtestDefaults();
 }
 
 auto CreateAccount::onTestBackend() -> void {
@@ -231,6 +233,24 @@ auto CreateAccount::onBackendInfoReady(BackendInfo info) -> void {
     auto *modal = new qontrol::Modal("Backend Info", msg);
     modal->setFixedSize(300, 230);
     AppController::execModal(modal);
+}
+
+auto CreateAccount::applyRegtestDefaults() -> void {
+    auto network = static_cast<Network>(m_network_combo->currentData().toInt());
+    if (network != Network::Regtest) {
+        return;
+    }
+
+    auto defaults = AppController::get()->regtestDefaults();
+    if (!defaults.has_value()) {
+        return;
+    }
+
+    m_blindbit_input->setText(defaults.value().blindbit_url);
+    m_p2p_input->setText(defaults.value().p2p_node);
+    m_backend_verified = true;
+    m_p2p_verified = true;
+    onUpdateCreateButton();
 }
 
 auto CreateAccount::invalidateBackendTest() -> void {

@@ -5,9 +5,16 @@
 #include <QObject>
 #include <QString>
 #include <Qontrol>
+#include <optional>
 #include <silent.h>
 
 class AccountWidget;
+
+struct RegtestDefaultsInfo {
+    QString blindbit_url;
+    QString p2p_node;
+    QString electrum_url;
+};
 
 class AppController : public qontrol::Controller {
     Q_OBJECT
@@ -18,10 +25,12 @@ public:
     static auto get() -> AppController *;
     auto accounts() -> int;
     [[nodiscard]] auto isAccountOpen(const QString &name) const -> bool;
+    [[nodiscard]] auto regtestDefaults() const -> std::optional<RegtestDefaultsInfo>;
 
 signals:
     void accountList(QList<QString>);
     void accountCreated(const QString &name);
+    void regtestDefaultsReady(const QString &blindbit, const QString &p2p, const QString &electrum);
 
 public slots:
     auto initState() -> void;
@@ -35,7 +44,10 @@ public slots:
     auto openAccount(const QString &name) -> void;
     auto deleteAccount(const QString &name) -> void;
     auto onDeleteConfirmed(const QString &account) -> void;
+    auto onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
+                                const QString &electrum) -> void;
 
 private:
     QHash<QString, AccountController *> m_accounts;
+    std::optional<RegtestDefaultsInfo> m_regtest_defaults;
 };

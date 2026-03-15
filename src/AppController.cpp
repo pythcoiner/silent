@@ -5,6 +5,7 @@
 #include "screens/modals/CreateAccount.h"
 #include <common.h>
 #include <qlogging.h>
+#include <qthread.h>
 
 AppController::AppController() = default;
 
@@ -25,6 +26,21 @@ auto AppController::initState() -> void {
     connect(this, &AppController::accountCreated, this, &AppController::onAccountCreated,
             qontrol::UNIQUE);
     listAccounts();
+
+    // Fetch regtest defaults in background
+    connect(this, &AppController::regtestDefaultsReady, this,
+            &AppController::onRegtestDefaultsReady, qontrol::UNIQUE);
+    auto *thread = QThread::create([this]() -> void {
+        auto defaults = ::get_regtest_defaults();
+        if (defaults.is_ok) {
+            auto blindbit = QString::fromStdString(std::string(defaults.blindbit_url.c_str()));
+            auto p2p = QString::fromStdString(std::string(defaults.p2p_node.c_str()));
+            auto electrum = QString::fromStdString(std::string(defaults.electrum_url.c_str()));
+            emit regtestDefaultsReady(blindbit, p2p, electrum);
+        }
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
 }
 
 auto AppController::addAccount(const QString &name) -> void {
@@ -123,4 +139,13 @@ auto AppController::accounts() -> int {
 
 auto AppController::isAccountOpen(const QString &name) const -> bool {
     return m_accounts.contains(name);
+}
+
+auto AppController::onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
+                                            const QString &electrum) -> void {
+    m_regtest_defaults = RegtestDefaultsInfo{blindbit, p2p, electrum};
+}
+
+auto AppController::regtestDefaults() const -> std::optional<RegtestDefaultsInfo> {
+    return m_regtest_defaults;
 }

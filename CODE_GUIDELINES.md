@@ -462,20 +462,29 @@ rust::String(qstring.toStdString())
 
 **Never block the GUI thread.** Any Rust FFI call that performs I/O or network
 requests (e.g. `get_backend_info()`) must run on a background `QThread`. Return the
-result to the main thread via `QMetaObject::invokeMethod`. Example from
-`Settings`/`CreateAccount`:
+result to the main thread by emitting a signal from the background thread and
+connecting it to a slot. Example:
 ```cpp
+// In header — declare signal and slot:
+// signals:
+//     void backendInfoReady(BackendInfo info);
+// public slots:
+//     auto onBackendInfoReady(BackendInfo info) -> void;
+
 auto *thread = QThread::create([this, url = url.toStdString()]() {
     auto info = ::get_backend_info(rust::String(url));
-    QMetaObject::invokeMethod(this, [this, info]() {
-        onBackendInfoReady(info);
-    });
+    emit backendInfoReady(info);
 });
+connect(this, &MyClass::backendInfoReady, this, &MyClass::onBackendInfoReady,
+        qontrol::UNIQUE);
 connect(thread, &QThread::finished, thread, &QThread::deleteLater);
 thread->start();
 ```
 This pattern applies to any new blocking FFI call — always `QThread::create` +
-lambda + `QMetaObject::invokeMethod` back to the GUI thread.
+lambda + emit signal back to the GUI thread.
+
+**`QMetaObject::invokeMethod` is FORBIDDEN** unless there is absolutely no other
+solution. Always prefer the signal+slot pattern above.
 
 ## C++: Timer-Based Polling
 
