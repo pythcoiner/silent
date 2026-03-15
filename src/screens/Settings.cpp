@@ -31,6 +31,8 @@ auto Settings::init() -> void {
         // Store config values to populate UI later
         m_current_url = QString::fromStdString(std::string(config->get_blindbit_url().c_str()));
         m_current_p2p_node = QString::fromStdString(std::string(config->get_p2p_node().c_str()));
+        m_current_electrum_url =
+            QString::fromStdString(std::string(config->get_electrum_url().c_str()));
         m_current_network = config->get_network();
     }
 
@@ -49,6 +51,13 @@ auto Settings::init() -> void {
     m_p2p_node->setText(m_current_p2p_node);
 
     m_btn_test_p2p = new QPushButton("Test");
+
+    m_electrum_url = new QLineEdit;
+    m_electrum_url->setFixedWidth(3 * INPUT_WIDTH);
+    m_electrum_url->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
+    m_electrum_url->setText(m_current_electrum_url);
+
+    m_btn_test_electrum = new QPushButton("Test");
 
     m_network_selector = new QComboBox;
     m_network_selector->addItem("Regtest", static_cast<int>(Network::Regtest));
@@ -84,8 +93,14 @@ auto Settings::doConnect() -> void {
     connect(m_btn_test_p2p, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
     connect(m_p2p_node, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
             qontrol::UNIQUE);
+    connect(m_btn_test_electrum, &QPushButton::clicked, this, &Settings::actionTestElectrum,
+            qontrol::UNIQUE);
+    connect(m_electrum_url, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
+            qontrol::UNIQUE);
     connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady, qontrol::UNIQUE);
     connect(this, &Settings::p2pTestReady, this, &Settings::onP2pTestReady, qontrol::UNIQUE);
+    connect(this, &Settings::electrumTestReady, this, &Settings::onElectrumTestReady,
+            qontrol::UNIQUE);
 }
 
 auto Settings::actionSave() -> void {
@@ -111,6 +126,10 @@ auto Settings::actionSave() -> void {
     // Update P2P node address
     auto p2pNode = m_p2p_node->text().trimmed().toStdString();
     config->set_p2p_node(rust::String(p2pNode));
+
+    // Update Electrum URL
+    auto electrumUrl = m_electrum_url->text().trimmed().toStdString();
+    config->set_electrum_url(rust::String(electrumUrl));
 
     // Update network
     int networkIndex = m_network_selector->currentIndex();
@@ -288,6 +307,48 @@ auto Settings::invalidateP2pTest() -> void {
     updateButtons();
 }
 
+auto Settings::actionTestElectrum() -> void {
+    auto addr = m_electrum_url->text().trimmed();
+    if (addr.isEmpty()) {
+        auto *modal = new qontrol::Modal("Error", "Electrum address is empty");
+        AppController::execModal(modal);
+        return;
+    }
+
+    m_btn_test_electrum->setEnabled(false);
+    m_btn_test_electrum->setText("Testing...");
+
+    auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
+        auto result = ::test_electrum(rust::String(addr));
+        emit electrumTestReady(result);
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+auto Settings::onElectrumTestReady(ConnectionResult result) -> void {
+    m_btn_test_electrum->setEnabled(true);
+    m_btn_test_electrum->setText("Test");
+
+    if (!result.is_ok) {
+        m_electrum_verified = false;
+        updateButtons();
+        AppController::execModal(new qontrol::Modal(
+            "Electrum Test Failed",
+            QString("Failed to connect to Electrum server:\n%1")
+                .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        return;
+    }
+
+    m_electrum_verified = true;
+    updateButtons();
+}
+
+auto Settings::invalidateElectrumTest() -> void {
+    m_electrum_verified = false;
+    updateButtons();
+}
+
 auto Settings::clearBackendInfo() -> void {
     m_info_network->setText("--");
     m_info_height->setText("--");
@@ -297,7 +358,7 @@ auto Settings::clearBackendInfo() -> void {
 
 auto Settings::updateButtons() -> void {
     bool connected = m_controller->isScannerRunning();
-    m_btn_save->setEnabled(m_backend_verified && m_p2p_verified);
+    m_btn_save->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
     m_btn_toggle->setEnabled(m_backend_verified || connected);
     m_blindbit_url->setEnabled(!connected);
     m_btn_test->setEnabled(!connected);
@@ -338,6 +399,16 @@ auto Settings::view() -> void {
                        ->push(m_btn_test_p2p)
                        ->pushSpacer();
 
+    auto *electrumLabel = new QLabel("Electrum Server:");
+    electrumLabel->setFixedWidth(LABEL_WIDTH);
+
+    auto *electrumRow = (new qontrol::Row)
+                            ->push(electrumLabel)
+                            ->push(m_electrum_url)
+                            ->pushSpacer(H_SPACER)
+                            ->push(m_btn_test_electrum)
+                            ->pushSpacer();
+
     auto *networkLabel = new QLabel("Network:");
     networkLabel->setFixedWidth(LABEL_WIDTH);
 
@@ -376,6 +447,8 @@ auto Settings::view() -> void {
                     ->push(urlRow)
                     ->pushSpacer(V_SPACER)
                     ->push(p2pRow)
+                    ->pushSpacer(V_SPACER)
+                    ->push(electrumRow)
                     ->pushSpacer(V_SPACER)
                     ->push(networkRow)
                     ->pushSpacer(20)

@@ -22,12 +22,14 @@ signals:
     void configSaved();
     void backendInfoReady(BackendInfo info);
     void p2pTestReady(ConnectionResult result);
+    void electrumTestReady(ConnectionResult result);
 
 public slots:
     auto actionSave() -> void;
     auto actionToggle() -> void;
     auto actionTestBackend() -> void;
     auto actionTestP2p() -> void;
+    auto actionTestElectrum() -> void;
     auto updateToggleButton(bool running) -> void;
     auto onScanProgress(uint32_t height, uint32_t tip) -> void;
 
@@ -43,24 +45,30 @@ private:
     auto clearBackendInfo() -> void;
     auto onP2pTestReady(ConnectionResult result) -> void;
     auto invalidateP2pTest() -> void;
+    auto onElectrumTestReady(ConnectionResult result) -> void;
+    auto invalidateElectrumTest() -> void;
     auto updateButtons() -> void;
 
     AccountController *m_controller = nullptr;
     bool m_backend_verified = false;
     bool m_p2p_verified = false;
+    bool m_electrum_verified = false;
     QWidget *m_main_widget = nullptr;
     QLineEdit *m_blindbit_url = nullptr;
     QLineEdit *m_p2p_node = nullptr;
+    QLineEdit *m_electrum_url = nullptr;
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_btn_save = nullptr;
     QPushButton *m_btn_toggle = nullptr;
     QPushButton *m_btn_test = nullptr;
     QPushButton *m_btn_test_p2p = nullptr;
+    QPushButton *m_btn_test_electrum = nullptr;
     QLabel *m_info_network = nullptr;
     QLabel *m_info_height = nullptr;
     QLabel *m_info_tweaks = nullptr;
     QString m_current_url;
     QString m_current_p2p_node;
+    QString m_current_electrum_url;
     Network m_current_network = Network::Signet;
     uint32_t m_current_height = 0;
 };
