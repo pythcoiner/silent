@@ -56,6 +56,7 @@ auto Settings::init() -> void {
     m_electrum_url->setFixedWidth(3 * INPUT_WIDTH);
     m_electrum_url->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
     m_electrum_url->setText(m_current_electrum_url);
+    m_electrum_url->setEnabled(!m_controller->isScannerRunning());
 
     m_btn_test_electrum = new QPushButton("Test");
 
@@ -77,15 +78,25 @@ auto Settings::init() -> void {
     m_info_tweaks = new QLabel("--");
 
     m_btn_save = new QPushButton("Save Settings");
-    m_btn_toggle = new QPushButton(m_controller->isScannerRunning() ? "Disconnect" : "Connect");
+    m_btn_toggle_blindbit =
+        new QPushButton(m_controller->isScannerRunning() ? "Disconnect Blindbit" : "Connect Blindbit");
+    m_btn_toggle_electrum =
+        new QPushButton(m_electrum_running ? "Disconnect Electrum" : "Connect Electrum");
 }
 
 auto Settings::doConnect() -> void {
     connect(m_btn_save, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
-    connect(m_btn_toggle, &QPushButton::clicked, this, &Settings::actionToggle, qontrol::UNIQUE);
+    connect(m_btn_toggle_blindbit, &QPushButton::clicked, this, &Settings::actionToggleBlindbit,
+            qontrol::UNIQUE);
+    connect(m_btn_toggle_electrum, &QPushButton::clicked, this, &Settings::actionToggleElectrum,
+            qontrol::UNIQUE);
     connect(m_btn_test, &QPushButton::clicked, this, &Settings::actionTestBackend, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scannerStateChanged, this,
-            &Settings::updateToggleButton, qontrol::UNIQUE);
+            &Settings::updateBlindbitToggleButton, qontrol::UNIQUE);
+    connect(m_controller, &AccountController::electrumConnected, this,
+            &Settings::updateElectrumToggleButton, qontrol::UNIQUE);
+    connect(m_controller, &AccountController::electrumDisconnected, this,
+            &Settings::updateElectrumToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, this, &Settings::onScanProgress,
             qontrol::UNIQUE);
     connect(m_blindbit_url, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
@@ -144,9 +155,7 @@ auto Settings::actionSave() -> void {
     emit configSaved();
 }
 
-auto Settings::actionToggle() -> void {
-    qDebug() << "Settings::actionToggle()";
-
+auto Settings::actionToggleBlindbit() -> void {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
         auto *modal = new qontrol::Modal("Error", "No account loaded");
@@ -155,17 +164,34 @@ auto Settings::actionToggle() -> void {
     }
 
     if (m_controller->isScannerRunning()) {
-        // Disconnect
-        m_btn_toggle->setEnabled(false);
+        m_btn_toggle_blindbit->setEnabled(false);
         accountOpt.value()->stop_scanner();
         clearBackendInfo();
     } else {
-        // Connect
         if (!accountOpt.value()->start_scanner()) {
             auto *modal = new qontrol::Modal("Error", "Failed to start scanner");
             AppController::execModal(modal);
         } else {
             fetchBackendInfo();
+        }
+    }
+}
+
+auto Settings::actionToggleElectrum() -> void {
+    auto &accountOpt = m_controller->getAccount();
+    if (m_controller == nullptr || !accountOpt.has_value()) {
+        auto *modal = new qontrol::Modal("Error", "No account loaded");
+        AppController::execModal(modal);
+        return;
+    }
+
+    if (m_electrum_running) {
+        m_btn_toggle_electrum->setEnabled(false);
+        accountOpt.value()->stop_electrum();
+    } else {
+        if (!accountOpt.value()->start_electrum()) {
+            auto *modal = new qontrol::Modal("Error", "Failed to start electrum");
+            AppController::execModal(modal);
         }
     }
 }
@@ -357,11 +383,14 @@ auto Settings::clearBackendInfo() -> void {
 }
 
 auto Settings::updateButtons() -> void {
-    bool connected = m_controller->isScannerRunning();
+    bool blindbitRunning = m_controller->isScannerRunning();
     m_btn_save->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
-    m_btn_toggle->setEnabled(m_backend_verified || connected);
-    m_blindbit_url->setEnabled(!connected);
-    m_btn_test->setEnabled(!connected);
+    m_btn_toggle_blindbit->setEnabled(m_backend_verified || blindbitRunning);
+    m_btn_toggle_electrum->setEnabled(m_electrum_verified || m_electrum_running);
+    m_blindbit_url->setEnabled(!blindbitRunning);
+    m_btn_test->setEnabled(!blindbitRunning);
+    m_electrum_url->setEnabled(!m_electrum_running);
+    m_btn_test_electrum->setEnabled(!m_electrum_running);
 }
 
 auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) -> void {
@@ -371,9 +400,19 @@ auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) ->
     }
 }
 
-auto Settings::updateToggleButton(bool running) -> void {
-    if (m_btn_toggle != nullptr) {
-        m_btn_toggle->setText(running ? "Disconnect" : "Connect");
+auto Settings::updateBlindbitToggleButton(bool running) -> void {
+    if (m_btn_toggle_blindbit != nullptr) {
+        m_btn_toggle_blindbit->setText(running ? "Disconnect Blindbit" : "Connect Blindbit");
+    }
+    updateButtons();
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto Settings::updateElectrumToggleButton() -> void {
+    m_electrum_running = !m_electrum_running;
+    if (m_btn_toggle_electrum != nullptr) {
+        m_btn_toggle_electrum->setText(m_electrum_running ? "Disconnect Electrum"
+                                                         : "Connect Electrum");
     }
     updateButtons();
 }
@@ -437,7 +476,9 @@ auto Settings::view() -> void {
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
-                          ->push(m_btn_toggle)
+                          ->push(m_btn_toggle_blindbit)
+                          ->pushSpacer(H_SPACER)
+                          ->push(m_btn_toggle_electrum)
                           ->pushSpacer(H_SPACER)
                           ->push(m_btn_save)
                           ->pushSpacer();

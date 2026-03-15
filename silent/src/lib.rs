@@ -335,6 +335,12 @@ mod ffi {
         /// Stop the scanner.
         fn stop_scanner(self: &mut Account);
 
+        /// Stop all electrum listeners on sub-accounts.
+        fn stop_electrum(self: &mut Account);
+
+        /// Reload electrum config and start listeners.
+        fn start_electrum(self: &mut Account) -> bool;
+
         /// Try to receive a notification (non-blocking).
         fn try_recv(self: &mut Account) -> Box<Poll>;
 
@@ -352,6 +358,9 @@ mod ffi {
 
         /// Check if the account has sub-accounts (segwit + taproot).
         fn has_sub_accounts(self: &Account) -> bool;
+
+        /// Get the number of sub-accounts.
+        fn sub_account_count(self: &Account) -> u32;
 
         /// Generate a new segwit (wpkh) receiving address.
         fn new_segwit_addr(self: &mut Account) -> String;

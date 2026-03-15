@@ -61,6 +61,10 @@ auto AccountWidget::initUI() -> void {
     connect(m_controller, &AccountController::waitingForBlocks, m_status_bar,
             &StatusBar::updateWaitingForBlocks);
     connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError);
+    connect(m_controller, &AccountController::electrumConnected, m_status_bar,
+            &StatusBar::onElectrumConnected);
+    connect(m_controller, &AccountController::electrumDisconnected, m_status_bar,
+            &StatusBar::onElectrumDisconnected);
 
     // Start scanner after all connections are established
     m_controller->startScanner();

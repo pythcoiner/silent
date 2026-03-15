@@ -32,6 +32,8 @@ signals:
     void waitingForBlocks(uint32_t tip_height);
     void scanError(rust::String error);
     void scannerStateChanged(bool running);
+    void electrumConnected(QString address);
+    void electrumDisconnected();
     void notificationReceived(Notification notif);
 
 public slots:
@@ -65,4 +67,6 @@ private:
     rust::Box<SyncEstimator> m_estimator = new_sync_estimator();
     bool m_init = false;
     bool m_scanner_running = false;
+    int m_electrum_connected_count = 0;
+    int m_electrum_expected_count = 0;
 };

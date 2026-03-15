@@ -96,6 +96,34 @@ impl Account {
         }
     }
 
+    /// Stop all electrum listeners on sub-accounts.
+    pub fn stop_electrum(&mut self) {
+        if let Some(inner) = &mut self.inner {
+            inner.account.stop_electrum();
+        }
+    }
+
+    /// Reload electrum config from file, apply new settings, and start listeners.
+    pub fn start_electrum(&mut self) -> bool {
+        let Some(inner) = &mut self.inner else {
+            return false;
+        };
+
+        let config = match crate::config::Config::from_file(inner.account.name().to_string()) {
+            Ok(c) => c,
+            Err(e) => {
+                log::error!("start_electrum: failed to load config: {e}");
+                return false;
+            }
+        };
+
+        let (host, port) = crate::config::parse_electrum_url(&config.electrum_url);
+        inner.account.set_electrum_settings(host, port);
+        inner.electrum_url = config.electrum_url;
+        inner.account.start_electrum();
+        true
+    }
+
     /// Try to receive a notification (non-blocking).
     pub fn try_recv(&mut self) -> Box<Poll> {
         let Some(inner) = &mut self.inner else {
@@ -157,6 +185,14 @@ impl Account {
         match &self.inner {
             Some(inner) => inner.account.sub_accounts().len() >= 2,
             None => false,
+        }
+    }
+
+    /// Get the number of sub-accounts.
+    pub fn sub_account_count(&self) -> u32 {
+        match &self.inner {
+            Some(inner) => inner.account.sub_accounts().len() as u32,
+            None => 0,
         }
     }
 

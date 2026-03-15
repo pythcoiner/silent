@@ -26,11 +26,13 @@ signals:
 
 public slots:
     auto actionSave() -> void;
-    auto actionToggle() -> void;
+    auto actionToggleBlindbit() -> void;
+    auto actionToggleElectrum() -> void;
     auto actionTestBackend() -> void;
     auto actionTestP2p() -> void;
     auto actionTestElectrum() -> void;
-    auto updateToggleButton(bool running) -> void;
+    auto updateBlindbitToggleButton(bool running) -> void;
+    auto updateElectrumToggleButton() -> void;
     auto onScanProgress(uint32_t height, uint32_t tip) -> void;
 
 protected:
@@ -59,7 +61,8 @@ private:
     QLineEdit *m_electrum_url = nullptr;
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_btn_save = nullptr;
-    QPushButton *m_btn_toggle = nullptr;
+    QPushButton *m_btn_toggle_blindbit = nullptr;
+    QPushButton *m_btn_toggle_electrum = nullptr;
     QPushButton *m_btn_test = nullptr;
     QPushButton *m_btn_test_p2p = nullptr;
     QPushButton *m_btn_test_electrum = nullptr;
@@ -71,6 +74,7 @@ private:
     QString m_current_electrum_url;
     Network m_current_network = Network::Signet;
     uint32_t m_current_height = 0;
+    bool m_electrum_running = false;
 };
 
 } // namespace screen

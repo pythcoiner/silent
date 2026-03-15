@@ -28,6 +28,7 @@ auto AccountController::init(const QString &account) -> void {
         return;
     }
     m_account = std::make_optional(std::move(acc));
+    m_electrum_expected_count = static_cast<int>(m_account.value()->sub_account_count());
 
     // Take the notification receiver and spawn a blocking listener thread
     connect(this, &AccountController::notificationReceived, this,
@@ -149,12 +150,24 @@ auto AccountController::handleNotification(Notification notif) -> void {
         pollCoins();
         break;
     case NotificationFlag::ElectrumStarted:
-    case NotificationFlag::ElectrumConnected:
         break;
+    case NotificationFlag::ElectrumConnected: {
+        m_electrum_connected_count++;
+        if (m_electrum_connected_count >= m_electrum_expected_count) {
+            auto payload = QString::fromStdString(std::string(notif.payload.c_str()));
+            emit electrumConnected(payload);
+        }
+        break;
+    }
     case NotificationFlag::ElectrumError:
         emit scanError(notif.payload);
         break;
     case NotificationFlag::ElectrumStopped:
+        m_electrum_connected_count--;
+        if (m_electrum_connected_count <= 0) {
+            m_electrum_connected_count = 0;
+            emit electrumDisconnected();
+        }
         break;
     default:
         break;

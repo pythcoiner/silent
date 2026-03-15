@@ -24,13 +24,23 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
       m_controller(controller) {
     initUI();
     loadBlindbitUrl();
+    loadElectrumUrl();
 
-    // Set initial state
+    // Set initial blindbit state
     m_connected = m_controller->isScannerRunning();
     updateConnectionState(m_connected);
 
-    // Connect toggle signal
+    // Set initial electrum state (sub-accounts auto-start on construction)
+    if (!m_electrum_url.isEmpty()) {
+        m_electrum_status->setText("Connecting...");
+    } else {
+        m_electrum_status->setText("Not configured");
+    }
+
+    // Connect toggle signals
     connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled, this, &StatusBar::onToggled);
+    connect(m_electrum_toggle, &qontrol::widgets::ToggleSwitch::toggled, this,
+            &StatusBar::onElectrumToggled);
 }
 
 auto StatusBar::initUI() -> void {
@@ -41,25 +51,49 @@ auto StatusBar::initUI() -> void {
     separator->setFrameShape(QFrame::HLine);
     separator->setFrameShadow(QFrame::Sunken);
 
+    // Blindbit toggle + status
     m_toggle = new qontrol::widgets::ToggleSwitch(this);
     m_toggle->setFixedSize(40, 20);
 
     m_status_text = new QLabel(this);
 
-    // Horizontal row for toggle + status
-    auto *row = new QHBoxLayout;
-    row->setContentsMargins(10, 2, 10, 2);
-    row->setSpacing(H_SPACER);
-    row->addWidget(m_toggle);
-    row->addWidget(m_status_text);
-    row->addStretch();
+    // Vertical line separator
+    auto *vline = new QFrame(this);
+    vline->setFrameShape(QFrame::VLine);
+    vline->setFrameShadow(QFrame::Sunken);
+
+    // Electrum toggle + status
+    m_electrum_toggle = new qontrol::widgets::ToggleSwitch(this);
+    m_electrum_toggle->setFixedSize(40, 20);
+
+    m_electrum_status = new QLabel(this);
+
+    // Left half: blindbit
+    auto *leftRow =
+        (new qontrol::Row)->push(m_toggle)->pushSpacer(10)->push(m_status_text)->pushSpacer();
+
+    // Right half: electrum
+    auto *rightRow = (new qontrol::Row)
+                         ->pushSpacer(10)
+                         ->push(m_electrum_toggle)
+                         ->pushSpacer(10)
+                         ->push(m_electrum_status)
+                         ->pushSpacer();
+
+    // Combine with equal proportions
+    auto *contentRow = new QHBoxLayout;
+    contentRow->setContentsMargins(10, 2, 10, 2);
+    contentRow->setSpacing(0);
+    contentRow->addWidget(leftRow, 1);
+    contentRow->addWidget(vline);
+    contentRow->addWidget(rightRow, 1);
 
     // Vertical layout: separator on top, content below
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(separator);
-    layout->addLayout(row);
+    layout->addLayout(contentRow);
 
     setLayout(layout);
 }
@@ -70,6 +104,15 @@ auto StatusBar::loadBlindbitUrl() -> void {
         auto accountName = accountOpt.value()->name();
         auto config = config_from_file(accountName);
         m_blindbit_url = QString::fromStdString(std::string(config->get_blindbit_url().c_str()));
+    }
+}
+
+auto StatusBar::loadElectrumUrl() -> void {
+    auto &accountOpt = m_controller->getAccount();
+    if (accountOpt.has_value()) {
+        auto accountName = accountOpt.value()->name();
+        auto config = config_from_file(accountName);
+        m_electrum_url = QString::fromStdString(std::string(config->get_electrum_url().c_str()));
     }
 }
 
@@ -116,8 +159,34 @@ auto StatusBar::updateScanError(rust::String error) -> void {
     m_status_text->setText(QString("Error: %1").arg(errorStr));
 }
 
+auto StatusBar::onElectrumConnected(QString address) -> void {
+    m_electrum_connected = true;
+
+    m_electrum_toggle->blockSignals(true);
+    m_electrum_toggle->setChecked(true);
+    m_electrum_toggle->blockSignals(false);
+
+    m_electrum_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
+    m_electrum_toggle->update();
+    m_electrum_status->setText(QString("Connected to electrum at %1").arg(address));
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto StatusBar::onElectrumDisconnected() -> void {
+    m_electrum_connected = false;
+
+    m_electrum_toggle->blockSignals(true);
+    m_electrum_toggle->setChecked(false);
+    m_electrum_toggle->blockSignals(false);
+
+    m_electrum_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
+    m_electrum_toggle->update();
+    m_electrum_status->setText("Electrum disconnected");
+}
+
 auto StatusBar::reloadUrl() -> void {
     loadBlindbitUrl();
+    loadElectrumUrl();
 }
 
 auto StatusBar::onToggled(bool checked) -> void {
@@ -138,5 +207,24 @@ auto StatusBar::onToggled(bool checked) -> void {
         m_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
         m_toggle->update();
         accountOpt.value()->stop_scanner();
+    }
+}
+
+auto StatusBar::onElectrumToggled(bool checked) -> void {
+    auto &accountOpt = m_controller->getAccount();
+    if (!accountOpt.has_value()) {
+        return;
+    }
+
+    if (checked) {
+        m_electrum_status->setText("Connecting...");
+        m_electrum_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
+        m_electrum_toggle->update();
+        accountOpt.value()->start_electrum();
+    } else {
+        m_electrum_status->setText("Disconnecting...");
+        m_electrum_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
+        m_electrum_toggle->update();
+        accountOpt.value()->stop_electrum();
     }
 }

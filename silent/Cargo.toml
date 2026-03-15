@@ -10,8 +10,8 @@ doctest = false
 [dependencies]
 # When changing rev, also update flake.lock:
 #   nix --extra-experimental-features 'nix-command flakes' flake update bwk
-bwk-sp = { git = "https://github.com/pythcoiner/bwk.git", rev = "2803720" }
-bwk-p2p = { git = "https://github.com/pythcoiner/bwk.git", rev = "2803720" }
+bwk-sp = { git = "https://github.com/pythcoiner/bwk.git", rev = "c65391b" }
+bwk-p2p = { git = "https://github.com/pythcoiner/bwk.git", rev = "c65391b" }
 bitcoin = "0.32"
 cxx = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -25,7 +25,7 @@ ureq = { git = "https://github.com/pythcoiner/ureq.git", branch = "gzip", defaul
 
 [dev-dependencies]
 blindbitd = { git = "https://github.com/pythcoiner/blindbitd.git", features = ["electrum"] }
-bwk-utils = { git = "https://github.com/pythcoiner/bwk.git", rev = "2803720", features = ["test"] }
+bwk-utils = { git = "https://github.com/pythcoiner/bwk.git", rev = "c65391b", features = ["test"] }
 temp-dir = "0.1"
 
 [build-dependencies]
