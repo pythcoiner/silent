@@ -124,7 +124,7 @@ private:
     qontrol::Row *m_fee_row = nullptr;
 
     QLabel *m_warning_label = nullptr;
-    QLabel *m_inputs_title = nullptr;
+    QLabel *m_inputs_title_label = nullptr;
 
     QPushButton *m_add_output_btn = nullptr;
     QScrollArea *m_coins_scroll = nullptr;

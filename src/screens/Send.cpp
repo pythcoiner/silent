@@ -284,10 +284,10 @@ auto Send::init() -> void {
 
     m_clear_inputs_btn = new QPushButton("Clear");
 
-    m_inputs_title = new QLabel("Select Inputs");
-    auto titleFont = m_inputs_title->font();
+    m_inputs_title_label = new QLabel("Select Inputs");
+    auto titleFont = m_inputs_title_label->font();
     titleFont.setPointSize(15);
-    m_inputs_title->setFont(titleFont);
+    m_inputs_title_label->setFont(titleFont);
 }
 
 auto Send::doConnect() -> void {
@@ -472,7 +472,7 @@ auto Send::inputsView() -> QWidget * {
     m_coins_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     m_auto_coin_selection->setParent(nullptr);
-    m_inputs_title->setParent(nullptr);
+    m_inputs_title_label->setParent(nullptr);
     m_clear_inputs_btn->setParent(nullptr);
 
     // Only show Clear button when in manual mode
@@ -480,7 +480,7 @@ auto Send::inputsView() -> QWidget * {
 
     auto *titleRow = (new qontrol::Row)
                          ->pushSpacer(15)
-                         ->push(m_inputs_title)
+                         ->push(m_inputs_title_label)
                          ->pushSpacer()
                          ->push(m_clear_inputs_btn)
                          ->pushSpacer(10)
@@ -759,11 +759,11 @@ auto Send::updateInputsTitle() -> void {
     }
 
     if (count == 1) {
-        m_inputs_title->setText(QString("Inputs (1 coin selected)"));
+        m_inputs_title_label->setText(QString("Inputs (1 coin selected)"));
     } else if (count > 1) {
-        m_inputs_title->setText(QString("Inputs (%1 coins selected)").arg(count));
+        m_inputs_title_label->setText(QString("Inputs (%1 coins selected)").arg(count));
     } else {
-        m_inputs_title->setText("Inputs");
+        m_inputs_title_label->setText("Inputs");
     }
 }
 

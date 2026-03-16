@@ -32,12 +32,12 @@ protected:
 private:
     AccountController *m_controller = nullptr;
     qontrol::widgets::ToggleSwitch *m_toggle = nullptr;
-    QLabel *m_status_text = nullptr;
+    QLabel *m_status_label = nullptr;
     QString m_blindbit_url;
     bool m_connected = false;
 
     qontrol::widgets::ToggleSwitch *m_electrum_toggle = nullptr;
-    QLabel *m_electrum_status = nullptr;
+    QLabel *m_electrum_status_label = nullptr;
     QString m_electrum_url;
     bool m_electrum_connected = false;
 };

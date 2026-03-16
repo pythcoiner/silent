@@ -73,9 +73,9 @@ auto Settings::init() -> void {
     }
     m_network_selector->setEnabled(false);
 
-    m_info_network = new QLabel("--");
-    m_info_height = new QLabel("--");
-    m_info_tweaks = new QLabel("--");
+    m_info_network_label = new QLabel("--");
+    m_info_height_label = new QLabel("--");
+    m_info_tweaks_label = new QLabel("--");
 
     m_save_btn = new QPushButton("Save Settings");
     m_toggle_blindbit_btn =
@@ -264,12 +264,12 @@ auto Settings::onBackendInfoReady(BackendInfo info) -> void {
 
     m_backend_verified = networkMatch;
     updateButtons();
-    m_info_network->setText(networkStr);
+    m_info_network_label->setText(networkStr);
     m_current_height = info.height;
-    m_info_height->setText(QString::number(info.height));
+    m_info_height_label->setText(QString::number(info.height));
 
     auto yn = [](bool v) -> const char * { return v ? "Yes" : "No"; };
-    m_info_tweaks->setText(QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: "
+    m_info_tweaks_label->setText(QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: "
                                    "%3\nCut-Through + Dust Filter: %4")
                                .arg(yn(info.tweaks_only))
                                .arg(yn(info.tweaks_full_basic))
@@ -376,9 +376,9 @@ auto Settings::invalidateElectrumTest() -> void {
 }
 
 auto Settings::clearBackendInfo() -> void {
-    m_info_network->setText("--");
-    m_info_height->setText("--");
-    m_info_tweaks->setText("--");
+    m_info_network_label->setText("--");
+    m_info_height_label->setText("--");
+    m_info_tweaks_label->setText("--");
     m_current_height = 0;
 }
 
@@ -396,7 +396,7 @@ auto Settings::updateButtons() -> void {
 auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) -> void {
     if (height > m_current_height) {
         m_current_height = height;
-        m_info_height->setText(QString::number(height));
+        m_info_height_label->setText(QString::number(height));
     }
 }
 
@@ -461,18 +461,18 @@ auto Settings::view() -> void {
 
     auto *netLabel = new QLabel("Network:");
     netLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_network->setFixedWidth(INPUT_WIDTH);
-    auto *infoNetRow = (new qontrol::Row)->push(netLabel)->push(m_info_network)->pushSpacer();
+    m_info_network_label->setFixedWidth(INPUT_WIDTH);
+    auto *infoNetRow = (new qontrol::Row)->push(netLabel)->push(m_info_network_label)->pushSpacer();
 
     auto *heightLabel = new QLabel("Block Height:");
     heightLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_height->setFixedWidth(INPUT_WIDTH);
-    auto *infoHeightRow = (new qontrol::Row)->push(heightLabel)->push(m_info_height)->pushSpacer();
+    m_info_height_label->setFixedWidth(INPUT_WIDTH);
+    auto *infoHeightRow = (new qontrol::Row)->push(heightLabel)->push(m_info_height_label)->pushSpacer();
 
     auto *tweaksLabel = new QLabel("Capabilities:");
     tweaksLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_tweaks->setFixedWidth(3 * INPUT_WIDTH);
-    auto *infoTweaksRow = (new qontrol::Row)->push(tweaksLabel)->push(m_info_tweaks)->pushSpacer();
+    m_info_tweaks_label->setFixedWidth(3 * INPUT_WIDTH);
+    auto *infoTweaksRow = (new qontrol::Row)->push(tweaksLabel)->push(m_info_tweaks_label)->pushSpacer();
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()

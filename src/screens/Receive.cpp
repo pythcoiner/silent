@@ -27,16 +27,16 @@ auto Receive::init() -> void {
     m_copy_btn = new QPushButton("Copy");
 
     if (m_has_sub_accounts) {
-        m_segwit_addr_display = new QLabel("");
-        m_segwit_addr_display->setFixedWidth(600);
-        m_segwit_addr_display->setWordWrap(true);
+        m_segwit_addr_label = new QLabel("");
+        m_segwit_addr_label->setFixedWidth(600);
+        m_segwit_addr_label->setWordWrap(true);
 
         m_new_segwit_btn = new QPushButton("Generate");
         m_copy_segwit_btn = new QPushButton("Copy");
 
-        m_taproot_addr_display = new QLabel("");
-        m_taproot_addr_display->setFixedWidth(600);
-        m_taproot_addr_display->setWordWrap(true);
+        m_taproot_addr_label = new QLabel("");
+        m_taproot_addr_label->setFixedWidth(600);
+        m_taproot_addr_label->setWordWrap(true);
 
         m_new_taproot_btn = new QPushButton("Generate");
         m_copy_taproot_btn = new QPushButton("Copy");
@@ -71,12 +71,12 @@ auto Receive::onNewSegwitAddr() -> void {
         return;
     }
     auto addr = account.value()->new_segwit_addr();
-    m_segwit_addr_display->setText(QString::fromStdString(std::string(addr.c_str())));
+    m_segwit_addr_label->setText(QString::fromStdString(std::string(addr.c_str())));
 }
 
 auto Receive::onCopySegwitAddr() -> void {
-    if (m_segwit_addr_display != nullptr) {
-        QApplication::clipboard()->setText(m_segwit_addr_display->text());
+    if (m_segwit_addr_label != nullptr) {
+        QApplication::clipboard()->setText(m_segwit_addr_label->text());
     }
 }
 
@@ -89,12 +89,12 @@ auto Receive::onNewTaprootAddr() -> void {
         return;
     }
     auto addr = account.value()->new_taproot_addr();
-    m_taproot_addr_display->setText(QString::fromStdString(std::string(addr.c_str())));
+    m_taproot_addr_label->setText(QString::fromStdString(std::string(addr.c_str())));
 }
 
 auto Receive::onCopyTaprootAddr() -> void {
-    if (m_taproot_addr_display != nullptr) {
-        QApplication::clipboard()->setText(m_taproot_addr_display->text());
+    if (m_taproot_addr_label != nullptr) {
+        QApplication::clipboard()->setText(m_taproot_addr_label->text());
     }
 }
 
@@ -127,7 +127,7 @@ auto Receive::view() -> void {
         segwitLabel->setFixedWidth(200);
 
         auto *segwitAddrRow =
-            (new qontrol::Row)->push(segwitLabel)->push(m_segwit_addr_display)->pushSpacer();
+            (new qontrol::Row)->push(segwitLabel)->push(m_segwit_addr_label)->pushSpacer();
 
         auto *segwitBtnRow = (new qontrol::Row)
                                  ->pushSpacer()
@@ -146,7 +146,7 @@ auto Receive::view() -> void {
         taprootLabel->setFixedWidth(200);
 
         auto *taprootAddrRow =
-            (new qontrol::Row)->push(taprootLabel)->push(m_taproot_addr_display)->pushSpacer();
+            (new qontrol::Row)->push(taprootLabel)->push(m_taproot_addr_label)->pushSpacer();
 
         auto *taprootBtnRow = (new qontrol::Row)
                                   ->pushSpacer()

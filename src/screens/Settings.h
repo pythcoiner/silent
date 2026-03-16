@@ -69,9 +69,9 @@ private:
     QPushButton *m_test_btn = nullptr;
     QPushButton *m_test_p2p_btn = nullptr;
     QPushButton *m_test_electrum_btn = nullptr;
-    QLabel *m_info_network = nullptr;
-    QLabel *m_info_height = nullptr;
-    QLabel *m_info_tweaks = nullptr;
+    QLabel *m_info_network_label = nullptr;
+    QLabel *m_info_height_label = nullptr;
+    QLabel *m_info_tweaks_label = nullptr;
     QString m_current_url;
     QString m_current_p2p_node;
     QString m_current_electrum_url;
