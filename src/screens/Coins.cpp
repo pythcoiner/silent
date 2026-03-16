@@ -1,16 +1,28 @@
 #include "Coins.h"
 #include "AccountController.h"
+#include "theme/Button.h"
+#include "theme/Display.h"
+#include "theme/Icon.h"
+#include "theme/Input.h"
+#include "theme/Theme.h"
+#include "theme/Label.h"
 #include "utils.h"
+#include <QKeyEvent>
 #include <Qontrol>
 #include <common.h>
 #include <cstdint>
 #include <optional>
-#include <qlabel.h>
-#include <qnamespace.h>
-#include <qtablewidget.h>
 #include <utility>
 
 namespace screen {
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::Display;
+using theme::DisplayRole;
+using theme::Input;
+using theme::Label;
+using theme::LabelRole;
 
 Coins::Coins(AccountController *ctrl) {
     m_controller = ctrl;
@@ -19,75 +31,55 @@ Coins::Coins(AccountController *ctrl) {
     this->view();
 }
 
-auto Coins::init() -> void {
+void Coins::init() {
+    // Match Display padding (6px) + border (1px) = 7px left indent
+    const int hPad = 7;
+
+    m_h_type = new Label("Type", LabelRole::InfoLabel);
+    m_h_type->setFixedWidth(TYPE_W);
+    m_h_type->setContentsMargins(hPad, 0, 0, 0);
+    m_h_height = new Label("Height", LabelRole::InfoLabel);
+    m_h_height->setFixedWidth(HEIGHT_W);
+    m_h_height->setContentsMargins(hPad, 0, 0, 0);
+    m_h_outpoint = new Label("OutPoint", LabelRole::InfoLabel);
+    m_h_outpoint->setFixedWidth(OUTPOINT_W);
+    m_h_outpoint->setContentsMargins(hPad, 0, 0, 0);
+    m_h_label = new Label("Label", LabelRole::InfoLabel);
+    m_h_label->setFixedWidth(LABEL_W);
+    m_h_label->setContentsMargins(hPad, 0, 0, 0);
+    m_h_edit = new QWidget;
+    m_h_edit->setFixedWidth(Theme::get()->buttonPalette().inlineIcon.width);
+    m_h_value = new Label("Value", LabelRole::InfoLabel);
+    m_h_value->setFixedWidth(VALUE_W);
+    m_h_value->setContentsMargins(hPad, 0, 0, 0);
 }
 
-auto Coins::recvPayload(const CoinState &state) -> void {
-    // Always update to ensure coin list changes (like label updates) are
-    // reflected
+void Coins::recvPayload(const CoinState &state) {
     m_state = state;
     this->view();
     emit coinsUpdated();
 }
 
-auto Coins::doConnect() -> void {
+void Coins::doConnect() {
     auto *ctrl = m_controller;
     connect(ctrl, &AccountController::updateCoins, this, &Coins::recvPayload, qontrol::UNIQUE);
 }
 
 auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count) -> QWidget * {
-    auto *label = new QLabel(label_str);
-    label->setFixedWidth(LABEL_WIDTH);
+    auto *label = new Label(label_str, LabelRole::InfoLabel);
 
     auto priceStr = toBitcoin(balance);
-    auto *price = new QLabel(priceStr);
-    price->setFixedWidth(PRICE_WIDTH);
+    auto *price = new Label(priceStr, LabelRole::Mono);
 
     auto coinStr = coinsCount(coins_count);
-    auto *coins = new QLabel(coinStr);
-    coins->setFixedWidth(PRICE_WIDTH);
+    auto *coins = new Label(coinStr);
 
     auto *row = (new qontrol::Row)->push(label)->push(price)->push(coins)->pushSpacer();
 
     return row;
 }
 
-auto insertCoin(QTableWidget *table, const RustCoin &coin, int index) -> void {
-    auto *typeItem =
-        new QTableWidgetItem(QString::fromUtf8(coin.account_type.data(), coin.account_type.size()));
-    typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 0, typeItem);
-
-    QString blockHeight;
-    if (!coin.spent && coin.height > 0) {
-        blockHeight = QString::number(coin.height);
-    } else if (coin.spent) {
-        blockHeight = "Spent";
-    } else {
-        blockHeight = "Unconfirmed";
-    }
-
-    auto *heightItem = new QTableWidgetItem(blockHeight);
-    heightItem->setFlags(heightItem->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 1, heightItem);
-
-    auto op = coin.outpoint;
-    auto *outpointItem = new QTableWidgetItem(QString(op.c_str()));
-    outpointItem->setFlags(outpointItem->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 2, outpointItem);
-
-    auto label = coin.label;
-    auto *labelItem = new QTableWidgetItem(QString(label.c_str()));
-    // Label is editable, keep default flags
-    table->setItem(index, 3, labelItem);
-
-    auto *value = new QTableWidgetItem(toBitcoin(coin.value, false));
-    value->setTextAlignment(Qt::AlignCenter);
-    value->setFlags(value->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 4, value);
-}
-
-auto Coins::view() -> void {
+void Coins::view() {
     auto *oldCR = m_confirmed_row;
     m_confirmed_row = balanceRow("Confirmed:", m_state.confirmed_balance, m_state.confirmed_count);
     delete oldCR;
@@ -104,33 +96,102 @@ auto Coins::view() -> void {
         m_coins = rust::Vec<RustCoin>();
     }
 
-    int rowCount = static_cast<int>(m_coins.size());
-    auto *table = new QTableWidget(rowCount, 5);
-    table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto headers = QStringList{"Type", "Block Height", "OutPoint", "Label", "Value"};
-    table->setHorizontalHeaderLabels(headers);
-    int index = 0;
+    // Clear tracking
+    m_label_inputs.clear();
+    m_edit_buttons.clear();
+
+    // Unparent persistent header labels
+    m_h_type->setParent(nullptr);
+    m_h_height->setParent(nullptr);
+    m_h_outpoint->setParent(nullptr);
+    m_h_label->setParent(nullptr);
+    m_h_edit->setParent(nullptr);
+    m_h_value->setParent(nullptr);
+
+    auto *headerRow = (new qontrol::Row)
+                          ->push(m_h_type)
+                          ->pushSpacer(resolve(Spacing::XS))
+                          ->push(m_h_height)
+                          ->pushSpacer(resolve(Spacing::XS))
+                          ->push(m_h_outpoint)
+                          ->pushSpacer(resolve(Spacing::XS))
+                          ->push(m_h_label)
+                          ->pushSpacer(resolve(Spacing::XS))
+                          ->push(m_h_edit)
+                          ->pushSpacer(resolve(Spacing::XS))
+                          ->push(m_h_value)
+                          ->pushSpacer();
+
+    // Column containing header + coin rows
+    auto *coinsColumn = new qontrol::Column;
+    coinsColumn->push(headerRow);
+
     for (const auto &coin : m_coins) {
-        insertCoin(table, coin, index);
-        index++;
+        QString typeStr = QString::fromUtf8(coin.account_type.data(), coin.account_type.size());
+        auto *typeField = new Display(typeStr);
+        typeField->setFixedWidth(TYPE_W);
+
+        QString heightStr;
+        if (!coin.spent && coin.height > 0) {
+            heightStr = QString::number(coin.height);
+        } else if (coin.spent) {
+            heightStr = "Spent";
+        } else {
+            heightStr = "Unconfirmed";
+        }
+        auto *heightField = new Display(heightStr);
+        heightField->setFixedWidth(HEIGHT_W);
+
+        QString outpoint = QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size());
+        auto *outpointField = new Display(shortenOutpoint(outpoint), DisplayRole::Outpoint);
+        outpointField->setFixedWidth(OUTPOINT_W);
+
+        QString label = QString::fromUtf8(coin.label.data(), coin.label.size());
+        auto *labelField = new Display(label);
+        labelField->setFixedWidth(LABEL_W);
+        labelField->setProperty("outpoint", outpoint);
+
+        auto *editBtn = new Button(ButtonRole::InlineIcon);
+        editBtn->setIcon(icon::pencil());
+        editBtn->setProperty("outpoint", outpoint);
+        connect(editBtn, &Button::clicked, this, &Coins::onEditLabelClicked, qontrol::UNIQUE);
+        m_edit_buttons.append(editBtn);
+
+        auto *valueField = new Display(toBitcoin(coin.value), DisplayRole::Amount);
+        valueField->setFixedWidth(VALUE_W);
+
+        auto *row = (new qontrol::Row)
+                        ->push(typeField)
+                        ->pushSpacer(resolve(Spacing::XS))
+                        ->push(heightField)
+                        ->pushSpacer(resolve(Spacing::XS))
+                        ->push(outpointField)
+                        ->pushSpacer(resolve(Spacing::XS))
+                        ->push(labelField)
+                        ->pushSpacer(resolve(Spacing::XS))
+                        ->push(editBtn)
+                        ->pushSpacer(resolve(Spacing::XS))
+                        ->push(valueField)
+                        ->pushSpacer();
+
+        coinsColumn->pushSpacer(resolve(Spacing::XS))->push(row);
     }
-    auto *oldTable = m_table;
-    m_table = table;
-    delete oldTable;
-    table->resizeColumnsToContents();
+    coinsColumn->pushSpacer();
 
-    // Enable editing only for the Label column (column 2)
-    table->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
-
-    // Connect itemChanged signal to handle label edits
-    connect(table, &QTableWidget::itemChanged, this, &Coins::onLabelEdited, qontrol::UNIQUE);
+    auto *scroll = new QScrollArea;
+    scroll->setWidget(coinsColumn);
+    scroll->setWidgetResizable(true);
+    scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    delete m_scroll;
+    m_scroll = scroll;
 
     auto *mainLayout = (new qontrol::Column(this))
                            ->push(m_confirmed_row)
-                           ->pushSpacer(V_SPACER)
+                           ->pushSpacer(resolve(Spacing::XS))
                            ->push(m_unconfirmed_row)
-                           ->pushSpacer(20)
-                           ->push(table);
+                           ->pushSpacer(resolve(Spacing::M))
+                           ->push(scroll);
 
     auto *boxed = margin(mainLayout);
     delete m_main_widget;
@@ -153,36 +214,118 @@ auto Coins::getCoins() -> std::optional<QList<RustCoin>> {
     return std::make_optional(coins);
 }
 
-auto Coins::onLabelEdited(QTableWidgetItem *item) -> void {
-    if (item == nullptr || m_table == nullptr) {
+void Coins::onEditLabelClicked() {
+    auto *btn = qobject_cast<Button *>(sender());
+    if (btn == nullptr) {
         return;
     }
 
-    // Only allow editing the Label column (column 3)
-    if (item->column() != 3) {
+    QString outpoint = btn->property("outpoint").toString();
+    if (outpoint.isEmpty()) {
         return;
     }
 
-    int row = item->row();
-    if (row < 0 || std::cmp_greater_equal(row, m_coins.size())) {
+    // Already editing this coin
+    if (m_label_inputs.contains(outpoint)) {
         return;
     }
 
-    // Get the outpoint from column 2
-    auto *outpointItem = m_table->item(row, 2);
-    if (outpointItem == nullptr) {
+    // Find the label Display in the same row
+    auto *row = btn->parentWidget();
+    if (row == nullptr) {
         return;
     }
 
-    QString outpoint = outpointItem->text();
-    QString newLabel = item->text();
+    Display *labelDisplay = nullptr;
+    for (auto *child : row->findChildren<Display *>()) {
+        if (child->property("outpoint").toString() == outpoint) {
+            labelDisplay = child;
+            break;
+        }
+    }
+    if (labelDisplay == nullptr) {
+        return;
+    }
 
-    qDebug() << "Coins::onLabelEdited() - Updating label for" << outpoint << "to" << newLabel;
+    // Input spans label + button (spacers remain in layout)
+    int btnW = Theme::get()->buttonPalette().inlineIcon.width;
+    int inputW = LABEL_W + btnW;
+
+    auto *input = new Input(labelDisplay->text());
+    input->setFixedWidth(inputW);
+    input->setProperty("outpoint", outpoint);
+    input->installEventFilter(this);
+    connect(input, &Input::editingFinished, this, &Coins::onLabelEditFinished, qontrol::UNIQUE);
+
+    // Replace Display with Input in the layout
+    auto *layout = row->layout();
+    if (layout == nullptr) {
+        delete input;
+        return;
+    }
+
+    int idx = layout->indexOf(labelDisplay);
+    if (idx < 0) {
+        delete input;
+        return;
+    }
+
+    layout->replaceWidget(labelDisplay, input);
+    labelDisplay->hide();
+    btn->hide();
+
+    m_label_inputs.insert(outpoint, input);
+    setEditButtonsEnabled(false);
+    input->setFocus();
+    input->selectAll();
+}
+
+void Coins::onLabelEditFinished() {
+    auto *input = qobject_cast<Input *>(sender());
+    if (input == nullptr) {
+        return;
+    }
+
+    QString outpoint = input->property("outpoint").toString();
+    if (outpoint.isEmpty()) {
+        return;
+    }
+
+    QString newLabel = input->text();
+
+    qDebug() << "Coins::onLabelEditFinished() - Updating label for" << outpoint << "to" << newLabel;
 
     // Update the coin label through the controller
     if (m_controller != nullptr) {
         m_controller->updateCoinLabel(outpoint, newLabel);
     }
+
+    // Remove from tracking (view() will rebuild everything)
+    m_label_inputs.remove(outpoint);
+}
+
+void Coins::setEditButtonsEnabled(bool enabled) {
+    for (auto *btn : m_edit_buttons) {
+        btn->setEnabled(enabled);
+    }
+}
+
+auto Coins::eventFilter(QObject *obj, QEvent *event) -> bool {
+    if (event->type() == QEvent::KeyPress) {
+        auto *keyEvent = static_cast<QKeyEvent *>(event);
+        if (keyEvent->key() == Qt::Key_Escape) {
+            auto *input = qobject_cast<Input *>(obj);
+            if (input != nullptr) {
+                QString outpoint = input->property("outpoint").toString();
+                m_label_inputs.remove(outpoint);
+                setEditButtonsEnabled(true);
+                // Rebuild view to restore Display
+                this->view();
+                return true;
+            }
+        }
+    }
+    return Screen::eventFilter(obj, event);
 }
 
 } // namespace screen

@@ -22,6 +22,9 @@ auto MainWindow::initWindow() -> void {
     m_tab = new QTabWidget(this);
     m_menu_tab = new MenuTab(this);
 
+    m_tab->setTabsClosable(true);
+    m_tab->setMovable(true);
+
     updateTabs();
 
     setCentralWidget(m_tab);
@@ -29,15 +32,14 @@ auto MainWindow::initWindow() -> void {
     connect(m_tab, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested,
             qontrol::UNIQUE);
 
-    m_tab->setTabsClosable(true);
-    m_tab->setMovable(true);
     m_init = true;
 }
 
 auto MainWindow::accountExists(const QString &name) -> bool {
     if (m_tabs.isEmpty())
         return false;
-    return std::ranges::any_of(m_tabs, [&name](const auto &tab) -> auto { return tab.first == name; });
+    return std::ranges::any_of(m_tabs,
+                               [&name](const auto &tab) -> auto { return tab.first == name; });
 }
 
 auto MainWindow::insertAccount(AccountWidget *account, const QString &name) -> void {
@@ -77,21 +79,21 @@ auto MainWindow::removeAccount(const QString &name) -> void {
 }
 
 auto MainWindow::updateTabs() -> void {
-    // Clear all tabs except the menu tab
     while (m_tab->count() > 0) {
         m_tab->removeTab(0);
     }
 
-    // Add account tabs
     for (const auto &tab : m_tabs) {
-        m_tab->addTab(tab.second, tab.first);
+        int index = m_tab->addTab(tab.second, tab.first);
+        auto *btn = m_tab->tabBar()->tabButton(index, QTabBar::RightSide);
+        if (btn != nullptr) {
+            btn->setToolTip("");
+        }
     }
 
-    // Add menu tab at the end
-    m_tab->addTab(m_menu_tab, "+");
-
-    // Make the last tab (menu tab) not closable
-    m_tab->tabBar()->setTabButton(m_tab->count() - 1, QTabBar::RightSide, nullptr);
+    // Menu tab has no close button
+    int menuIndex = m_tab->addTab(m_menu_tab, "+");
+    m_tab->tabBar()->setTabButton(menuIndex, QTabBar::RightSide, nullptr);
 }
 
 auto MainWindow::closeEvent(QCloseEvent *event) -> void {

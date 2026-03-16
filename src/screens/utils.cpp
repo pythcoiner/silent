@@ -1,9 +1,9 @@
 #include "utils.h"
+#include "theme/Theme.h"
 #include <QPainter>
 #include <QPen>
 #include <Qontrol>
 #include <qframe.h>
-#include <qnamespace.h>
 
 auto margin(QWidget *widget) -> QWidget * {
     return margin(widget, MARGIN);
@@ -54,9 +54,12 @@ auto Frame::paintEvent(QPaintEvent *event) -> void {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    QPen pen(Qt::darkGray, 3);
+    constexpr qreal c_pen_width = 1.5;
+    QPen pen(Theme::get()->palette().border, c_pen_width);
     painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
 
-    QRectF rect = this->rect();
-    painter.drawRoundedRect(rect, 10, 10);
+    qreal half = c_pen_width / 2.0;
+    QRectF rect = QRectF(this->rect()).adjusted(half, half, -half, -half);
+    painter.drawRoundedRect(rect, 8, 8);
 }

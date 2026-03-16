@@ -1,9 +1,16 @@
 #pragma once
 
 #include <Qontrol>
-#include <qlabel.h>
-#include <qpushbutton.h>
 #include <qtmetamacros.h>
+
+namespace theme {
+class Button;
+}
+
+namespace theme {
+class Label;
+}
+
 #include <qwidget.h>
 #include <silent.h>
 
@@ -17,29 +24,29 @@ public:
     Receive(AccountController *ctrl);
 
 public slots:
-    auto onCopyAddress() -> void;
-    auto onNewSegwitAddr() -> void;
-    auto onCopySegwitAddr() -> void;
-    auto onNewTaprootAddr() -> void;
-    auto onCopyTaprootAddr() -> void;
+    void onCopyAddress();
+    void onNewSegwitAddr();
+    void onCopySegwitAddr();
+    void onNewTaprootAddr();
+    void onCopyTaprootAddr();
 
 protected:
-    auto init() -> void override;
-    auto doConnect() -> void override;
-    auto view() -> void override;
+    void init() override;
+    void doConnect() override;
+    void view() override;
 
 private:
     AccountController *m_controller = nullptr;
     QWidget *m_main_widget = nullptr;
-    QPushButton *m_copy_btn = nullptr;
+    theme::Button *m_copy_btn = nullptr;
     rust::String m_sp_address;
     bool m_has_sub_accounts = false;
-    QPushButton *m_new_segwit_btn = nullptr;
-    QPushButton *m_copy_segwit_btn = nullptr;
-    QLabel *m_segwit_addr_label = nullptr;
-    QPushButton *m_new_taproot_btn = nullptr;
-    QPushButton *m_copy_taproot_btn = nullptr;
-    QLabel *m_taproot_addr_label = nullptr;
+    theme::Button *m_new_segwit_btn = nullptr;
+    theme::Button *m_copy_segwit_btn = nullptr;
+    theme::Label *m_segwit_addr_label = nullptr;
+    theme::Button *m_new_taproot_btn = nullptr;
+    theme::Button *m_copy_taproot_btn = nullptr;
+    theme::Label *m_taproot_addr_label = nullptr;
 };
 
 } // namespace screen

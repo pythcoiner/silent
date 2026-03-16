@@ -1,10 +1,17 @@
 #include "AccountWidget.h"
 #include "AccountController.h"
 #include "StatusBar.h"
+#include "theme/Button.h"
+#include "theme/Icon.h"
+#include "theme/Palette.h"
+#include "theme/Theme.h"
+#include <QButtonGroup>
 #include <Qontrol>
 #include <common.h>
-#include <qpushbutton.h>
 #include <qsizepolicy.h>
+
+using theme::Button;
+using theme::ButtonRole;
 
 AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(parent) {
     m_controller = new AccountController(account, this);
@@ -12,24 +19,53 @@ AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(
     m_controller->loadPanels();
 }
 
-auto AccountWidget::initUI() -> void {
+void AccountWidget::initUI() {
     // Create side menu
     m_menu = new qontrol::Column(this);
     m_menu->setFixedWidth(200);
+    m_menu->setAutoFillBackground(true);
+    auto menuPal = m_menu->palette();
+    menuPal.setColor(QPalette::Window, Theme::get()->palette().bgSecondary);
+    m_menu->setPalette(menuPal);
+    int p = resolve(Padding::XS);
+    m_menu->layout()->setContentsMargins(p, p, p, p);
 
-    auto *coinsBtn = new QPushButton("Coins");
-    coinsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *sendBtn = new QPushButton("Send");
-    sendBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *recvBtn = new QPushButton("Receive");
-    recvBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *settingsBtn = new QPushButton("Settings");
-    settingsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto *coinsBtn = new Button("  Coins", ButtonRole::Menu);
+    coinsBtn->setIcon(icon::coins());
+    coinsBtn->setIconSize(QSize(20, 20));
+    coinsBtn->setCheckable(true);
+    coinsBtn->setChecked(true);
+    coinsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto *sendBtn = new Button("  Send", ButtonRole::Menu);
+    sendBtn->setIcon(icon::send());
+    sendBtn->setIconSize(QSize(20, 20));
+    sendBtn->setCheckable(true);
+    sendBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto *recvBtn = new Button("  Receive", ButtonRole::Menu);
+    recvBtn->setIcon(icon::receive());
+    recvBtn->setIconSize(QSize(20, 20));
+    recvBtn->setCheckable(true);
+    recvBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto *settingsBtn = new Button("  Settings", ButtonRole::Menu);
+    settingsBtn->setIcon(icon::settings());
+    settingsBtn->setIconSize(QSize(20, 20));
+    settingsBtn->setCheckable(true);
 
-    m_menu->push(coinsBtn);
-    m_menu->push(sendBtn);
-    m_menu->push(recvBtn);
-    m_menu->push(settingsBtn);
+    auto *btnGroup = new QButtonGroup(this);
+    btnGroup->setExclusive(true);
+    btnGroup->addButton(coinsBtn);
+    btnGroup->addButton(sendBtn);
+    btnGroup->addButton(recvBtn);
+    btnGroup->addButton(settingsBtn);
+    settingsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    m_menu->push(coinsBtn)
+        ->pushSpacer(resolve(Spacing::S))
+        ->push(sendBtn)
+        ->pushSpacer(resolve(Spacing::S))
+        ->push(recvBtn)
+        ->pushSpacer()
+        ->push(settingsBtn);
 
     connect(coinsBtn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked,
             qontrol::UNIQUE);
@@ -78,7 +114,7 @@ auto AccountWidget::initUI() -> void {
     setLayout(mainCol->layout());
 }
 
-auto AccountWidget::loadPanel(qontrol::Panel *panel) -> void {
+void AccountWidget::loadPanel(qontrol::Panel *panel) {
     if (panel == nullptr)
         return;
 

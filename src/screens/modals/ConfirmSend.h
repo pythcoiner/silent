@@ -2,9 +2,16 @@
 
 #include <Qontrol>
 #include <cstdint>
-#include <qlabel.h>
-#include <qpushbutton.h>
 #include <qstring.h>
+
+namespace theme {
+class Button;
+}
+
+namespace theme {
+class Label;
+}
+
 #include <qstringlist.h>
 
 namespace modal {
@@ -19,24 +26,24 @@ signals:
     void confirmed();
 
 public slots:
-    auto onConfirmClicked() -> void;
-    auto setBroadcasting() -> void;
-    auto setResult(bool ok, const QString &message) -> void;
+    void onConfirmClicked();
+    void setBroadcasting();
+    void setResult(bool ok, const QString &message);
 
 protected:
-    auto init() -> void;
-    auto doConnect() -> void;
-    auto view() -> void;
+    void init();
+    void doConnect();
+    void view();
 
 private:
     QStringList m_recipients;
     uint64_t m_fee = 0;
     QString m_txid_preview;
-    QLabel *m_details_label = nullptr;
-    QPushButton *m_cancel_btn = nullptr;
-    QPushButton *m_confirm_btn = nullptr;
-    QLabel *m_status_label = nullptr;
-    QPushButton *m_ok_btn = nullptr;
+    theme::Label *m_details_label = nullptr;
+    theme::Button *m_cancel_btn = nullptr;
+    theme::Button *m_confirm_btn = nullptr;
+    theme::Label *m_status_label = nullptr;
+    theme::Button *m_ok_btn = nullptr;
 };
 
 } // namespace modal

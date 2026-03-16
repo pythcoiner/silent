@@ -1,22 +1,24 @@
 #pragma once
 
+#include "theme/Palette.h"
 #include <QFrame>
 #include <cstdint>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-const int MARGIN = 30;
+// Layout constants — aliases from design system
+const int MARGIN = resolve(Padding::XL);
 const int LEFT_MARGIN = MARGIN;
 const int TOP_MARGIN = MARGIN;
 const int RIGHT_MARGIN = MARGIN;
 const int BOTTOM_MARGIN = MARGIN;
 
-const int LABEL_WIDTH = 120;
-const int INPUT_WIDTH = 200;
-const int PRICE_WIDTH = 200;
+const int LABEL_WIDTH = resolve(Size::S);
+const int INPUT_WIDTH = resolve(Size::M);
+const int PRICE_WIDTH = resolve(Size::M);
 
-const int V_SPACER = 5;
-const int H_SPACER = 5;
+const int V_SPACER = resolve(Spacing::XS);
+const int H_SPACER = resolve(Spacing::XS);
 
 const int SATS = 100000000;
 

@@ -69,17 +69,34 @@
     "qt_static": {
       "flake": false,
       "locked": {
-        "lastModified": 1767166924,
-        "narHash": "sha256-ywN3LpracT4gcdyD89lt8JYRHC7s6vM49Ro1+zPStbM=",
+        "lastModified": 1773727979,
+        "narHash": "sha256-Hup7YlpKArHeW8MK5Apw+l8aFT727//TjuzlfANH1TE=",
         "owner": "pythcoiner",
         "repo": "qt_static",
-        "rev": "90d74b76b25ef472418d1c9fd2e4a617778937c8",
+        "rev": "8948e2f8cbbb8b5b4ca49c5af69e8d2b9f182514",
         "type": "github"
       },
       "original": {
         "owner": "pythcoiner",
         "ref": "6.6.3",
         "repo": "qt_static",
+        "type": "github"
+      }
+    },
+    "qt_svg_src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1710780787,
+        "narHash": "sha256-esAaMMqbEOWb00iIdt2ERwKOus1QOn2Xyvu6nG6uK3Q=",
+        "owner": "qt",
+        "repo": "qtsvg",
+        "rev": "86b5372ebf311b7a6411666c17c9f45e072c4b6f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "qt",
+        "ref": "v6.6.3",
+        "repo": "qtsvg",
         "type": "github"
       }
     },
@@ -90,6 +107,7 @@
         "qontrol": "qontrol",
         "qt_src": "qt_src",
         "qt_static": "qt_static",
+        "qt_svg_src": "qt_svg_src",
         "rust-overlay": "rust-overlay",
         "spdk": "spdk"
       }

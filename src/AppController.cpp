@@ -144,7 +144,7 @@ auto AppController::isAccountOpen(const QString &name) const -> bool {
 }
 
 auto AppController::onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
-                                            const QString &electrum) -> void {
+                                           const QString &electrum) -> void {
     m_regtest_defaults = RegtestDefaultsInfo{blindbit, p2p, electrum};
 }
 

@@ -1,17 +1,27 @@
 #include "Settings.h"
 #include "AccountController.h"
 #include "AppController.h"
+#include "Column.h"
+#include "theme/Button.h"
+#include "theme/ComboBox.h"
+#include "theme/Input.h"
+#include "theme/Label.h"
 #include "utils.h"
 #include <Qontrol>
 #include <common.h>
-#include <qcombobox.h>
-#include <qlabel.h>
-#include <qlineedit.h>
 #include <qlogging.h>
-#include <qpushbutton.h>
+#include <qnamespace.h>
 #include <qthread.h>
 
 namespace screen {
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::ComboBox;
+using theme::Input;
+using theme::InputRole;
+using theme::Label;
+using theme::LabelRole;
 
 Settings::Settings(AccountController *ctrl) {
     m_controller = ctrl;
@@ -21,7 +31,7 @@ Settings::Settings(AccountController *ctrl) {
     fetchBackendInfo();
 }
 
-auto Settings::init() -> void {
+void Settings::init() {
     // Load current config values
     auto &accountOpt = m_controller->getAccount();
     if (accountOpt.has_value()) {
@@ -37,35 +47,35 @@ auto Settings::init() -> void {
     }
 
     // Create widgets
-    m_blindbit_url_input = new QLineEdit;
-    m_blindbit_url_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_blindbit_url_input = new Input;
+    m_blindbit_url_input->setWidth(Size::XXL);
     m_blindbit_url_input->setPlaceholderText("https://blindbit.example.com");
     m_blindbit_url_input->setText(m_current_url);
     m_blindbit_url_input->setEnabled(!m_controller->isScannerRunning());
 
-    m_test_btn = new QPushButton("Test");
+    m_test_btn = new Button("Test");
 
-    m_p2p_node_input = new QLineEdit;
-    m_p2p_node_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_p2p_node_input = new Input;
+    m_p2p_node_input->setWidth(Size::XXL);
     m_p2p_node_input->setPlaceholderText("127.0.0.1:8333");
     m_p2p_node_input->setText(m_current_p2p_node);
 
-    m_test_p2p_btn = new QPushButton("Test");
+    m_test_p2p_btn = new Button("Test");
 
-    m_electrum_url_input = new QLineEdit;
-    m_electrum_url_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_electrum_url_input = new Input;
+    m_electrum_url_input->setWidth(Size::XXL);
     m_electrum_url_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
     m_electrum_url_input->setText(m_current_electrum_url);
     m_electrum_url_input->setEnabled(!m_controller->isScannerRunning());
 
-    m_test_electrum_btn = new QPushButton("Test");
+    m_test_electrum_btn = new Button("Test");
 
-    m_network_selector = new QComboBox;
+    m_network_selector = new ComboBox;
     m_network_selector->addItem("Regtest", static_cast<int>(Network::Regtest));
     m_network_selector->addItem("Signet", static_cast<int>(Network::Signet));
     m_network_selector->addItem("Testnet", static_cast<int>(Network::Testnet));
     m_network_selector->addItem("Bitcoin", static_cast<int>(Network::Bitcoin));
-    m_network_selector->setFixedWidth(INPUT_WIDTH);
+    m_network_selector->setWidth(Size::M);
 
     int index = m_network_selector->findData(static_cast<int>(m_current_network));
     if (index != -1) {
@@ -73,18 +83,18 @@ auto Settings::init() -> void {
     }
     m_network_selector->setEnabled(false);
 
-    m_info_network_label = new QLabel("--");
-    m_info_height_label = new QLabel("--");
-    m_info_tweaks_label = new QLabel("--");
+    m_info_network_label = new Label("--");
+    m_info_height_label = new Label("--");
+    m_capabilities = new Label("--");
 
-    m_save_btn = new QPushButton("Save Settings");
+    m_save_btn = new Button("Save Settings", ButtonRole::Primary);
     m_toggle_blindbit_btn =
-        new QPushButton(m_controller->isScannerRunning() ? "Disconnect Blindbit" : "Connect Blindbit");
+        new Button(m_controller->isScannerRunning() ? "Disconnect Blindbit" : "Connect Blindbit");
     m_toggle_electrum_btn =
-        new QPushButton(m_electrum_running ? "Disconnect Electrum" : "Connect Electrum");
+        new Button(m_electrum_running ? "Disconnect Electrum" : "Connect Electrum");
 }
 
-auto Settings::doConnect() -> void {
+void Settings::doConnect() {
     connect(m_save_btn, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
     connect(m_toggle_blindbit_btn, &QPushButton::clicked, this, &Settings::actionToggleBlindbit,
             qontrol::UNIQUE);
@@ -108,13 +118,14 @@ auto Settings::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_electrum_url_input, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
             qontrol::UNIQUE);
-    connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady, qontrol::UNIQUE);
+    connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady,
+            qontrol::UNIQUE);
     connect(this, &Settings::p2pTestReady, this, &Settings::onP2pTestReady, qontrol::UNIQUE);
     connect(this, &Settings::electrumTestReady, this, &Settings::onElectrumTestReady,
             qontrol::UNIQUE);
 }
 
-auto Settings::actionSave() -> void {
+void Settings::actionSave() {
     qDebug() << "Settings::actionSave()";
 
     auto &accountOpt = m_controller->getAccount();
@@ -155,7 +166,7 @@ auto Settings::actionSave() -> void {
     emit configSaved();
 }
 
-auto Settings::actionToggleBlindbit() -> void {
+void Settings::actionToggleBlindbit() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
         auto *modal = new qontrol::Modal("Error", "No account loaded");
@@ -177,7 +188,7 @@ auto Settings::actionToggleBlindbit() -> void {
     }
 }
 
-auto Settings::actionToggleElectrum() -> void {
+void Settings::actionToggleElectrum() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
         auto *modal = new qontrol::Modal("Error", "No account loaded");
@@ -196,7 +207,7 @@ auto Settings::actionToggleElectrum() -> void {
     }
 }
 
-auto Settings::actionTestBackend() -> void {
+void Settings::actionTestBackend() {
     auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "BlindBit URL is empty");
@@ -207,7 +218,7 @@ auto Settings::actionTestBackend() -> void {
     m_test_btn->setEnabled(false);
     m_test_btn->setText("Testing...");
 
-    auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
+    auto *thread = QThread::create([this, url = url.toStdString()]() {
         auto info = ::get_backend_info(rust::String(url));
         emit backendInfoReady(info);
     });
@@ -215,12 +226,12 @@ auto Settings::actionTestBackend() -> void {
     thread->start();
 }
 
-auto Settings::fetchBackendInfo() -> void {
+void Settings::fetchBackendInfo() {
     auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty())
         return;
 
-    auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
+    auto *thread = QThread::create([this, url = url.toStdString()]() {
         auto info = ::get_backend_info(rust::String(url));
         emit backendInfoReady(info);
     });
@@ -228,7 +239,7 @@ auto Settings::fetchBackendInfo() -> void {
     thread->start();
 }
 
-auto Settings::onBackendInfoReady(BackendInfo info) -> void {
+void Settings::onBackendInfoReady(BackendInfo info) {
     m_test_btn->setEnabled(true);
     m_test_btn->setText("Test");
 
@@ -269,12 +280,13 @@ auto Settings::onBackendInfoReady(BackendInfo info) -> void {
     m_info_height_label->setText(QString::number(info.height));
 
     auto yn = [](bool v) -> const char * { return v ? "Yes" : "No"; };
-    m_info_tweaks_label->setText(QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: "
-                                   "%3\nCut-Through + Dust Filter: %4")
-                               .arg(yn(info.tweaks_only))
-                               .arg(yn(info.tweaks_full_basic))
-                               .arg(yn(info.tweaks_full_with_dust_filter))
-                               .arg(yn(info.tweaks_cut_through_with_dust_filter)));
+    m_capabilities->setText(QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: "
+                                    "%3\nCut-Through + Dust Filter: %4")
+                                .arg(yn(info.tweaks_only))
+                                .arg(yn(info.tweaks_full_basic))
+                                .arg(yn(info.tweaks_full_with_dust_filter))
+                                .arg(yn(info.tweaks_cut_through_with_dust_filter)));
+    m_capabilities->setAlignment(Qt::AlignTop);
 
     if (!networkMatch) {
         AppController::execModal(new qontrol::Modal(
@@ -284,13 +296,13 @@ auto Settings::onBackendInfoReady(BackendInfo info) -> void {
     }
 }
 
-auto Settings::invalidateBackendTest() -> void {
+void Settings::invalidateBackendTest() {
     m_backend_verified = false;
     clearBackendInfo();
     updateButtons();
 }
 
-auto Settings::actionTestP2p() -> void {
+void Settings::actionTestP2p() {
     auto addr = m_p2p_node_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "P2P node address is empty");
@@ -302,7 +314,7 @@ auto Settings::actionTestP2p() -> void {
     m_test_p2p_btn->setText("Testing...");
 
     auto network = m_current_network;
-    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
+    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() {
         auto result = ::test_p2p_node(rust::String(addr), network);
         emit p2pTestReady(result);
     });
@@ -310,17 +322,17 @@ auto Settings::actionTestP2p() -> void {
     thread->start();
 }
 
-auto Settings::onP2pTestReady(ConnectionResult result) -> void {
+void Settings::onP2pTestReady(ConnectionResult result) {
     m_test_p2p_btn->setEnabled(true);
     m_test_p2p_btn->setText("Test");
 
     if (!result.is_ok) {
         m_p2p_verified = false;
         updateButtons();
-        AppController::execModal(
-            new qontrol::Modal("P2P Test Failed",
-                               QString("Failed to connect to P2P node:\n%1")
-                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        AppController::execModal(new qontrol::Modal(
+            "P2P Test Failed",
+            QString("Failed to connect to P2P node:\n%1")
+                .arg(QString::fromStdString(std::string(result.error.c_str())))));
         return;
     }
 
@@ -328,12 +340,12 @@ auto Settings::onP2pTestReady(ConnectionResult result) -> void {
     updateButtons();
 }
 
-auto Settings::invalidateP2pTest() -> void {
+void Settings::invalidateP2pTest() {
     m_p2p_verified = false;
     updateButtons();
 }
 
-auto Settings::actionTestElectrum() -> void {
+void Settings::actionTestElectrum() {
     auto addr = m_electrum_url_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "Electrum address is empty");
@@ -344,7 +356,7 @@ auto Settings::actionTestElectrum() -> void {
     m_test_electrum_btn->setEnabled(false);
     m_test_electrum_btn->setText("Testing...");
 
-    auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
+    auto *thread = QThread::create([this, addr = addr.toStdString()]() {
         auto result = ::test_electrum(rust::String(addr));
         emit electrumTestReady(result);
     });
@@ -352,7 +364,7 @@ auto Settings::actionTestElectrum() -> void {
     thread->start();
 }
 
-auto Settings::onElectrumTestReady(ConnectionResult result) -> void {
+void Settings::onElectrumTestReady(ConnectionResult result) {
     m_test_electrum_btn->setEnabled(true);
     m_test_electrum_btn->setText("Test");
 
@@ -370,19 +382,19 @@ auto Settings::onElectrumTestReady(ConnectionResult result) -> void {
     updateButtons();
 }
 
-auto Settings::invalidateElectrumTest() -> void {
+void Settings::invalidateElectrumTest() {
     m_electrum_verified = false;
     updateButtons();
 }
 
-auto Settings::clearBackendInfo() -> void {
+void Settings::clearBackendInfo() {
     m_info_network_label->setText("--");
     m_info_height_label->setText("--");
-    m_info_tweaks_label->setText("--");
+    m_capabilities->setText("--");
     m_current_height = 0;
 }
 
-auto Settings::updateButtons() -> void {
+void Settings::updateButtons() {
     bool blindbitRunning = m_controller->isScannerRunning();
     m_save_btn->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
     m_toggle_blindbit_btn->setEnabled(m_backend_verified || blindbitRunning);
@@ -393,14 +405,14 @@ auto Settings::updateButtons() -> void {
     m_test_electrum_btn->setEnabled(!m_electrum_running);
 }
 
-auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) -> void {
+void Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) {
     if (height > m_current_height) {
         m_current_height = height;
         m_info_height_label->setText(QString::number(height));
     }
 }
 
-auto Settings::updateBlindbitToggleButton(bool running) -> void {
+void Settings::updateBlindbitToggleButton(bool running) {
     if (m_toggle_blindbit_btn != nullptr) {
         m_toggle_blindbit_btn->setText(running ? "Disconnect Blindbit" : "Connect Blindbit");
     }
@@ -408,99 +420,90 @@ auto Settings::updateBlindbitToggleButton(bool running) -> void {
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto Settings::updateElectrumToggleButton() -> void {
+void Settings::updateElectrumToggleButton() {
     m_electrum_running = !m_electrum_running;
     if (m_toggle_electrum_btn != nullptr) {
         m_toggle_electrum_btn->setText(m_electrum_running ? "Disconnect Electrum"
-                                                         : "Connect Electrum");
+                                                          : "Connect Electrum");
     }
     updateButtons();
 }
 
-auto Settings::view() -> void {
-    auto *urlLabel = new QLabel("BlindBit URL:");
-    urlLabel->setFixedWidth(LABEL_WIDTH);
+void Settings::view() {
+    auto *urlLabel = new Label("BlindBit URL:", LabelRole::InputLabel);
 
     auto *urlRow = (new qontrol::Row)
                        ->push(urlLabel)
                        ->push(m_blindbit_url_input)
-                       ->pushSpacer(H_SPACER)
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_btn)
                        ->pushSpacer();
 
-    auto *p2pLabel = new QLabel("P2P Node:");
-    p2pLabel->setFixedWidth(LABEL_WIDTH);
+    auto *p2pLabel = new Label("P2P Node:", LabelRole::InputLabel);
 
     auto *p2pRow = (new qontrol::Row)
                        ->push(p2pLabel)
                        ->push(m_p2p_node_input)
-                       ->pushSpacer(H_SPACER)
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_p2p_btn)
                        ->pushSpacer();
 
-    auto *electrumLabel = new QLabel("Electrum Server:");
-    electrumLabel->setFixedWidth(LABEL_WIDTH);
+    auto *electrumLabel = new Label("Electrum Server:", LabelRole::InputLabel);
 
     auto *electrumRow = (new qontrol::Row)
                             ->push(electrumLabel)
                             ->push(m_electrum_url_input)
-                            ->pushSpacer(H_SPACER)
+                            ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_test_electrum_btn)
                             ->pushSpacer();
 
-    auto *networkLabel = new QLabel("Network:");
-    networkLabel->setFixedWidth(LABEL_WIDTH);
+    auto *networkLabel = new Label("Network:", LabelRole::InputLabel);
 
     auto *networkRow =
         (new qontrol::Row)->push(networkLabel)->push(m_network_selector)->pushSpacer();
 
     // Backend info section (read-only)
-    auto *infoTitle = new QLabel("Backend Info:");
-    infoTitle->setFixedWidth(LABEL_WIDTH);
+    auto *infoTitle = new Label("Backend Info:", LabelRole::Section);
     auto *infoTitleRow = (new qontrol::Row)->push(infoTitle)->pushSpacer();
 
-    auto *netLabel = new QLabel("Network:");
-    netLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_network_label->setFixedWidth(INPUT_WIDTH);
+    auto *netLabel = new Label("Network:", LabelRole::InfoLabel);
     auto *infoNetRow = (new qontrol::Row)->push(netLabel)->push(m_info_network_label)->pushSpacer();
 
-    auto *heightLabel = new QLabel("Block Height:");
-    heightLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_height_label->setFixedWidth(INPUT_WIDTH);
-    auto *infoHeightRow = (new qontrol::Row)->push(heightLabel)->push(m_info_height_label)->pushSpacer();
+    auto *heightLabel = new Label("Block Height:", LabelRole::InfoLabel);
+    auto *infoHeightRow =
+        (new qontrol::Row)->push(heightLabel)->push(m_info_height_label)->pushSpacer();
 
-    auto *tweaksLabel = new QLabel("Capabilities:");
-    tweaksLabel->setFixedWidth(LABEL_WIDTH);
-    m_info_tweaks_label->setFixedWidth(3 * INPUT_WIDTH);
-    auto *infoTweaksRow = (new qontrol::Row)->push(tweaksLabel)->push(m_info_tweaks_label)->pushSpacer();
+    auto *capabilities = new Label("Capabilities:", LabelRole::InfoLabel);
+    capabilities->setAlignment(Qt::AlignTop);
+    auto *capRow = (new qontrol::Row)->push(capabilities)->push(m_capabilities)->pushSpacer();
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_toggle_blindbit_btn)
-                          ->pushSpacer(H_SPACER)
+                          ->pushSpacer(resolve(Spacing::XS))
                           ->push(m_toggle_electrum_btn)
-                          ->pushSpacer(H_SPACER)
+                          ->pushSpacer(resolve(Spacing::XS))
                           ->push(m_save_btn)
                           ->pushSpacer();
 
     auto *col = (new qontrol::Column)
-                    ->pushSpacer(50)
+                    ->pushSpacer(resolve(Spacing::XXL))
                     ->push(urlRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(p2pRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(electrumRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(networkRow)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(infoTitleRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(infoNetRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(infoHeightRow)
-                    ->pushSpacer(V_SPACER)
-                    ->push(infoTweaksRow)
-                    ->pushSpacer(30)
+                    ->pushSpacer(resolve(Spacing::XS))
+                    ->push(capRow)
+                    ->pushSpacer(resolve(Spacing::L))
                     ->push(buttonRow)
                     ->pushSpacer();
 

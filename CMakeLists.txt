@@ -22,7 +22,7 @@ set_target_properties(silent_rust PROPERTIES
     IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libsilent.a
 )
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core Svg)
 
 # qontrol framework (vendored in lib/qontrol)
 add_subdirectory(lib/qontrol)
@@ -32,6 +32,18 @@ set(CMAKE_AUTOUIC ON)
 
 set(SOURCES
     src/main.cpp
+    src/theme/Theme.h
+    src/theme/Theme.cpp
+    src/theme/Palette.h
+    src/theme/Palette.cpp
+    src/theme/Button.h
+    src/theme/Button.cpp
+    src/theme/Label.h
+    src/theme/Label.cpp
+    src/theme/Input.h
+    src/theme/Input.cpp
+    src/theme/Display.h
+    src/theme/Display.cpp
     src/AppController.h
     src/AppController.cpp
     src/MainWindow.h
@@ -60,6 +72,18 @@ set(SOURCES
     src/screens/modals/ConfirmDelete.cpp
     src/screens/modals/ConfirmSend.h
     src/screens/modals/ConfirmSend.cpp
+    src/theme/Icon.h
+    src/theme/Icon.cpp
+    src/theme/Tab.h
+    src/theme/Tab.cpp
+    src/theme/Checkbox.h
+    src/theme/Checkbox.cpp
+    src/theme/Toggle.h
+    src/theme/Toggle.cpp
+    src/theme/ComboBox.h
+    src/theme/ComboBox.cpp
+    src/theme/TextEdit.h
+    src/theme/TextEdit.cpp
 )
 
 qt_add_executable(${BIN}
@@ -84,6 +108,7 @@ target_link_libraries(${BIN}
     Qt6::Gui
     Qt6::Core
     Qt6::Widgets
+    Qt6::Svg
     qontrol
     silent_rust
     ssl

@@ -1,11 +1,24 @@
 #pragma once
 
 #include <Qontrol>
-#include <qcombobox.h>
-#include <qlabel.h>
-#include <qlineedit.h>
-#include <qpushbutton.h>
 #include <qtmetamacros.h>
+
+namespace theme {
+class Button;
+}
+
+namespace theme {
+class ComboBox;
+}
+
+namespace theme {
+class Input;
+}
+
+namespace theme {
+class Label;
+}
+
 #include <qwidget.h>
 #include <silent.h>
 
@@ -25,33 +38,33 @@ signals:
     void electrumTestReady(ConnectionResult result);
 
 public slots:
-    auto actionSave() -> void;
-    auto actionToggleBlindbit() -> void;
-    auto actionToggleElectrum() -> void;
-    auto actionTestBackend() -> void;
-    auto actionTestP2p() -> void;
-    auto actionTestElectrum() -> void;
-    auto updateBlindbitToggleButton(bool running) -> void;
-    auto updateElectrumToggleButton() -> void;
-    auto onScanProgress(uint32_t height, uint32_t tip) -> void;
+    void actionSave();
+    void actionToggleBlindbit();
+    void actionToggleElectrum();
+    void actionTestBackend();
+    void actionTestP2p();
+    void actionTestElectrum();
+    void updateBlindbitToggleButton(bool running);
+    void updateElectrumToggleButton();
+    void onScanProgress(uint32_t height, uint32_t tip);
 
 protected:
-    auto init() -> void override;
-    auto doConnect() -> void override;
-    auto view() -> void override;
+    void init() override;
+    void doConnect() override;
+    void view() override;
 
 public slots:
-    auto onBackendInfoReady(BackendInfo info) -> void;
-    auto onP2pTestReady(ConnectionResult result) -> void;
-    auto onElectrumTestReady(ConnectionResult result) -> void;
+    void onBackendInfoReady(BackendInfo info);
+    void onP2pTestReady(ConnectionResult result);
+    void onElectrumTestReady(ConnectionResult result);
 
 protected:
-    auto fetchBackendInfo() -> void;
-    auto invalidateBackendTest() -> void;
-    auto clearBackendInfo() -> void;
-    auto invalidateP2pTest() -> void;
-    auto invalidateElectrumTest() -> void;
-    auto updateButtons() -> void;
+    void fetchBackendInfo();
+    void invalidateBackendTest();
+    void clearBackendInfo();
+    void invalidateP2pTest();
+    void invalidateElectrumTest();
+    void updateButtons();
 
 private:
     AccountController *m_controller = nullptr;
@@ -59,19 +72,19 @@ private:
     bool m_p2p_verified = false;
     bool m_electrum_verified = false;
     QWidget *m_main_widget = nullptr;
-    QLineEdit *m_blindbit_url_input = nullptr;
-    QLineEdit *m_p2p_node_input = nullptr;
-    QLineEdit *m_electrum_url_input = nullptr;
-    QComboBox *m_network_selector = nullptr;
-    QPushButton *m_save_btn = nullptr;
-    QPushButton *m_toggle_blindbit_btn = nullptr;
-    QPushButton *m_toggle_electrum_btn = nullptr;
-    QPushButton *m_test_btn = nullptr;
-    QPushButton *m_test_p2p_btn = nullptr;
-    QPushButton *m_test_electrum_btn = nullptr;
-    QLabel *m_info_network_label = nullptr;
-    QLabel *m_info_height_label = nullptr;
-    QLabel *m_info_tweaks_label = nullptr;
+    theme::Input *m_blindbit_url_input = nullptr;
+    theme::Input *m_p2p_node_input = nullptr;
+    theme::Input *m_electrum_url_input = nullptr;
+    theme::ComboBox *m_network_selector = nullptr;
+    theme::Button *m_save_btn = nullptr;
+    theme::Button *m_toggle_blindbit_btn = nullptr;
+    theme::Button *m_toggle_electrum_btn = nullptr;
+    theme::Button *m_test_btn = nullptr;
+    theme::Button *m_test_p2p_btn = nullptr;
+    theme::Button *m_test_electrum_btn = nullptr;
+    theme::Label *m_info_network_label = nullptr;
+    theme::Label *m_info_height_label = nullptr;
+    theme::Label *m_capabilities = nullptr;
     QString m_current_url;
     QString m_current_p2p_node;
     QString m_current_electrum_url;

@@ -2,10 +2,23 @@
 #include "../utils.h"
 #include "AppController.h"
 #include "common.h"
-#include <qlabel.h>
+#include "theme/Button.h"
+#include "theme/ComboBox.h"
+#include "theme/Input.h"
+#include "theme/Label.h"
+#include "theme/TextEdit.h"
 #include <qthread.h>
 
 namespace modal {
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::ComboBox;
+using theme::Input;
+using theme::InputRole;
+using theme::Label;
+using theme::LabelRole;
+using theme::TextEdit;
 
 CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     setWindowTitle("Create Account");
@@ -15,49 +28,49 @@ CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     applyRegtestDefaults();
 }
 
-auto CreateAccount::init() -> void {
-    m_name_input = new QLineEdit();
+void CreateAccount::init() {
+    m_name_input = new Input;
     m_name_input->setPlaceholderText("Enter account name");
 
-    m_mnemonic_input = new QTextEdit();
+    m_mnemonic_input = new TextEdit;
     m_mnemonic_input->setPlaceholderText("Mnemonic phrase");
     m_mnemonic_input->setMaximumHeight(50);
     m_mnemonic_input->setMinimumWidth(200);
 
-    m_generate_btn = new QPushButton("Generate");
+    m_generate_btn = new Button("Generate");
 
-    m_network_combo = new QComboBox();
+    m_network_combo = new ComboBox;
     m_network_combo->addItem("Regtest", static_cast<int>(Network::Regtest));
     m_network_combo->addItem("Signet", static_cast<int>(Network::Signet));
     m_network_combo->addItem("Testnet", static_cast<int>(Network::Testnet));
     m_network_combo->addItem("Bitcoin", static_cast<int>(Network::Bitcoin));
     m_network_combo->setCurrentIndex(0);
 
-    m_blindbit_input = new QLineEdit();
+    m_blindbit_input = new Input;
     m_blindbit_input->setPlaceholderText("http://localhost:8080");
     m_blindbit_input->setText("http://localhost:8080");
 
-    m_p2p_input = new QLineEdit();
+    m_p2p_input = new Input;
     m_p2p_input->setPlaceholderText("127.0.0.1:18444");
 
-    m_test_btn = new QPushButton("Test");
-    m_test_p2p_btn = new QPushButton("Test");
+    m_test_btn = new Button("Test");
+    m_test_p2p_btn = new Button("Test");
 
-    m_electrum_input = new QLineEdit();
+    m_electrum_input = new Input;
     m_electrum_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
 
-    m_test_electrum_btn = new QPushButton("Test");
+    m_test_electrum_btn = new Button("Test");
 
-    m_create_btn = new QPushButton("Create");
+    m_create_btn = new Button("Create", ButtonRole::Primary);
     m_create_btn->setEnabled(false);
 
-    m_cancel_btn = new QPushButton("Cancel");
+    m_cancel_btn = new Button("Cancel");
 }
 
-auto CreateAccount::doConnect() -> void {
+void CreateAccount::doConnect() {
     connect(m_name_input, &QLineEdit::textChanged, this, &CreateAccount::onUpdateCreateButton,
             qontrol::UNIQUE);
-    connect(m_mnemonic_input, &QTextEdit::textChanged, this, &CreateAccount::onUpdateCreateButton,
+    connect(m_mnemonic_input, &TextEdit::textChanged, this, &CreateAccount::onUpdateCreateButton,
             qontrol::UNIQUE);
     connect(m_generate_btn, &QPushButton::clicked, this, &CreateAccount::onGenerate,
             qontrol::UNIQUE);
@@ -87,78 +100,78 @@ auto CreateAccount::doConnect() -> void {
             qontrol::UNIQUE);
 }
 
-auto CreateAccount::view() -> void {
+void CreateAccount::view() {
     auto *nameRow = (new qontrol::Row)
-                        ->push(new QLabel("Account Name:"))
-                        ->pushSpacer(H_SPACER)
+                        ->push(new Label("Account Name:", LabelRole::InputLabel))
+                        ->pushSpacer(resolve(Spacing::XS))
                         ->push(m_name_input);
 
     auto *mnemonicRow = (new qontrol::Row)
-                            ->push(new QLabel("Mnemonic:"))
-                            ->pushSpacer(H_SPACER)
+                            ->push(new Label("Mnemonic:", LabelRole::InputLabel))
+                            ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_mnemonic_input);
 
     auto *generateRow = (new qontrol::Row)->pushSpacer()->push(m_generate_btn)->pushSpacer();
 
     auto *networkRow = (new qontrol::Row)
-                           ->push(new QLabel("Network:"))
-                           ->pushSpacer(H_SPACER)
+                           ->push(new Label("Network:", LabelRole::InputLabel))
+                           ->pushSpacer(resolve(Spacing::XS))
                            ->push(m_network_combo);
 
     auto *urlRow = (new qontrol::Row)
-                       ->push(new QLabel("BlindBit URL:"))
-                       ->pushSpacer(H_SPACER)
+                       ->push(new Label("BlindBit URL:", LabelRole::InputLabel))
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_blindbit_input)
-                       ->pushSpacer(H_SPACER)
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_btn);
 
     auto *p2pRow = (new qontrol::Row)
-                       ->push(new QLabel("P2P Node:"))
-                       ->pushSpacer(H_SPACER)
+                       ->push(new Label("P2P Node:", LabelRole::InputLabel))
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_p2p_input)
-                       ->pushSpacer(H_SPACER)
+                       ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_p2p_btn);
 
     auto *electrumRow = (new qontrol::Row)
-                            ->push(new QLabel("Electrum:"))
-                            ->pushSpacer(H_SPACER)
+                            ->push(new Label("Electrum:", LabelRole::InputLabel))
+                            ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_electrum_input)
-                            ->pushSpacer(H_SPACER)
+                            ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_test_electrum_btn);
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_cancel_btn)
-                          ->pushSpacer(H_SPACER * 3)
+                          ->pushSpacer(resolve(Padding::M))
                           ->push(m_create_btn)
                           ->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->push(nameRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(mnemonicRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(generateRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(networkRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(urlRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(p2pRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(electrumRow)
-                    ->pushSpacer(V_SPACER)
+                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(buttonRow);
 
     setMainWidget(margin(col));
 }
 
-auto CreateAccount::onGenerate() -> void {
+void CreateAccount::onGenerate() {
     auto mnemonic = generateMnemonic();
-    m_mnemonic_input->setPlainText(mnemonic);
+    m_mnemonic_input->setText(mnemonic);
 }
 
-auto CreateAccount::onCreate() -> void {
+void CreateAccount::onCreate() {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
     auto blindbitUrl = m_blindbit_input->text().trimmed();
@@ -170,7 +183,7 @@ auto CreateAccount::onCreate() -> void {
     accept();
 }
 
-auto CreateAccount::onNetworkChanged() -> void {
+void CreateAccount::onNetworkChanged() {
     bool isMainnet =
         static_cast<Network>(m_network_combo->currentData().toInt()) == Network::Bitcoin;
 
@@ -181,7 +194,7 @@ auto CreateAccount::onNetworkChanged() -> void {
     applyRegtestDefaults();
 }
 
-auto CreateAccount::onTestBackend() -> void {
+void CreateAccount::onTestBackend() {
     auto url = m_blindbit_input->text().trimmed();
     if (url.isEmpty()) {
         AppController::execModal(
@@ -192,7 +205,7 @@ auto CreateAccount::onTestBackend() -> void {
     m_test_btn->setEnabled(false);
     m_test_btn->setText("Testing...");
 
-    auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
+    auto *thread = QThread::create([this, url = url.toStdString()]() {
         auto info = ::get_backend_info(rust::String(url));
         emit backendInfoReady(info);
     });
@@ -200,7 +213,7 @@ auto CreateAccount::onTestBackend() -> void {
     thread->start();
 }
 
-auto CreateAccount::onBackendInfoReady(BackendInfo info) -> void {
+void CreateAccount::onBackendInfoReady(BackendInfo info) {
     m_test_btn->setEnabled(true);
     m_test_btn->setText("Test");
 
@@ -262,7 +275,7 @@ auto CreateAccount::onBackendInfoReady(BackendInfo info) -> void {
     AppController::execModal(modal);
 }
 
-auto CreateAccount::applyRegtestDefaults() -> void {
+void CreateAccount::applyRegtestDefaults() {
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
     if (network != Network::Regtest) {
         return;
@@ -282,12 +295,12 @@ auto CreateAccount::applyRegtestDefaults() -> void {
     onUpdateCreateButton();
 }
 
-auto CreateAccount::invalidateBackendTest() -> void {
+void CreateAccount::invalidateBackendTest() {
     m_backend_verified = false;
     onUpdateCreateButton();
 }
 
-auto CreateAccount::onTestP2p() -> void {
+void CreateAccount::onTestP2p() {
     auto addr = m_p2p_input->text().trimmed();
     if (addr.isEmpty()) {
         AppController::execModal(
@@ -299,7 +312,7 @@ auto CreateAccount::onTestP2p() -> void {
     m_test_p2p_btn->setText("Testing...");
 
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
-    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
+    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() {
         auto result = ::test_p2p_node(rust::String(addr), network);
         emit p2pTestReady(result);
     });
@@ -307,17 +320,17 @@ auto CreateAccount::onTestP2p() -> void {
     thread->start();
 }
 
-auto CreateAccount::onP2pTestReady(ConnectionResult result) -> void {
+void CreateAccount::onP2pTestReady(ConnectionResult result) {
     m_test_p2p_btn->setEnabled(true);
     m_test_p2p_btn->setText("Test");
 
     if (!result.is_ok) {
         m_p2p_verified = false;
         onUpdateCreateButton();
-        AppController::execModal(
-            new qontrol::Modal("P2P Test Failed",
-                               QString("Failed to connect to P2P node:\n%1")
-                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        AppController::execModal(new qontrol::Modal(
+            "P2P Test Failed",
+            QString("Failed to connect to P2P node:\n%1")
+                .arg(QString::fromStdString(std::string(result.error.c_str())))));
         return;
     }
 
@@ -325,12 +338,12 @@ auto CreateAccount::onP2pTestReady(ConnectionResult result) -> void {
     onUpdateCreateButton();
 }
 
-auto CreateAccount::invalidateP2pTest() -> void {
+void CreateAccount::invalidateP2pTest() {
     m_p2p_verified = false;
     onUpdateCreateButton();
 }
 
-auto CreateAccount::onTestElectrum() -> void {
+void CreateAccount::onTestElectrum() {
     auto addr = m_electrum_input->text().trimmed();
     if (addr.isEmpty()) {
         AppController::execModal(
@@ -341,7 +354,7 @@ auto CreateAccount::onTestElectrum() -> void {
     m_test_electrum_btn->setEnabled(false);
     m_test_electrum_btn->setText("Testing...");
 
-    auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
+    auto *thread = QThread::create([this, addr = addr.toStdString()]() {
         auto result = ::test_electrum(rust::String(addr));
         emit electrumTestReady(result);
     });
@@ -349,17 +362,17 @@ auto CreateAccount::onTestElectrum() -> void {
     thread->start();
 }
 
-auto CreateAccount::onElectrumTestReady(ConnectionResult result) -> void {
+void CreateAccount::onElectrumTestReady(ConnectionResult result) {
     m_test_electrum_btn->setEnabled(true);
     m_test_electrum_btn->setText("Test");
 
     if (!result.is_ok) {
         m_electrum_verified = false;
         onUpdateCreateButton();
-        AppController::execModal(
-            new qontrol::Modal("Electrum Test Failed",
-                               QString("Failed to connect to Electrum server:\n%1")
-                                   .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        AppController::execModal(new qontrol::Modal(
+            "Electrum Test Failed",
+            QString("Failed to connect to Electrum server:\n%1")
+                .arg(QString::fromStdString(std::string(result.error.c_str())))));
         return;
     }
 
@@ -367,12 +380,12 @@ auto CreateAccount::onElectrumTestReady(ConnectionResult result) -> void {
     onUpdateCreateButton();
 }
 
-auto CreateAccount::invalidateElectrumTest() -> void {
+void CreateAccount::invalidateElectrumTest() {
     m_electrum_verified = false;
     onUpdateCreateButton();
 }
 
-auto CreateAccount::onUpdateCreateButton() -> void {
+void CreateAccount::onUpdateCreateButton() {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
 

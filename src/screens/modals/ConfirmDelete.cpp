@@ -1,11 +1,16 @@
 #include "ConfirmDelete.h"
 #include "../utils.h"
+#include "theme/Button.h"
+#include "theme/Label.h"
 #include <Qontrol>
 #include <common.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
 
 namespace modal {
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::Label;
+using theme::LabelRole;
 
 ConfirmDelete::ConfirmDelete(const QString &name, [[maybe_unused]] QWidget *parent) : m_name(name) {
     setWindowTitle("Delete Wallet");
@@ -15,40 +20,40 @@ ConfirmDelete::ConfirmDelete(const QString &name, [[maybe_unused]] QWidget *pare
     view();
 }
 
-auto ConfirmDelete::init() -> void {
-    m_label = new QLabel(QString("Are you sure you want to delete wallet '%1'?\n"
-                                 "This action cannot be undone.")
-                             .arg(m_name));
+void ConfirmDelete::init() {
+    m_label = new Label(QString("Are you sure you want to delete wallet '%1'?\n"
+                                "This action cannot be undone.")
+                            .arg(m_name));
     m_label->setWordWrap(true);
     m_label->setAlignment(Qt::AlignCenter);
 
-    m_cancel_btn = new QPushButton("Cancel");
-    m_delete_btn = new QPushButton("Delete");
+    m_cancel_btn = new Button("Cancel");
+    m_delete_btn = new Button("Delete", ButtonRole::Destructive);
 }
 
-auto ConfirmDelete::doConnect() -> void {
+void ConfirmDelete::doConnect() {
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(m_delete_btn, &QPushButton::clicked, this, &ConfirmDelete::onDeleteClicked,
             qontrol::UNIQUE);
 }
 
-auto ConfirmDelete::onDeleteClicked() -> void {
+void ConfirmDelete::onDeleteClicked() {
     emit confirmed(m_name);
     accept();
 }
 
-auto ConfirmDelete::view() -> void {
+void ConfirmDelete::view() {
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_cancel_btn)
-                          ->pushSpacer(H_SPACER)
+                          ->pushSpacer(resolve(Spacing::XS))
                           ->push(m_delete_btn)
                           ->pushSpacer();
 
     auto *col = (new qontrol::Column)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(m_label)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(buttonRow)
                     ->pushSpacer();
 

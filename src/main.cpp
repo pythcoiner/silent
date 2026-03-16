@@ -1,7 +1,10 @@
 #include "AppController.h"
 #include "MainWindow.h"
 #include "metatypes.h"
+#include "resources/font/noto_sans.h"
+#include "theme/Theme.h"
 #include <QApplication>
+#include <QFontDatabase>
 #include <QStyleFactory>
 
 auto main(int argc, char *argv[]) -> int {
@@ -9,6 +12,10 @@ auto main(int argc, char *argv[]) -> int {
 #ifdef Q_OS_LINUX
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
+
+    // Embed default font
+    QFontDatabase::addApplicationFontFromData(QByteArray(
+        reinterpret_cast<const char *>(embedded_font::NOTO_SANS), embedded_font::NOTO_SANS_SIZE));
 
     // Register CXX types for cross-thread signal-slot connections
     qRegisterMetaType<BackendInfo>();
@@ -18,6 +25,11 @@ auto main(int argc, char *argv[]) -> int {
 
     // Initialize Rust logging (Debug level for verbose output)
     init_logging(LogLevel::Error);
+
+    // Initialize and apply theme
+    Theme::init();
+    Theme::get()->setMode(ThemeMode::Light);
+    Theme::get()->apply();
 
     // Initialize application controller
     AppController::init();

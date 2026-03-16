@@ -1,10 +1,16 @@
 #include "MenuTab.h"
 #include "AppController.h"
+#include "theme/Button.h"
+#include "theme/Icon.h"
+#include "theme/Label.h"
+#include "theme/Palette.h"
 #include <Qontrol>
 #include <common.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
-#include <qstyle.h>
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::Label;
+using theme::LabelRole;
 
 MenuTab::MenuTab(QWidget *parent) : QWidget(parent) {
     init();
@@ -12,29 +18,24 @@ MenuTab::MenuTab(QWidget *parent) : QWidget(parent) {
     view();
 }
 
-auto MenuTab::init() -> void {
-    m_create_btn = new QPushButton("+ Create New Wallet");
-    m_create_btn->setFixedWidth(354);
-    m_create_btn->setFixedHeight(50);
-    auto btnFont = m_create_btn->font();
-    btnFont.setPointSize(14);
-    m_create_btn->setFont(btnFont);
+void MenuTab::init() {
+    m_create_btn = new Button("+ Create New Wallet", ButtonRole::TabCreate);
 
     m_accounts_column = new qontrol::Column;
 }
 
-auto MenuTab::doConnect() -> void {
+void MenuTab::doConnect() {
     connect(m_create_btn, &QPushButton::clicked, this, &MenuTab::onCreateClicked, qontrol::UNIQUE);
     connect(AppController::get(), &AppController::accountList, this, &MenuTab::onAccountList,
             qontrol::UNIQUE);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto MenuTab::onCreateClicked() -> void {
+void MenuTab::onCreateClicked() {
     AppController::get()->onCreateAccount();
 }
 
-auto MenuTab::onAccountClicked() -> void {
+void MenuTab::onAccountClicked() {
     auto *btn = qobject_cast<QPushButton *>(sender());
     if (btn != nullptr) {
         auto name = btn->property("accountName").toString();
@@ -42,7 +43,7 @@ auto MenuTab::onAccountClicked() -> void {
     }
 }
 
-auto MenuTab::onTrashClicked() -> void {
+void MenuTab::onTrashClicked() {
     auto *btn = qobject_cast<QPushButton *>(sender());
     if (btn != nullptr) {
         auto name = btn->property("accountName").toString();
@@ -50,12 +51,8 @@ auto MenuTab::onTrashClicked() -> void {
     }
 }
 
-auto MenuTab::view() -> void {
-    auto *title = new QLabel("Silent - Silent Payments Wallet");
-    auto titleFont = title->font();
-    titleFont.setPointSize(24);
-    titleFont.setBold(true);
-    title->setFont(titleFont);
+void MenuTab::view() {
+    auto *title = new Label("Silent - Silent Payments Wallet", LabelRole::Title);
     title->setAlignment(Qt::AlignCenter);
 
     auto *titleRow = (new qontrol::Row)->pushSpacer()->push(title)->pushSpacer();
@@ -64,21 +61,21 @@ auto MenuTab::view() -> void {
     auto *col = (new qontrol::Column)
                     ->pushSpacer()
                     ->push(titleRow)
-                    ->pushSpacer(40)
+                    ->pushSpacer(resolve(Spacing::XL))
                     ->push(m_accounts_column)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(btnRow)
                     ->pushSpacer();
 
     setLayout(col->layout());
 }
 
-auto MenuTab::clearAccountButtons() -> void {
+void MenuTab::clearAccountButtons() {
     m_accounts_column->clear();
     m_account_rows.clear();
 }
 
-auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
+void MenuTab::onAccountList(const QList<QString> &accounts) {
     clearAccountButtons();
 
     if (accounts.isEmpty()) {
@@ -86,16 +83,10 @@ auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
     }
 
     for (const auto &name : accounts) {
-        auto *btn = new QPushButton(name);
-        btn->setFixedWidth(300);
-        btn->setFixedHeight(50);
-        auto btnFont = btn->font();
-        btnFont.setPointSize(14);
-        btn->setFont(btnFont);
+        auto *btn = new Button(name, ButtonRole::TabOpen);
 
-        auto *trashBtn = new QPushButton();
-        trashBtn->setFixedSize(50, 50);
-        trashBtn->setIcon(trashBtn->style()->standardIcon(QStyle::SP_TrashIcon));
+        auto *trashBtn = new Button(ButtonRole::Icon);
+        trashBtn->setIcon(icon::trash());
         trashBtn->setToolTip("Delete wallet");
 
         btn->setProperty("accountName", name);
@@ -107,7 +98,7 @@ auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
         auto *row = (new qontrol::Row)
                         ->pushSpacer()
                         ->push(btn)
-                        ->pushSpacer(4)
+                        ->pushSpacer(resolve(Spacing::XS))
                         ->push(trashBtn)
                         ->pushSpacer();
 
@@ -116,7 +107,7 @@ auto MenuTab::onAccountList(const QList<QString> &accounts) -> void {
         }
 
         if (!m_account_rows.isEmpty()) {
-            m_accounts_column->pushSpacer(8);
+            m_accounts_column->pushSpacer(resolve(Spacing::S));
         }
 
         m_accounts_column->push(row);

@@ -1,14 +1,19 @@
 #include "Receive.h"
 #include "AccountController.h"
+#include "theme/Button.h"
+#include "theme/Label.h"
 #include "utils.h"
 #include <QApplication>
 #include <QClipboard>
 #include <Qontrol>
 #include <common.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
 
 namespace screen {
+
+using theme::Button;
+using theme::ButtonRole;
+using theme::Label;
+using theme::LabelRole;
 
 Receive::Receive(AccountController *ctrl) {
     m_controller = ctrl;
@@ -17,33 +22,31 @@ Receive::Receive(AccountController *ctrl) {
     this->view();
 }
 
-auto Receive::init() -> void {
+void Receive::init() {
     // Get SP address from controller
     if (m_controller != nullptr) {
         m_sp_address = m_controller->getSpAddress();
         m_has_sub_accounts = m_controller->getAccount().has_value() &&
                              m_controller->getAccount().value()->has_sub_accounts();
     }
-    m_copy_btn = new QPushButton("Copy");
+    m_copy_btn = new Button("Copy");
 
     if (m_has_sub_accounts) {
-        m_segwit_addr_label = new QLabel("");
-        m_segwit_addr_label->setFixedWidth(600);
+        m_segwit_addr_label = new Label("", LabelRole::Mono);
         m_segwit_addr_label->setWordWrap(true);
 
-        m_new_segwit_btn = new QPushButton("Generate");
-        m_copy_segwit_btn = new QPushButton("Copy");
+        m_new_segwit_btn = new Button("Generate");
+        m_copy_segwit_btn = new Button("Copy");
 
-        m_taproot_addr_label = new QLabel("");
-        m_taproot_addr_label->setFixedWidth(600);
+        m_taproot_addr_label = new Label("", LabelRole::Mono);
         m_taproot_addr_label->setWordWrap(true);
 
-        m_new_taproot_btn = new QPushButton("Generate");
-        m_copy_taproot_btn = new QPushButton("Copy");
+        m_new_taproot_btn = new Button("Generate");
+        m_copy_taproot_btn = new Button("Copy");
     }
 }
 
-auto Receive::doConnect() -> void {
+void Receive::doConnect() {
     connect(m_copy_btn, &QPushButton::clicked, this, &Receive::onCopyAddress, qontrol::UNIQUE);
 
     if (m_has_sub_accounts) {
@@ -58,11 +61,11 @@ auto Receive::doConnect() -> void {
     }
 }
 
-auto Receive::onCopyAddress() -> void {
+void Receive::onCopyAddress() {
     QApplication::clipboard()->setText(QString(m_sp_address.c_str()));
 }
 
-auto Receive::onNewSegwitAddr() -> void {
+void Receive::onNewSegwitAddr() {
     if (m_controller == nullptr) {
         return;
     }
@@ -74,13 +77,13 @@ auto Receive::onNewSegwitAddr() -> void {
     m_segwit_addr_label->setText(QString::fromStdString(std::string(addr.c_str())));
 }
 
-auto Receive::onCopySegwitAddr() -> void {
+void Receive::onCopySegwitAddr() {
     if (m_segwit_addr_label != nullptr) {
         QApplication::clipboard()->setText(m_segwit_addr_label->text());
     }
 }
 
-auto Receive::onNewTaprootAddr() -> void {
+void Receive::onNewTaprootAddr() {
     if (m_controller == nullptr) {
         return;
     }
@@ -92,39 +95,33 @@ auto Receive::onNewTaprootAddr() -> void {
     m_taproot_addr_label->setText(QString::fromStdString(std::string(addr.c_str())));
 }
 
-auto Receive::onCopyTaprootAddr() -> void {
+void Receive::onCopyTaprootAddr() {
     if (m_taproot_addr_label != nullptr) {
         QApplication::clipboard()->setText(m_taproot_addr_label->text());
     }
 }
 
-auto Receive::view() -> void {
-    auto *addrLabel = new QLabel("Silent Payment Address:");
-    addrLabel->setFixedWidth(200);
+void Receive::view() {
+    auto *addrLabel = new Label("Silent Payment Address:", LabelRole::InfoLabel);
 
     // Display the SP address (large, copyable)
     auto addrQStr = QString(m_sp_address.c_str());
-    auto *addrDisplay = new QLabel(addrQStr);
-    addrDisplay->setFixedWidth(600);
+    auto *addrDisplay = new Label(addrQStr, LabelRole::Mono);
     addrDisplay->setWordWrap(true);
-    QFont f = addrDisplay->font();
-    f.setPointSize(f.pointSize() + 2);
-    addrDisplay->setFont(f);
 
     auto *addrRow = (new qontrol::Row)->push(addrLabel)->push(addrDisplay)->pushSpacer();
 
     auto *btnRow = (new qontrol::Row)->pushSpacer()->push(m_copy_btn)->pushSpacer();
 
     auto *col = (new qontrol::Column)
-                    ->pushSpacer(50)
+                    ->pushSpacer(resolve(Spacing::XXL))
                     ->push(addrRow)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(btnRow);
 
     if (m_has_sub_accounts) {
         // Segwit address section
-        auto *segwitLabel = new QLabel("Segwit Address:");
-        segwitLabel->setFixedWidth(200);
+        auto *segwitLabel = new Label("Segwit Address:", LabelRole::InfoLabel);
 
         auto *segwitAddrRow =
             (new qontrol::Row)->push(segwitLabel)->push(m_segwit_addr_label)->pushSpacer();
@@ -132,18 +129,17 @@ auto Receive::view() -> void {
         auto *segwitBtnRow = (new qontrol::Row)
                                  ->pushSpacer()
                                  ->push(m_new_segwit_btn)
-                                 ->pushSpacer(H_SPACER)
+                                 ->pushSpacer(resolve(Spacing::XS))
                                  ->push(m_copy_segwit_btn)
                                  ->pushSpacer();
 
-        col->pushSpacer(30)
+        col->pushSpacer(resolve(Spacing::L))
             ->push(segwitAddrRow)
-            ->pushSpacer(10)
+            ->pushSpacer(resolve(Spacing::S))
             ->push(segwitBtnRow);
 
         // Taproot address section
-        auto *taprootLabel = new QLabel("Taproot Address:");
-        taprootLabel->setFixedWidth(200);
+        auto *taprootLabel = new Label("Taproot Address:", LabelRole::InfoLabel);
 
         auto *taprootAddrRow =
             (new qontrol::Row)->push(taprootLabel)->push(m_taproot_addr_label)->pushSpacer();
@@ -151,13 +147,13 @@ auto Receive::view() -> void {
         auto *taprootBtnRow = (new qontrol::Row)
                                   ->pushSpacer()
                                   ->push(m_new_taproot_btn)
-                                  ->pushSpacer(H_SPACER)
+                                  ->pushSpacer(resolve(Spacing::XS))
                                   ->push(m_copy_taproot_btn)
                                   ->pushSpacer();
 
-        col->pushSpacer(30)
+        col->pushSpacer(resolve(Spacing::L))
             ->push(taprootAddrRow)
-            ->pushSpacer(10)
+            ->pushSpacer(resolve(Spacing::S))
             ->push(taprootBtnRow);
     }
 

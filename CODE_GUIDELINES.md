@@ -180,6 +180,15 @@ auto main(int argc, char *argv[]) -> int;
 auto getCoins() -> rust::Vec<RustCoin>;
 ```
 
+**Void functions use traditional syntax.** Do not use trailing return type for void
+functions — write `void fn()`, not `auto fn() -> void`:
+```cpp
+void applyRole();                          // good
+auto applyRole() -> void;                  // bad
+void Settings::actionSave() { ... }        // good
+auto Settings::actionSave() -> void { ... } // bad
+```
+
 **Explicit nullptr comparisons:** Never rely on implicit pointer-to-bool conversion.
 Use explicit comparisons (enforced by `readability-implicit-bool-conversion`):
 ```cpp

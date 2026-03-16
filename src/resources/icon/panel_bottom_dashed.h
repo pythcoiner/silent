@@ -1,0 +1,25 @@
+#pragma once
+
+// Auto-generated from panel-bottom-dashed.svg (Lucide Icons) — do not edit
+
+namespace embedded_icon {
+
+constexpr char PANEL_BOTTOM_DASHED[] = R"svg(<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="18" height="18" x="3" y="3" rx="2" />
+  <path d="M14 15h1" />
+  <path d="M19 15h2" />
+  <path d="M3 15h2" />
+  <path d="M9 15h1" />
+</svg>)svg";
+
+} // namespace embedded_icon

@@ -2,8 +2,14 @@
 
 #include <QString>
 #include <Qontrol>
-#include <qlabel.h>
-#include <qpushbutton.h>
+
+namespace theme {
+class Button;
+}
+
+namespace theme {
+class Label;
+}
 
 namespace modal {
 
@@ -17,18 +23,18 @@ signals:
     void confirmed(const QString &name);
 
 public slots:
-    auto onDeleteClicked() -> void;
+    void onDeleteClicked();
 
 protected:
-    auto init() -> void;
-    auto doConnect() -> void;
-    auto view() -> void;
+    void init();
+    void doConnect();
+    void view();
 
 private:
     QString m_name;
-    QLabel *m_label = nullptr;
-    QPushButton *m_cancel_btn = nullptr;
-    QPushButton *m_delete_btn = nullptr;
+    theme::Label *m_label = nullptr;
+    theme::Button *m_cancel_btn = nullptr;
+    theme::Button *m_delete_btn = nullptr;
 };
 
 } // namespace modal

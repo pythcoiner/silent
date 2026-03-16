@@ -14,6 +14,11 @@
       flake = false;
     };
 
+    qt_svg_src = {
+      url = "github:qt/qtsvg/v6.6.3";
+      flake = false;
+    };
+
     bwk = {
       url = "github:pythcoiner/bwk/master";
       flake = false;
@@ -35,7 +40,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, qt_static, qt_src, bwk, spdk, qontrol, rust-overlay }:
+  outputs = { self, nixpkgs, qt_static, qt_src, qt_svg_src, bwk, spdk, qontrol, rust-overlay }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -50,9 +55,31 @@
       qtVersion = "6.6.3";
 
       # Build static Qt6 for Linux using qt_static's nix/linux.nix
-      linuxQt6 = pkgs.callPackage "${qt_static}/nix/linux.nix" {
+      linuxQt6Base = pkgs.callPackage "${qt_static}/nix/linux.nix" {
         qt6Source = qt_src;
         inherit qtVersion;
+      };
+
+      linuxQt6Svg = (pkgs.callPackage "${qt_static}/nix/qtsvg-linux.nix" {
+        qtSvgSource = qt_svg_src;
+        qt6Linux = linuxQt6Base;
+        inherit qtVersion;
+      }).overrideAttrs (old: {
+        buildInputs = old.buildInputs ++ (with pkgs; [
+          zlib pcre2 double-conversion libb2 openssl libpng libjpeg sqlite
+          glib fontconfig freetype harfbuzz dbus at-spi2-core libinput mtdev systemd
+          xorg.libX11 xorg.libXext xorg.libXrender xorg.libXi xorg.libXcursor
+          xorg.libXrandr xorg.libXinerama xorg.libXfixes xorg.libXcomposite
+          xorg.libXdamage xorg.libxcb xorg.xcbutil xorg.xcbutilwm xorg.xcbutilimage
+          xorg.xcbutilkeysyms xorg.xcbutilrenderutil xorg.xcbutilcursor
+          xorg.libSM xorg.libICE libxkbcommon wayland wayland-protocols
+          mesa libGL vulkan-headers vulkan-loader libdrm xorg.libxshmfence
+        ]);
+      });
+
+      linuxQt6 = pkgs.callPackage "${qt_static}/nix/combine.nix" {
+        qtbase = linuxQt6Base;
+        qtsvg = linuxQt6Svg;
       };
 
       # Vendor Cargo dependencies (handles git deps via outputHashes)
@@ -61,7 +88,7 @@
         outputHashes = {
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
           "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
-          "bwk-sp-0.1.0" = "sha256-rApP4aQaklY3cqMDOeW7ULj0jazSxqIWWRU2u05Izmg=";
+          "bwk-sp-0.1.0" = "sha256-OoOUyQw5pZuWD2Ic0M5GTIE9DK3L8ZZUBvDBqRTMbG0=";
           "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
           "blindbitd-0.0.1" = "sha256-XfO7P9uVLbw8mpiqLZbUoKw8XsxqM1MyeBuq6TKeZ24=";
           "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
@@ -108,9 +135,9 @@ git = "https://github.com/pythcoiner/ureq.git"
 branch = "gzip"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/pythcoiner/bwk.git?rev=2b6f231"]
+[source."git+https://github.com/pythcoiner/bwk.git?rev=4fd3ad6"]
 git = "https://github.com/pythcoiner/bwk.git"
-rev = "2b6f231"
+rev = "4fd3ad6"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
@@ -392,10 +419,22 @@ CARGO_EOF
         ];
       };
 
-      windowsQt6 = pkgs.callPackage "${qt_static}/nix/windows.nix" {
+      windowsQt6Base = pkgs.callPackage "${qt_static}/nix/windows.nix" {
         qt6Source = qt_src;
         inherit qtVersion mingwPkgs;
-        qt6HostTools = linuxQt6;
+        qt6HostTools = linuxQt6Base;
+      };
+
+      windowsQt6Svg = pkgs.callPackage "${qt_static}/nix/qtsvg-windows.nix" {
+        qtSvgSource = qt_svg_src;
+        qt6Linux = linuxQt6Base;
+        qt6Windows = windowsQt6Base;
+        inherit qtVersion mingwPkgs;
+      };
+
+      windowsQt6 = pkgs.callPackage "${qt_static}/nix/combine.nix" {
+        qtbase = windowsQt6Base;
+        qtsvg = windowsQt6Svg;
       };
 
       windows = buildGui {
@@ -620,12 +659,26 @@ TOOLCHAIN
         preBuildSetup = macosRustSetup "aarch64";
       };
 
-      macosArmQt6 = pkgs.callPackage "${qt_static}/nix/macos.nix" {
+      macosArmQt6Base = pkgs.callPackage "${qt_static}/nix/macos.nix" {
         qt6Source = qt_src;
         inherit qtVersion xcode;
-        qt6HostTools = linuxQt6;
+        qt6HostTools = linuxQt6Base;
         targetArch = "aarch64";
         llvmPackages = llvmPkgs;
+      };
+
+      macosArmQt6Svg = pkgs.callPackage "${qt_static}/nix/qtsvg-macos.nix" {
+        qtSvgSource = qt_svg_src;
+        qt6Linux = linuxQt6Base;
+        qt6Macos = macosArmQt6Base;
+        inherit qtVersion xcode;
+        targetArch = "aarch64";
+        llvmPackages = llvmPkgs;
+      };
+
+      macosArmQt6 = pkgs.callPackage "${qt_static}/nix/combine.nix" {
+        qtbase = macosArmQt6Base;
+        qtsvg = macosArmQt6Svg;
       };
 
       macosArm = buildGui {
@@ -657,12 +710,26 @@ TOOLCHAIN
         preBuildSetup = macosRustSetup "x86_64";
       };
 
-      macosX86Qt6 = pkgs.callPackage "${qt_static}/nix/macos.nix" {
+      macosX86Qt6Base = pkgs.callPackage "${qt_static}/nix/macos.nix" {
         qt6Source = qt_src;
         inherit qtVersion xcode;
-        qt6HostTools = linuxQt6;
+        qt6HostTools = linuxQt6Base;
         targetArch = "x86_64";
         llvmPackages = llvmPkgs;
+      };
+
+      macosX86Qt6Svg = pkgs.callPackage "${qt_static}/nix/qtsvg-macos.nix" {
+        qtSvgSource = qt_svg_src;
+        qt6Linux = linuxQt6Base;
+        qt6Macos = macosX86Qt6Base;
+        inherit qtVersion xcode;
+        targetArch = "x86_64";
+        llvmPackages = llvmPkgs;
+      };
+
+      macosX86Qt6 = pkgs.callPackage "${qt_static}/nix/combine.nix" {
+        qtbase = macosX86Qt6Base;
+        qtsvg = macosX86Qt6Svg;
       };
 
       macosX86 = buildGui {

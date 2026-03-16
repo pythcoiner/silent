@@ -1,19 +1,44 @@
 #pragma once
 
+#include "theme/Palette.h"
 #include <Qontrol>
 #include <cstdint>
 #include <optional>
-#include <qcheckbox.h>
 #include <qhash.h>
-#include <qlineedit.h>
-#include <qpushbutton.h>
 #include <qscrollarea.h>
+
+namespace theme {
+class Button;
+}
+
+namespace theme {
+class Checkbox;
+}
+
+namespace theme {
+class Display;
+}
+
+namespace theme {
+class Input;
+}
+
+namespace theme {
+class Label;
+}
+
+namespace theme {
+class Toggle;
+}
+
+class QCheckBox;
 #include <qstringlist.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <silent.h>
 
 class AccountController;
+
 namespace modal {
 class ConfirmSend;
 }
@@ -25,10 +50,10 @@ class InputW {
 public:
     InputW(const RustCoin &coin);
     auto widget() -> QWidget *;
-    static const int TYPE_WIDTH = 60;
-    static const int OUTPOINT_WIDTH = 180;
-    static const int LABEL_WIDTH = 420;
-    static const int VALUE_WIDTH = 150;
+    static const int TYPE_WIDTH = resolve(Size::XXS);
+    static const int OUTPOINT_WIDTH = resolve(Size::M);
+    static const int LABEL_WIDTH = resolve(Size::XL);
+    static const int VALUE_WIDTH = resolve(Size::S);
 
 private:
     QWidget *m_widget = nullptr;
@@ -38,28 +63,27 @@ class OutputW {
 public:
     OutputW(Send *screen, int id);
     auto widget() -> QWidget *;
-    auto setDeletable(bool deletable) -> void;
-    auto enableMax(bool max) -> void;
+    void setDeletable(bool deletable);
+    void enableMax(bool max);
     auto isMax() -> bool;
     auto address() -> QString;
     auto amount() -> std::optional<uint64_t>;
     auto label() -> QString;
-    auto updateAddressValidation() -> void;
-    auto updateAmountValidation() -> void;
-    auto setAmountVisible(bool visible) -> void;
-    auto clearAmount() -> void;
+    void updateAddressValidation();
+    void updateAmountValidation();
+    void setMaxMode(bool max);
+    void setMaxAmount(uint64_t sats);
 
 private:
-    QLineEdit *m_address_input = nullptr;
-    QLineEdit *m_label_input = nullptr;
-    QLineEdit *m_amount_input = nullptr;
-    QPushButton *m_delete_btn = nullptr;
+    theme::Input *m_address_input = nullptr;
+    theme::Input *m_label_input = nullptr;
+    theme::Input *m_amount_input = nullptr;
+    theme::Label *m_address_indicator = nullptr;
+    theme::Label *m_amount_indicator = nullptr;
+    theme::Button *m_delete_btn = nullptr;
     QWidget *m_delete_spacer = nullptr;
-    QCheckBox *m_max = nullptr;
-    QLabel *m_max_label = nullptr;
-    QLabel *m_address_indicator = nullptr;
-    QLabel *m_amount_indicator = nullptr;
-    QWidget *m_amount_spacer = nullptr;
+    theme::Checkbox *m_max = nullptr;
+    theme::Label *m_max_label = nullptr;
     QWidget *m_widget = nullptr;
 };
 
@@ -74,40 +98,40 @@ signals:
     void broadcastReady(TxResult result);
 
 public slots:
-    auto outputSetMax(int id) -> void;
-    auto deleteOutput(int id) -> void;
-    auto addOutput() -> void;
-    auto onOutputDeleteClicked() -> void;
-    auto onOutputMaxToggled() -> void;
-    auto clearOutputs() -> void;
-    auto clearInputs() -> void;
-    auto onFeeToggled() -> void;
-    auto setBroadcastable(bool broadcastable) -> void;
-    auto onCoinToggled() -> void;
-    auto onAutoSelectionToggled() -> void;
-    auto updateInputsTotal() -> void;
-    auto updateOutputValidations() -> void;
-    auto updateFeeValidation() -> void;
-    auto updateSelectedCoinsFromSimulation() -> void;
-    auto setSpendable(bool spendable) -> void;
-    auto process() -> void;
-    auto sendTransaction() -> void;
-    auto onValidationResult(PsbtValidation result) -> void;
-    auto onSendConfirmed() -> void;
-    auto onSignResult(TxResult result) -> void;
-    auto onBroadcastResult(TxResult result) -> void;
-    auto onCoinsUpdated(CoinState state) -> void;
+    void outputSetMax(int id);
+    void deleteOutput(int id);
+    void addOutput();
+    void onOutputDeleteClicked();
+    void onOutputMaxToggled();
+    void clearOutputs();
+    void clearInputs();
+    void onFeeToggled();
+    void setBroadcastable(bool broadcastable);
+    void onCoinToggled();
+    void onAutoSelectionToggled();
+    void updateInputsTotal();
+    void updateOutputValidations();
+    void updateFeeValidation();
+    void updateSelectedCoinsFromSimulation();
+    void setSpendable(bool spendable);
+    void process();
+    void sendTransaction();
+    void onValidationResult(PsbtValidation result);
+    void onSendConfirmed();
+    void onSignResult(TxResult result);
+    void onBroadcastResult(TxResult result);
+    void onCoinsUpdated(CoinState state);
 
 protected:
-    auto init() -> void override;
-    auto doConnect() -> void override;
-    auto view() -> void override;
+    void init() override;
+    void doConnect() override;
+    void view() override;
     auto outputsView() -> QWidget *;
     auto inputsView() -> QWidget *;
     auto txTemplate() -> std::optional<TransactionTemplate>;
     auto output() -> QWidget *;
-    auto updateCoinCheckboxes() -> void;
-    auto updateInputsTitle() -> void;
+    void updateCoinCheckboxes();
+    void updateInputsTitle();
 
 private:
     AccountController *m_controller = nullptr;
@@ -120,29 +144,28 @@ private:
     QWidget *m_outputs_frame = nullptr;
     QWidget *m_inputs_frame = nullptr;
 
-    qontrol::widgets::ToggleSwitch *m_fee_toggle = nullptr;
-    QLineEdit *m_fee_value_input = nullptr;
-    QLabel *m_fee_label = nullptr;
-    QLabel *m_fee_indicator = nullptr;
-    qontrol::Row *m_fee_row = nullptr;
+    theme::Toggle *m_fee_toggle = nullptr;
+    theme::Input *m_fee_value_input = nullptr;
+    theme::Label *m_fee_label = nullptr;
+    theme::Label *m_fee_indicator = nullptr;
 
-    QLabel *m_warning_label = nullptr;
-    QLabel *m_inputs_title_label = nullptr;
+    theme::Label *m_warning_label = nullptr;
+    theme::Label *m_inputs_title_label = nullptr;
 
-    QPushButton *m_add_output_btn = nullptr;
+    theme::Button *m_add_output_btn = nullptr;
     QScrollArea *m_coins_scroll = nullptr;
 
     qontrol::Row *m_inputs_total_input_row = nullptr;
-    QLineEdit *m_inputs_total_input = nullptr;
+    theme::Display *m_inputs_total_input = nullptr;
     qontrol::Row *m_inputs_min_input_row = nullptr;
-    QLineEdit *m_inputs_min_input = nullptr;
-    QCheckBox *m_auto_coin_selection = nullptr;
+    theme::Display *m_inputs_min_input = nullptr;
+    theme::Checkbox *m_auto_coin_selection = nullptr;
 
-    QPushButton *m_clear_outputs_btn = nullptr;
-    QPushButton *m_clear_inputs_btn = nullptr;
-    QPushButton *m_send_btn = nullptr;
+    theme::Button *m_clear_outputs_btn = nullptr;
+    theme::Button *m_clear_inputs_btn = nullptr;
+    theme::Button *m_send_btn = nullptr;
 
-    QLabel *m_fee_estimate_label = nullptr;
+    theme::Label *m_fee_estimate_label = nullptr;
 
     bool m_broadcastable = false;
     std::optional<rust::Box<PsbtResult>> m_psbt_result = std::nullopt;
@@ -150,7 +173,7 @@ private:
     QString m_signed_tx_hex;
     QList<RustCoin> m_selected_coins;
     QStringList m_auto_selected_outpoints;
-    QHash<QString, QCheckBox *> m_coin_checkboxes;
+    QHash<QString, theme::Checkbox *> m_coin_checkboxes;
     CoinState m_last_coin_state{};
     modal::ConfirmSend *m_confirm_modal = nullptr;
 };

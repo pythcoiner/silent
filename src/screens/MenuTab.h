@@ -1,7 +1,11 @@
 #pragma once
 
-#include <QPushButton>
 #include <QWidget>
+
+namespace theme {
+class Button;
+}
+
 #include <Qontrol>
 
 class MenuTab : public QWidget {
@@ -14,19 +18,19 @@ signals:
     void createAccount();
 
 public slots:
-    auto onAccountList(const QList<QString> &accounts) -> void;
-    auto onCreateClicked() -> void;
-    auto onAccountClicked() -> void;
-    auto onTrashClicked() -> void;
+    void onAccountList(const QList<QString> &accounts);
+    void onCreateClicked();
+    void onAccountClicked();
+    void onTrashClicked();
 
 protected:
-    auto init() -> void;
-    auto doConnect() -> void;
-    auto view() -> void;
-    auto clearAccountButtons() -> void;
+    void init();
+    void doConnect();
+    void view();
+    void clearAccountButtons();
 
 private:
-    QPushButton *m_create_btn = nullptr;
+    theme::Button *m_create_btn = nullptr;
     qontrol::Column *m_accounts_column = nullptr;
     QList<QWidget *> m_account_rows;
 };

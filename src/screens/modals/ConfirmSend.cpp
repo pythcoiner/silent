@@ -1,15 +1,21 @@
 #include "ConfirmSend.h"
 #include "../utils.h"
+#include "theme/Button.h"
+#include "theme/Label.h"
 #include <Qontrol>
 #include <common.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
 
 namespace modal {
 
-ConfirmSend::ConfirmSend(const QStringList &recipients, uint64_t fee,
-                         const QString &txid_preview)
-    : m_recipients(recipients), m_fee(fee), m_txid_preview(txid_preview) {
+using theme::Button;
+using theme::ButtonRole;
+using theme::Label;
+using theme::LabelRole;
+
+ConfirmSend::ConfirmSend(const QStringList &recipients, uint64_t fee, const QString &txid_preview)
+    : m_recipients(recipients),
+      m_fee(fee),
+      m_txid_preview(txid_preview) {
     setWindowTitle("Confirm Transaction");
     resize(500, 300);
     init();
@@ -17,7 +23,7 @@ ConfirmSend::ConfirmSend(const QStringList &recipients, uint64_t fee,
     view();
 }
 
-auto ConfirmSend::init() -> void {
+void ConfirmSend::init() {
     QString details;
     for (const auto &line : m_recipients) {
         details += line + "\n";
@@ -25,23 +31,23 @@ auto ConfirmSend::init() -> void {
     details += "\nFee: " + toBitcoin(m_fee);
     details += "\nTxid: " + m_txid_preview;
 
-    m_details_label = new QLabel(details);
+    m_details_label = new Label(details);
     m_details_label->setWordWrap(true);
     m_details_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    m_cancel_btn = new QPushButton("Cancel");
-    m_confirm_btn = new QPushButton("Confirm");
+    m_cancel_btn = new Button("Cancel");
+    m_confirm_btn = new Button("Confirm", ButtonRole::Primary);
 
-    m_status_label = new QLabel("Broadcasting...");
+    m_status_label = new Label("Broadcasting...");
     m_status_label->setAlignment(Qt::AlignCenter);
     m_status_label->setWordWrap(true);
     m_status_label->setVisible(false);
 
-    m_ok_btn = new QPushButton("OK");
+    m_ok_btn = new Button("OK", ButtonRole::Primary);
     m_ok_btn->setVisible(false);
 }
 
-auto ConfirmSend::doConnect() -> void {
+void ConfirmSend::doConnect() {
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(m_confirm_btn, &QPushButton::clicked, this, &ConfirmSend::onConfirmClicked,
             qontrol::UNIQUE);
@@ -49,20 +55,20 @@ auto ConfirmSend::doConnect() -> void {
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto ConfirmSend::onConfirmClicked() -> void {
+void ConfirmSend::onConfirmClicked() {
     setBroadcasting();
     emit confirmed();
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto ConfirmSend::setBroadcasting() -> void {
+void ConfirmSend::setBroadcasting() {
     m_cancel_btn->setVisible(false);
     m_confirm_btn->setVisible(false);
     m_status_label->setVisible(true);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-auto ConfirmSend::setResult(bool ok, const QString &message) -> void {
+void ConfirmSend::setResult(bool ok, const QString &message) {
     m_details_label->setVisible(false);
     if (ok) {
         m_status_label->setText("Transaction Sent\n\nTxid: " + message);
@@ -73,23 +79,20 @@ auto ConfirmSend::setResult(bool ok, const QString &message) -> void {
     m_ok_btn->setVisible(true);
 }
 
-auto ConfirmSend::view() -> void {
+void ConfirmSend::view() {
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
                           ->push(m_cancel_btn)
-                          ->pushSpacer(H_SPACER)
+                          ->pushSpacer(resolve(Spacing::XS))
                           ->push(m_confirm_btn)
                           ->pushSpacer();
 
-    auto *okRow = (new qontrol::Row)
-                      ->pushSpacer()
-                      ->push(m_ok_btn)
-                      ->pushSpacer();
+    auto *okRow = (new qontrol::Row)->pushSpacer()->push(m_ok_btn)->pushSpacer();
 
     auto *col = (new qontrol::Column)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(m_details_label)
-                    ->pushSpacer(20)
+                    ->pushSpacer(resolve(Spacing::M))
                     ->push(m_status_label)
                     ->push(buttonRow)
                     ->push(okRow)
