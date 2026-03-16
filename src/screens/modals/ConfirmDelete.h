@@ -17,11 +17,12 @@ signals:
 public slots:
     auto onDeleteClicked() -> void;
 
-private:
+protected:
     auto init() -> void;
     auto doConnect() -> void;
     auto view() -> void;
 
+private:
     QString m_name;
     QLabel *m_label = nullptr;
     QPushButton *m_cancel_btn = nullptr;

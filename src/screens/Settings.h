@@ -40,17 +40,20 @@ protected:
     auto doConnect() -> void override;
     auto view() -> void override;
 
-private:
-    auto fetchBackendInfo() -> void;
+public slots:
     auto onBackendInfoReady(BackendInfo info) -> void;
+    auto onP2pTestReady(ConnectionResult result) -> void;
+    auto onElectrumTestReady(ConnectionResult result) -> void;
+
+protected:
+    auto fetchBackendInfo() -> void;
     auto invalidateBackendTest() -> void;
     auto clearBackendInfo() -> void;
-    auto onP2pTestReady(ConnectionResult result) -> void;
     auto invalidateP2pTest() -> void;
-    auto onElectrumTestReady(ConnectionResult result) -> void;
     auto invalidateElectrumTest() -> void;
     auto updateButtons() -> void;
 
+private:
     AccountController *m_controller = nullptr;
     bool m_backend_verified = false;
     bool m_p2p_verified = false;

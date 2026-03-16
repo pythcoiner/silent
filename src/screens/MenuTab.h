@@ -19,12 +19,13 @@ public slots:
     auto onAccountClicked() -> void;
     auto onTrashClicked() -> void;
 
-private:
+protected:
     auto init() -> void;
     auto doConnect() -> void;
     auto view() -> void;
     auto clearAccountButtons() -> void;
 
+private:
     QPushButton *m_create_btn = nullptr;
     qontrol::Column *m_accounts_column = nullptr;
     QList<QWidget *> m_account_rows;

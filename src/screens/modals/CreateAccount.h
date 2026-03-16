@@ -21,7 +21,7 @@ signals:
     void p2pTestReady(ConnectionResult result);
     void electrumTestReady(ConnectionResult result);
 
-private slots:
+public slots:
     auto onGenerate() -> void;
     auto onCreate() -> void;
     auto onNetworkChanged() -> void;
@@ -29,20 +29,21 @@ private slots:
     auto onTestP2p() -> void;
     auto onTestElectrum() -> void;
     auto onUpdateCreateButton() -> void;
+    auto onBackendInfoReady(BackendInfo info) -> void;
+    auto onP2pTestReady(ConnectionResult result) -> void;
+    auto onElectrumTestReady(ConnectionResult result) -> void;
 
-private:
+protected:
     auto init() -> void;
     auto doConnect() -> void;
     auto view() -> void;
     auto applyRegtestDefaults() -> void;
     auto invalidateBackendTest() -> void;
-    auto onBackendInfoReady(BackendInfo info) -> void;
     auto invalidateP2pTest() -> void;
-    auto onP2pTestReady(ConnectionResult result) -> void;
     auto invalidateElectrumTest() -> void;
-    auto onElectrumTestReady(ConnectionResult result) -> void;
     auto generateMnemonic() -> QString;
 
+private:
     QLineEdit *m_name_input = nullptr;
     QTextEdit *m_mnemonic_input = nullptr;
     QPushButton *m_generate_btn = nullptr;

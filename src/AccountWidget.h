@@ -17,12 +17,13 @@ public:
     auto controller() -> AccountController *;
     auto loadPanel(qontrol::Panel *panel) -> void;
 
+protected:
+    auto initUI() -> void;
+
 private:
     AccountController *m_controller = nullptr;
     qontrol::Column *m_menu = nullptr;
     QWidget *m_screen_container = nullptr;
     QPointer<qontrol::Panel> m_current_panel;
     StatusBar *m_status_bar = nullptr;
-
-    auto initUI() -> void;
 };

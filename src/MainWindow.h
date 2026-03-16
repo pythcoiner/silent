@@ -28,11 +28,12 @@ public slots:
 protected:
     auto closeEvent(QCloseEvent *event) -> void override;
 
+protected:
+    auto initWindow() -> void;
+
 private:
     bool m_init = false;
     QTabWidget *m_tab = nullptr;
     QList<QPair<QString, AccountWidget *>> m_tabs;
     QWidget *m_menu_tab = nullptr;
-
-    auto initWindow() -> void;
 };
