@@ -114,7 +114,8 @@ auto AppController::openAccount(const QString &name) -> void {
 // NOLINTNEXTLINE(readability-make-member-function-const)
 auto AppController::deleteAccount(const QString &name) -> void {
     auto *modal = new modal::ConfirmDelete(name);
-    connect(modal, &modal::ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
+    connect(modal, &modal::ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed,
+            qontrol::UNIQUE);
     AppController::execModal(modal);
 }
 

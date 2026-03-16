@@ -3,6 +3,7 @@
 #include "screens/utils.h"
 #include <QBrush>
 #include <QFrame>
+#include <common.h>
 
 static auto formatEta(uint64_t secs) -> QString {
     auto hours = secs / 3600;
@@ -36,9 +37,10 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
     }
 
     // Connect toggle signals
-    connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled, this, &StatusBar::onToggled);
+    connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled, this, &StatusBar::onToggled,
+            qontrol::UNIQUE);
     connect(m_electrum_toggle, &qontrol::widgets::ToggleSwitch::toggled, this,
-            &StatusBar::onElectrumToggled);
+            &StatusBar::onElectrumToggled, qontrol::UNIQUE);
 }
 
 auto StatusBar::initUI() -> void {

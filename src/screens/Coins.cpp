@@ -2,6 +2,7 @@
 #include "AccountController.h"
 #include "utils.h"
 #include <Qontrol>
+#include <common.h>
 #include <cstdint>
 #include <optional>
 #include <qlabel.h>
@@ -31,7 +32,7 @@ auto Coins::recvPayload(const CoinState &state) -> void {
 
 auto Coins::doConnect() -> void {
     auto *ctrl = m_controller;
-    connect(ctrl, &AccountController::updateCoins, this, &Coins::recvPayload);
+    connect(ctrl, &AccountController::updateCoins, this, &Coins::recvPayload, qontrol::UNIQUE);
 }
 
 auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count) -> QWidget * {
@@ -117,7 +118,7 @@ auto Coins::view() -> void {
     table->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::EditKeyPressed);
 
     // Connect itemChanged signal to handle label edits
-    connect(table, &QTableWidget::itemChanged, this, &Coins::onLabelEdited);
+    connect(table, &QTableWidget::itemChanged, this, &Coins::onLabelEdited, qontrol::UNIQUE);
 
     auto *mainLayout = (new qontrol::Column(this))
                            ->push(m_confirmed_row)

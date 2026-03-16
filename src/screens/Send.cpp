@@ -113,8 +113,10 @@ OutputW::OutputW(Send *screen, int id) {
     m_max_label->setFont(f);
 
     // Connect to process() which handles validation updates
-    QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::process);
-    QObject::connect(m_amount_input, &QLineEdit::textChanged, screen, &Send::process);
+    QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::process,
+                     qontrol::UNIQUE);
+    QObject::connect(m_amount_input, &QLineEdit::textChanged, screen, &Send::process,
+                     qontrol::UNIQUE);
 
     auto *addrRow = (new qontrol::Row)
                         ->push(m_delete_btn)

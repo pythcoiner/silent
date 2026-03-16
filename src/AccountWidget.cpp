@@ -2,6 +2,7 @@
 #include "AccountController.h"
 #include "StatusBar.h"
 #include <Qontrol>
+#include <common.h>
 #include <qpushbutton.h>
 #include <qsizepolicy.h>
 
@@ -30,10 +31,14 @@ auto AccountWidget::initUI() -> void {
     m_menu->push(recvBtn);
     m_menu->push(settingsBtn);
 
-    connect(coinsBtn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked);
-    connect(sendBtn, &QPushButton::clicked, m_controller, &AccountController::sendClicked);
-    connect(recvBtn, &QPushButton::clicked, m_controller, &AccountController::receiveClicked);
-    connect(settingsBtn, &QPushButton::clicked, m_controller, &AccountController::settingsClicked);
+    connect(coinsBtn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked,
+            qontrol::UNIQUE);
+    connect(sendBtn, &QPushButton::clicked, m_controller, &AccountController::sendClicked,
+            qontrol::UNIQUE);
+    connect(recvBtn, &QPushButton::clicked, m_controller, &AccountController::receiveClicked,
+            qontrol::UNIQUE);
+    connect(settingsBtn, &QPushButton::clicked, m_controller, &AccountController::settingsClicked,
+            qontrol::UNIQUE);
 
     // Create screen container
     auto *container = new qontrol::Column;
@@ -51,16 +56,17 @@ auto AccountWidget::initUI() -> void {
 
     // Connect status bar signals
     connect(m_controller, &AccountController::scannerStateChanged, m_status_bar,
-            &StatusBar::updateConnectionState);
+            &StatusBar::updateConnectionState, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, m_status_bar,
-            &StatusBar::updateScanProgress);
+            &StatusBar::updateScanProgress, qontrol::UNIQUE);
     connect(m_controller, &AccountController::waitingForBlocks, m_status_bar,
-            &StatusBar::updateWaitingForBlocks);
-    connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError);
+            &StatusBar::updateWaitingForBlocks, qontrol::UNIQUE);
+    connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError,
+            qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumConnected, m_status_bar,
-            &StatusBar::onElectrumConnected);
+            &StatusBar::onElectrumConnected, qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumDisconnected, m_status_bar,
-            &StatusBar::onElectrumDisconnected);
+            &StatusBar::onElectrumDisconnected, qontrol::UNIQUE);
 
     // Start scanner after all connections are established
     m_controller->startScanner();
