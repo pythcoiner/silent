@@ -257,7 +257,7 @@ impl Account {
                     outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
                     value: entry.amount_sat(),
                     height: entry.height().unwrap_or(0) as u32,
-                    label: entry.label(),
+                    label: inner.account.get_coin_label(&outpoint).unwrap_or_default(),
                     spent: matches!(
                         entry.status(),
                         bwk_sp::bwk_tx::CoinStatus::Spent | bwk_sp::bwk_tx::CoinStatus::BeingSpend
