@@ -50,7 +50,7 @@ impl Account {
             crate::ffi::Network::Signet => bitcoin::Network::Signet,
             crate::ffi::Network::Testnet => bitcoin::Network::Testnet,
             crate::ffi::Network::Bitcoin => bitcoin::Network::Bitcoin,
-            _ => unreachable!("Invalid network variant"),
+            _ => unreachable!("CXX enum type safety guarantees no other variants exist"),
         };
 
         let sp_config = config.to_sp_config();

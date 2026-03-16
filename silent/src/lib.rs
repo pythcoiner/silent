@@ -474,7 +474,7 @@ pub fn init_logging(level: LogLevel) {
         LogLevel::Info => log::LevelFilter::Info,
         LogLevel::Debug => log::LevelFilter::Debug,
         LogLevel::Trace => log::LevelFilter::Trace,
-        _ => log::LevelFilter::Info,
+        _ => unreachable!("CXX enum type safety guarantees no other variants exist"),
     };
     env_logger::Builder::new()
         .filter_level(filter)
