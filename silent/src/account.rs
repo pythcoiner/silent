@@ -241,10 +241,17 @@ impl Account {
                 height: entry.height(),
                 label: inner.account.get_coin_label(&outpoint).unwrap_or_default(),
                 spent: !entry.is_spendable(),
+                account_type: "SP".into(),
             })
             .collect();
         // Sub-account coins (segwit, taproot)
-        for sub in inner.account.sub_accounts() {
+        for (sub_idx, sub) in inner.account.sub_accounts().iter().enumerate() {
+            let acct_type: String = match sub_idx {
+                0 => "Segwit",
+                1 => "Taproot",
+                _ => "Unknown",
+            }
+            .into();
             for (outpoint, entry) in sub.coins() {
                 all_coins.push(RustCoin {
                     outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
@@ -255,6 +262,7 @@ impl Account {
                         entry.status(),
                         bwk_sp::bwk_tx::CoinStatus::Spent | bwk_sp::bwk_tx::CoinStatus::BeingSpend
                     ),
+                    account_type: acct_type.clone(),
                 });
             }
         }

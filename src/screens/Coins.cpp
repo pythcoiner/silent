@@ -53,6 +53,11 @@ auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count
 }
 
 auto insertCoin(QTableWidget *table, const RustCoin &coin, int index) -> void {
+    auto *typeItem =
+        new QTableWidgetItem(QString::fromUtf8(coin.account_type.data(), coin.account_type.size()));
+    typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
+    table->setItem(index, 0, typeItem);
+
     QString blockHeight;
     if (!coin.spent && coin.height > 0) {
         blockHeight = QString::number(coin.height);
@@ -64,22 +69,22 @@ auto insertCoin(QTableWidget *table, const RustCoin &coin, int index) -> void {
 
     auto *heightItem = new QTableWidgetItem(blockHeight);
     heightItem->setFlags(heightItem->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 0, heightItem);
+    table->setItem(index, 1, heightItem);
 
     auto op = coin.outpoint;
     auto *outpointItem = new QTableWidgetItem(QString(op.c_str()));
     outpointItem->setFlags(outpointItem->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 1, outpointItem);
+    table->setItem(index, 2, outpointItem);
 
     auto label = coin.label;
     auto *labelItem = new QTableWidgetItem(QString(label.c_str()));
     // Label is editable, keep default flags
-    table->setItem(index, 2, labelItem);
+    table->setItem(index, 3, labelItem);
 
     auto *value = new QTableWidgetItem(toBitcoin(coin.value, false));
     value->setTextAlignment(Qt::AlignCenter);
     value->setFlags(value->flags() & ~Qt::ItemIsEditable);
-    table->setItem(index, 3, value);
+    table->setItem(index, 4, value);
 }
 
 auto Coins::view() -> void {
@@ -100,9 +105,9 @@ auto Coins::view() -> void {
     }
 
     int rowCount = static_cast<int>(m_coins.size());
-    auto *table = new QTableWidget(rowCount, 4);
+    auto *table = new QTableWidget(rowCount, 5);
     table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto headers = QStringList{"Block Height", "OutPoint", "Label", "Value"};
+    auto headers = QStringList{"Type", "Block Height", "OutPoint", "Label", "Value"};
     table->setHorizontalHeaderLabels(headers);
     int index = 0;
     for (const auto &coin : m_coins) {
@@ -153,8 +158,8 @@ auto Coins::onLabelEdited(QTableWidgetItem *item) -> void {
         return;
     }
 
-    // Only allow editing the Label column (column 2)
-    if (item->column() != 2) {
+    // Only allow editing the Label column (column 3)
+    if (item->column() != 3) {
         return;
     }
 
@@ -163,8 +168,8 @@ auto Coins::onLabelEdited(QTableWidgetItem *item) -> void {
         return;
     }
 
-    // Get the outpoint from column 1
-    auto *outpointItem = m_table->item(row, 1);
+    // Get the outpoint from column 2
+    auto *outpointItem = m_table->item(row, 2);
     if (outpointItem == nullptr) {
         return;
     }

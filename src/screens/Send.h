@@ -25,6 +25,7 @@ class InputW {
 public:
     InputW(const RustCoin &coin);
     auto widget() -> QWidget *;
+    static const int TYPE_WIDTH = 60;
     static const int OUTPOINT_WIDTH = 180;
     static const int LABEL_WIDTH = 420;
     static const int VALUE_WIDTH = 150;

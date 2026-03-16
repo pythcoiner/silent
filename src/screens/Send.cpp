@@ -39,6 +39,10 @@ static void setValidationIndicator(QLabel *indicator, const QString &text, bool 
 }
 
 InputW::InputW(const RustCoin &coin) {
+    auto *typeLabel =
+        new QLabel(QString::fromUtf8(coin.account_type.data(), coin.account_type.size()));
+    typeLabel->setFixedWidth(TYPE_WIDTH);
+
     auto *outpointLabel = new QLabel(QString::fromUtf8(coin.outpoint.data(), coin.outpoint.size()));
     outpointLabel->setFixedWidth(OUTPOINT_WIDTH);
 
@@ -50,6 +54,8 @@ InputW::InputW(const RustCoin &coin) {
     labelLabel->setFixedWidth(VALUE_WIDTH);
 
     auto *row = (new qontrol::Row)
+                    ->push(typeLabel)
+                    ->pushSpacer(H_SPACER)
                     ->push(outpointLabel)
                     ->pushSpacer(H_SPACER)
                     ->push(valueLabel)
@@ -251,8 +257,9 @@ auto Send::init() -> void {
     m_warning_label->setVisible(false);
 
     // Calculate label width to align with coin value column
-    // checkbox + spacer + outpoint + spacer + label = total label width
-    int labelWidth = 20 + H_SPACER + InputW::OUTPOINT_WIDTH + H_SPACER + InputW::LABEL_WIDTH;
+    // checkbox + spacer + type + spacer + outpoint + spacer + label = total label width
+    int labelWidth = 20 + H_SPACER + InputW::TYPE_WIDTH + H_SPACER + InputW::OUTPOINT_WIDTH +
+                     H_SPACER + InputW::LABEL_WIDTH;
 
     // Inputs total row
     auto *totalLabel = new QLabel("Total selected:");
@@ -443,6 +450,12 @@ auto Send::inputsView() -> QWidget * {
         connect(checkbox, &QCheckBox::checkStateChanged, this, &Send::onCoinToggled,
                 qontrol::UNIQUE);
 
+        QString typeStr =
+            QString::fromUtf8(coin.account_type.data(), coin.account_type.size());
+        auto *typeField = new QLineEdit(typeStr);
+        typeField->setFixedWidth(InputW::TYPE_WIDTH);
+        typeField->setEnabled(false);
+
         auto *outpointField = new QLineEdit(shortenOutpoint(outpoint));
         outpointField->setFixedWidth(InputW::OUTPOINT_WIDTH);
         outpointField->setEnabled(false);
@@ -459,6 +472,8 @@ auto Send::inputsView() -> QWidget * {
 
         auto *row = (new qontrol::Row)
                         ->push(checkbox)
+                        ->pushSpacer(H_SPACER)
+                        ->push(typeField)
                         ->pushSpacer(H_SPACER)
                         ->push(outpointField)
                         ->pushSpacer(H_SPACER)

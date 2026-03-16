@@ -70,6 +70,7 @@ mod ffi {
         pub height: u32,
         pub label: String,
         pub spent: bool,
+        pub account_type: String,
     }
 
     /// Summary of spendable coins.
