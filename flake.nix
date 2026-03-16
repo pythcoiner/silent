@@ -61,9 +61,9 @@
         outputHashes = {
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
           "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
-          "bwk-sp-0.1.0" = "sha256-j9qUiIUGuHDI4kFZbUcgkEQH+zSS/bfhUrrtacG4i5Y=";
+          "bwk-sp-0.1.0" = "sha256-rApP4aQaklY3cqMDOeW7ULj0jazSxqIWWRU2u05Izmg=";
           "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
-          "blindbitd-0.0.1" = "sha256-E+R92nf6WKepvaNUtBOP6LN1EM3c/tGiQNdqyF8tuLI=";
+          "blindbitd-0.0.1" = "sha256-XfO7P9uVLbw8mpiqLZbUoKw8XsxqM1MyeBuq6TKeZ24=";
           "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
           "bitcoin-0.32.8" = "sha256-U1zAufR3Dirxc9gPSGGpyf9HBHEuSNoXxaAyt1Yx5vE=";
         };
@@ -108,9 +108,9 @@ git = "https://github.com/pythcoiner/ureq.git"
 branch = "gzip"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/pythcoiner/bwk.git?rev=9cb5c21"]
+[source."git+https://github.com/pythcoiner/bwk.git?rev=2b6f231"]
 git = "https://github.com/pythcoiner/bwk.git"
-rev = "9cb5c21"
+rev = "2b6f231"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
