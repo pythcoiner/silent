@@ -1071,6 +1071,11 @@ auto Send::onBroadcastResult(TxResult result) -> void {
 
     // Refresh coin state
     m_controller->pollCoins();
+
+    if (result.is_ok) {
+        clearOutputs();
+        clearInputs();
+    }
 }
 
 auto Send::onOutputDeleteClicked() -> void {
