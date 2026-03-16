@@ -678,6 +678,56 @@ impl Account {
             value: txid.to_string(),
         }
     }
+    /// Validate a prepared transaction via Electrum before signing.
+    /// Checks for output address reuse and already-spent inputs.
+    pub fn validate_before_sign(
+        &self,
+        psbt_result: &PsbtResult,
+    ) -> crate::ffi::PsbtValidation {
+        let err_validation = |error: String| crate::ffi::PsbtValidation {
+            is_ok: false,
+            error,
+            is_valid: false,
+            issues: String::new(),
+            reused_output_count: 0,
+            spent_input_count: 0,
+        };
+
+        let Some(inner) = &self.inner else {
+            return err_validation("Account not initialized".to_string());
+        };
+
+        let psbt = match &psbt_result.inner {
+            Ok(psbt) => psbt,
+            Err(e) => return err_validation(format!("Invalid PSBT: {e}")),
+        };
+
+        match validate_psbt_via_electrum(psbt, &inner.electrum_url) {
+            Ok(issue) => {
+                let mut issues = Vec::new();
+                for (idx, addr) in &issue.reused_outputs {
+                    issues.push(format!("Output #{idx}: address {addr} already used"));
+                }
+                for (idx, outpoint, spending_txid) in &issue.spent_inputs {
+                    issues.push(format!(
+                        "Input #{idx}: {outpoint} already spent in {spending_txid}"
+                    ));
+                }
+                let is_valid =
+                    issue.reused_outputs.is_empty() && issue.spent_inputs.is_empty();
+                crate::ffi::PsbtValidation {
+                    is_ok: true,
+                    error: String::new(),
+                    is_valid,
+                    issues: issues.join("\n"),
+                    reused_output_count: issue.reused_outputs.len() as u32,
+                    spent_input_count: issue.spent_inputs.len() as u32,
+                }
+            }
+            Err(e) => err_validation(e),
+        }
+    }
+
     /// Log all details of a failed broadcast for debugging/reproduction.
     /// Called from C++ as a separate step after broadcast_transaction returns an error.
     pub fn log_failed_broadcast(
@@ -819,6 +869,148 @@ fn log_failed_broadcast_impl(
     // Raw hex
     log::error!("signed_tx_hex: {signed_tx_hex}");
     log::error!("=== END BROADCAST FAILED ===");
+}
+
+/// Issues found during PSBT validation.
+#[derive(Debug, Clone)]
+struct PsbtValidationIssue {
+    reused_outputs: Vec<(usize, String)>,               // (output_index, address_string)
+    spent_inputs: Vec<(usize, String, String)>,          // (input_index, outpoint, spending_txid)
+}
+
+/// Validate a PSBT via Electrum before signing.
+/// Checks for output address reuse and already-spent inputs.
+fn validate_psbt_via_electrum(
+    psbt: &bitcoin::Psbt,
+    electrum_url: &str,
+) -> Result<PsbtValidationIssue, String> {
+    use std::collections::HashMap;
+
+    if electrum_url.is_empty() {
+        return Err("Electrum server address not configured".to_string());
+    }
+
+    let (host, port) = crate::config::parse_electrum_url(electrum_url);
+    let host = host.ok_or("Invalid electrum URL: missing host")?;
+    let port = port.ok_or("Invalid electrum URL: missing port")?;
+
+    let mut client =
+        bwk_sp::bwk::bwk_electrum::client::Client::new_local(&host, port).map_err(|e| {
+            format!("Connection to {electrum_url} failed: {e}")
+        })?;
+
+    let mut reused_outputs = Vec::new();
+    let mut spent_inputs = Vec::new();
+
+    // Check outputs: any destination address already used?
+    for (idx, output) in psbt.unsigned_tx.output.iter().enumerate() {
+        let spk = &output.script_pubkey;
+
+        // Skip OP_RETURN outputs
+        if spk.is_op_return() {
+            continue;
+        }
+
+        match client.get_coins_tx_at(spk) {
+            Ok(txids) => {
+                if !txids.is_empty() {
+                    let addr = bitcoin::Address::from_script(spk, bitcoin::Network::Bitcoin)
+                        .map(|a| a.to_string())
+                        .unwrap_or_else(|_| spk.to_hex_string());
+                    reused_outputs.push((idx, addr));
+                }
+            }
+            Err(e) => {
+                log::warn!("validate_psbt: failed to check output #{idx}: {e}");
+            }
+        }
+    }
+
+    // Check inputs: any coin already spent?
+    let mut tx_cache: HashMap<bitcoin::Txid, bitcoin::Transaction> = HashMap::new();
+
+    for (idx, input) in psbt.unsigned_tx.input.iter().enumerate() {
+        let outpoint = input.previous_output;
+
+        // Get the script pubkey for this input from PSBT data
+        let spk = if let Some(ref witness_utxo) = psbt.inputs[idx].witness_utxo {
+            witness_utxo.script_pubkey.clone()
+        } else if let Some(ref non_witness_utxo) = psbt.inputs[idx].non_witness_utxo {
+            non_witness_utxo.output[outpoint.vout as usize]
+                .script_pubkey
+                .clone()
+        } else {
+            // Fetch the previous tx to get the script pubkey
+            match fetch_or_cache_tx(&mut client, &mut tx_cache, outpoint.txid) {
+                Ok(tx) => tx.output[outpoint.vout as usize].script_pubkey.clone(),
+                Err(e) => {
+                    log::warn!(
+                        "validate_psbt: failed to fetch prev tx for input #{idx}: {e}"
+                    );
+                    continue;
+                }
+            }
+        };
+
+        // Get history for this script pubkey
+        let txids = match client.get_coins_tx_at(&spk) {
+            Ok(txids) => txids,
+            Err(e) => {
+                log::warn!("validate_psbt: failed to get history for input #{idx}: {e}");
+                continue;
+            }
+        };
+
+        // Check if any tx in the history spends our outpoint
+        for txid in &txids {
+            // Skip the funding transaction itself
+            if *txid == outpoint.txid {
+                continue;
+            }
+
+            let tx = match fetch_or_cache_tx(&mut client, &mut tx_cache, *txid) {
+                Ok(tx) => tx,
+                Err(e) => {
+                    log::warn!(
+                        "validate_psbt: failed to fetch tx {txid} for input #{idx}: {e}"
+                    );
+                    continue;
+                }
+            };
+
+            for tx_input in &tx.input {
+                if tx_input.previous_output == outpoint {
+                    spent_inputs.push((
+                        idx,
+                        outpoint.to_string(),
+                        txid.to_string(),
+                    ));
+                    break;
+                }
+            }
+        }
+    }
+
+    Ok(PsbtValidationIssue {
+        reused_outputs,
+        spent_inputs,
+    })
+}
+
+/// Fetch a transaction, using cache to avoid duplicate requests.
+fn fetch_or_cache_tx(
+    client: &mut bwk_sp::bwk::bwk_electrum::client::Client,
+    cache: &mut std::collections::HashMap<bitcoin::Txid, bitcoin::Transaction>,
+    txid: bitcoin::Txid,
+) -> Result<bitcoin::Transaction, String> {
+    if let Some(tx) = cache.get(&txid) {
+        return Ok(tx.clone());
+    }
+    let tx = client
+        .get_tx(txid)
+        .map_err(|e| format!("Failed to fetch tx {txid}: {e}"))?;
+    cache.insert(txid, tx.clone());
+    Ok(tx)
 }
 
 /// Broadcast a transaction via Electrum server.

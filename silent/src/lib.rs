@@ -173,6 +173,23 @@ mod ffi {
         pub electrum_url: String,
     }
 
+    /// Result of PSBT pre-signing validation via Electrum.
+    #[derive(Debug, Clone)]
+    pub struct PsbtValidation {
+        /// Whether the validation check itself succeeded (false = connection/protocol error).
+        pub is_ok: bool,
+        /// Error message when is_ok is false (connection failure, etc.).
+        pub error: String,
+        /// Whether the PSBT passed all checks (true = no issues found).
+        pub is_valid: bool,
+        /// Human-readable summary of issues found.
+        pub issues: String,
+        /// Number of output addresses that have been used before.
+        pub reused_output_count: u32,
+        /// Number of inputs whose coins have already been spent.
+        pub spent_input_count: u32,
+    }
+
     /// Backend server information result.
     #[derive(Debug, Clone)]
     pub struct BackendInfo {
@@ -412,6 +429,14 @@ mod ffi {
             tx_template: TransactionTemplate,
             signed_tx_hex: String,
         );
+
+        /// Validate a prepared transaction via Electrum before signing.
+        /// Checks for output address reuse and already-spent inputs.
+        /// Blocking call - must be called from a background thread.
+        fn validate_before_sign(
+            self: &Account,
+            psbt_result: &PsbtResult,
+        ) -> PsbtValidation;
     }
 
     // ===== Poll Methods =====
@@ -714,6 +739,6 @@ pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use sync_estimator::{new_sync_estimator, SyncEstimator};
 pub use ffi::{
-    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, RegtestDefaults,
-    TransactionSimulation, TransactionTemplate,
+    BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, PsbtValidation,
+    RegtestDefaults, TransactionSimulation, TransactionTemplate,
 };

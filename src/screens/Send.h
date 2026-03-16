@@ -68,6 +68,7 @@ public:
     Send(AccountController *ctrl);
 
 signals:
+    void validationReady(PsbtValidation result);
     void signReady(TxResult result);
     void broadcastReady(TxResult result);
 
@@ -90,6 +91,7 @@ public slots:
     auto setSpendable(bool spendable) -> void;
     auto process() -> void;
     auto sendTransaction() -> void;
+    auto onValidationResult(PsbtValidation result) -> void;
     auto onSendConfirmed() -> void;
     auto onSignResult(TxResult result) -> void;
     auto onBroadcastResult(TxResult result) -> void;

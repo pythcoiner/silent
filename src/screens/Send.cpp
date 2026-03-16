@@ -304,6 +304,7 @@ auto Send::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_fee_toggle, &QCheckBox::toggled, this, &Send::onFeeToggled, qontrol::UNIQUE);
     connect(m_fee_value_input, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
+    connect(this, &Send::validationReady, this, &Send::onValidationResult, qontrol::UNIQUE);
     connect(this, &Send::signReady, this, &Send::onSignResult, qontrol::UNIQUE);
     connect(this, &Send::broadcastReady, this, &Send::onBroadcastResult, qontrol::UNIQUE);
 }
@@ -965,6 +966,78 @@ auto Send::sendTransaction() -> void {
         return;
     }
 
+    // Store psbt and tx template for use in validation / onSendConfirmed / logging
+    m_psbt_result = std::make_optional(std::move(psbt));
+    m_tx_template = txTemp;
+
+    // Run PSBT validation on background thread before showing confirm modal
+    m_send_btn->setEnabled(false);
+    auto *thread = QThread::create([this]() {
+        auto result =
+            m_controller->getAccount().value()->validate_before_sign(*m_psbt_result.value());
+        emit validationReady(result);
+    });
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto Send::onValidationResult(PsbtValidation result) -> void {
+    qDebug() << "Send::onValidationResult() is_ok:" << result.is_ok
+             << "is_valid:" << result.is_valid;
+
+    m_send_btn->setEnabled(true);
+
+    if (!result.is_ok) {
+        // Connection/protocol error — warn but don't block
+        auto error = QString::fromStdString(std::string(result.error.c_str()));
+        AppController::execModal(new qontrol::Modal("Validation Error", error));
+        // Fall through to show ConfirmSend anyway
+    } else if (result.spent_input_count > 0) {
+        // Spent inputs — block the transaction
+        auto issues = QString::fromStdString(std::string(result.issues.c_str()));
+        AppController::execModal(
+            new qontrol::Modal("Error", "Input(s) already spent:\n" + issues));
+        m_psbt_result = std::nullopt;
+        m_tx_template = std::nullopt;
+        return;
+    } else if (result.reused_output_count > 0) {
+        // Address reuse — warn and ask user via accept/reject modal
+        auto issues = QString::fromStdString(std::string(result.issues.c_str()));
+        auto *modal = new qontrol::Modal();
+        modal->setWindowTitle("Address Reuse Warning");
+        auto *label = new QLabel(issues + "\n\nProceed anyway?");
+        label->setWordWrap(true);
+        auto *proceedBtn = new QPushButton("Proceed");
+        auto *cancelBtn = new QPushButton("Cancel");
+        connect(proceedBtn, &QPushButton::clicked, modal, &QDialog::accept);
+        connect(cancelBtn, &QPushButton::clicked, modal, &QDialog::reject);
+        auto *btnRow = (new qontrol::Row)
+                           ->pushSpacer()
+                           ->push(cancelBtn)
+                           ->pushSpacer()
+                           ->push(proceedBtn)
+                           ->pushSpacer();
+        auto *col = (new qontrol::Column)
+                        ->push(label)
+                        ->pushSpacer(20)
+                        ->push(btnRow)
+                        ->pushSpacer();
+        modal->setMainWidget(margin(col, 10));
+        int dialogResult = modal->exec();
+        delete modal;
+        if (dialogResult != QDialog::Accepted) {
+            m_psbt_result = std::nullopt;
+            m_tx_template = std::nullopt;
+            return;
+        }
+    }
+
+    // Continue with normal ConfirmSend flow
+    if (!m_psbt_result.has_value() || !m_tx_template.has_value()) {
+        return;
+    }
+
     // Build recipient summary for confirmation modal
     QStringList recipients;
     for (auto *out : m_outputs) {
@@ -979,20 +1052,15 @@ auto Send::sendTransaction() -> void {
         }
     }
 
-    auto txidPreview = QString::fromStdString(std::string(psbt->get_txid_preview().c_str()));
-    auto fee = m_fee_estimate_label->isVisible()
-                   ? static_cast<uint64_t>(m_fee_value_input->text().toDouble() > 0 ? m_fee_value_input->text().toDouble() : 0)
-                   : 0;
+    auto txidPreview = QString::fromStdString(
+        std::string(m_psbt_result.value()->get_txid_preview().c_str()));
+    uint64_t fee = 0;
 
     // Use the fee from the last simulation if available
-    auto simu = m_controller->simulateTx(txTemp.value());
+    auto simu = m_controller->simulateTx(m_tx_template.value());
     if (simu.is_valid) {
         fee = simu.fee;
     }
-
-    // Store psbt and tx template for use in onSendConfirmed / logging
-    m_psbt_result = std::make_optional(std::move(psbt));
-    m_tx_template = txTemp;
 
     m_confirm_modal = new modal::ConfirmSend(recipients, fee, txidPreview);
     connect(m_confirm_modal, &modal::ConfirmSend::confirmed, this, &Send::onSendConfirmed,
