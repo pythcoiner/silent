@@ -1031,6 +1031,30 @@ fn test_max_send_to_sp_with_mixed_inputs() {
         .send_raw_transaction(&tx2)
         .expect("mixed-input SP broadcast should succeed");
 
+    // Step 4: Mine and verify scanner detects the SP output from mixed-input send
+    bwk_test::generate_blocks(bitcoind, 1);
+
+    let tx2_height =
+        bwk_test::get_tx_height(bitcoind, tx2.compute_txid()).expect("get tx2 height") as u32;
+    wait_for_sync_and_index(&url, tx2_height);
+
+    // Wait for scanner to detect the new SP output
+    assert!(
+        wait_for_notification(&mut account, NotificationFlag::NewOutput, 30),
+        "Scanner should detect the SP output from mixed-input send"
+    );
+
+    let coins_after = account.coins();
+    let unspent_after: Vec<_> = coins_after.iter().filter(|c| !c.spent).collect();
+    eprintln!("Coins after mixed-input SP send:");
+    for coin in &unspent_after {
+        eprintln!("  {} value={} spent={}", coin.outpoint, coin.value, coin.spent);
+    }
+    assert!(
+        !unspent_after.is_empty(),
+        "Scanner should detect at least 1 unspent SP coin from mixed-input send, got 0"
+    );
+
     account.stop_scanner();
     cleanup_test_account(&account_name);
     drop(bbd);
