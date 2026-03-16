@@ -5,6 +5,8 @@
 #include <qlabel.h>
 #include <qthread.h>
 
+namespace modal {
+
 CreateAccount::CreateAccount(QWidget *parent) {
     Q_UNUSED(parent);
     setWindowTitle("Create Account");
@@ -401,3 +403,5 @@ auto CreateAccount::generateMnemonic() -> QString { // NOLINT
     auto mnemonic = ::generate_mnemonic();
     return QString::fromStdString(std::string(mnemonic));
 }
+
+} // namespace modal

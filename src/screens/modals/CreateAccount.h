@@ -7,6 +7,8 @@
 #include <Qontrol>
 #include <silent.h>
 
+namespace modal {
+
 class CreateAccount : public qontrol::Modal {
     Q_OBJECT
 
@@ -60,3 +62,5 @@ private:
     bool m_p2p_verified = false;
     bool m_electrum_verified = false;
 };
+
+} // namespace modal

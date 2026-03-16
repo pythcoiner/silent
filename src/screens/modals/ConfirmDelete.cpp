@@ -5,6 +5,8 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 
+namespace modal {
+
 ConfirmDelete::ConfirmDelete(const QString &name, QWidget *parent) : m_name(name) {
     Q_UNUSED(parent);
     setWindowTitle("Delete Wallet");
@@ -53,3 +55,5 @@ auto ConfirmDelete::view() -> void {
 
     setMainWidget(margin(col));
 }
+
+} // namespace modal

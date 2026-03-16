@@ -82,7 +82,7 @@ auto AppController::listAccounts() -> void {
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AppController::onCreateAccount() -> void {
-    auto *modal = new CreateAccount();
+    auto *modal = new modal::CreateAccount();
     AppController::execModal(modal);
 }
 
@@ -113,8 +113,8 @@ auto AppController::openAccount(const QString &name) -> void {
 
 // NOLINTNEXTLINE(readability-make-member-function-const)
 auto AppController::deleteAccount(const QString &name) -> void {
-    auto *modal = new ConfirmDelete(name);
-    connect(modal, &ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
+    auto *modal = new modal::ConfirmDelete(name);
+    connect(modal, &modal::ConfirmDelete::confirmed, this, &AppController::onDeleteConfirmed);
     AppController::execModal(modal);
 }
 

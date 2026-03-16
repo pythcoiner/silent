@@ -5,6 +5,8 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 
+namespace modal {
+
 class ConfirmDelete : public qontrol::Modal {
     Q_OBJECT
 
@@ -28,3 +30,5 @@ private:
     QPushButton *m_cancel_btn = nullptr;
     QPushButton *m_delete_btn = nullptr;
 };
+
+} // namespace modal
