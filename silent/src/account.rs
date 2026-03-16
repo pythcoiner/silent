@@ -506,12 +506,19 @@ impl Account {
 
         let mut builder = match Self::build_tx_builder(inner, &tx_template) {
             Ok(b) => b,
-            Err(e) => return err_psbt(e.to_string()),
+            Err(e) => {
+                log_failed_prepare(inner, &tx_template, &e.to_string());
+                return err_psbt(e.to_string());
+            }
         };
 
         match builder.generate() {
             Ok(psbt) => Box::new(PsbtResult { inner: Ok(psbt) }),
-            Err(e) => err_psbt(format!("{e:?}")),
+            Err(e) => {
+                let error = format!("{e:?}");
+                log_failed_prepare(inner, &tx_template, &error);
+                err_psbt(error)
+            }
         }
     }
 
@@ -667,6 +674,25 @@ impl Account {
 
         log_failed_broadcast_impl(inner, &tx, &signed_tx_hex, &tx_template);
     }
+}
+
+/// Log transaction template and wallet coins on prepare failure for debugging.
+fn log_failed_prepare(inner: &AccountInner, tx_template: &TransactionTemplate, error: &str) {
+    log::error!("=== PREPARE FAILED ===");
+    log::error!("error: {error}");
+    log::error!("tx_template: {tx_template:#?}");
+
+    log::error!("sp_coins: {:#?}", inner.account.coins());
+    for (sub_idx, sub) in inner.account.sub_accounts().iter().enumerate() {
+        let name = match sub_idx {
+            0 => "segwit",
+            1 => "taproot",
+            _ => "unknown_sub",
+        };
+        log::error!("{name}_coins: {:#?}", sub.coins());
+    }
+
+    log::error!("=== END PREPARE FAILED ===");
 }
 
 /// Log all transaction details on broadcast failure for debugging.
