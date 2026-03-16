@@ -7,8 +7,7 @@
 
 namespace modal {
 
-ConfirmDelete::ConfirmDelete(const QString &name, QWidget *parent) : m_name(name) {
-    Q_UNUSED(parent);
+ConfirmDelete::ConfirmDelete(const QString &name, [[maybe_unused]] QWidget *parent) : m_name(name) {
     setWindowTitle("Delete Wallet");
     resize(400, 150);
     init();

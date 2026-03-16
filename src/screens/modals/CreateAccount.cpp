@@ -7,8 +7,7 @@
 
 namespace modal {
 
-CreateAccount::CreateAccount(QWidget *parent) {
-    Q_UNUSED(parent);
+CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     setWindowTitle("Create Account");
     init();
     doConnect();
