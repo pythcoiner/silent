@@ -59,9 +59,9 @@ private:
     bool m_p2p_verified = false;
     bool m_electrum_verified = false;
     QWidget *m_main_widget = nullptr;
-    QLineEdit *m_blindbit_url = nullptr;
-    QLineEdit *m_p2p_node = nullptr;
-    QLineEdit *m_electrum_url = nullptr;
+    QLineEdit *m_blindbit_url_input = nullptr;
+    QLineEdit *m_p2p_node_input = nullptr;
+    QLineEdit *m_electrum_url_input = nullptr;
     QComboBox *m_network_selector = nullptr;
     QPushButton *m_save_btn = nullptr;
     QPushButton *m_toggle_blindbit_btn = nullptr;

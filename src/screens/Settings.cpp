@@ -37,26 +37,26 @@ auto Settings::init() -> void {
     }
 
     // Create widgets
-    m_blindbit_url = new QLineEdit;
-    m_blindbit_url->setFixedWidth(3 * INPUT_WIDTH);
-    m_blindbit_url->setPlaceholderText("https://blindbit.example.com");
-    m_blindbit_url->setText(m_current_url);
-    m_blindbit_url->setEnabled(!m_controller->isScannerRunning());
+    m_blindbit_url_input = new QLineEdit;
+    m_blindbit_url_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_blindbit_url_input->setPlaceholderText("https://blindbit.example.com");
+    m_blindbit_url_input->setText(m_current_url);
+    m_blindbit_url_input->setEnabled(!m_controller->isScannerRunning());
 
     m_test_btn = new QPushButton("Test");
 
-    m_p2p_node = new QLineEdit;
-    m_p2p_node->setFixedWidth(3 * INPUT_WIDTH);
-    m_p2p_node->setPlaceholderText("127.0.0.1:8333");
-    m_p2p_node->setText(m_current_p2p_node);
+    m_p2p_node_input = new QLineEdit;
+    m_p2p_node_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_p2p_node_input->setPlaceholderText("127.0.0.1:8333");
+    m_p2p_node_input->setText(m_current_p2p_node);
 
     m_test_p2p_btn = new QPushButton("Test");
 
-    m_electrum_url = new QLineEdit;
-    m_electrum_url->setFixedWidth(3 * INPUT_WIDTH);
-    m_electrum_url->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
-    m_electrum_url->setText(m_current_electrum_url);
-    m_electrum_url->setEnabled(!m_controller->isScannerRunning());
+    m_electrum_url_input = new QLineEdit;
+    m_electrum_url_input->setFixedWidth(3 * INPUT_WIDTH);
+    m_electrum_url_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
+    m_electrum_url_input->setText(m_current_electrum_url);
+    m_electrum_url_input->setEnabled(!m_controller->isScannerRunning());
 
     m_test_electrum_btn = new QPushButton("Test");
 
@@ -99,14 +99,14 @@ auto Settings::doConnect() -> void {
             &Settings::updateElectrumToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, this, &Settings::onScanProgress,
             qontrol::UNIQUE);
-    connect(m_blindbit_url, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
+    connect(m_blindbit_url_input, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
             qontrol::UNIQUE);
     connect(m_test_p2p_btn, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
-    connect(m_p2p_node, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
+    connect(m_p2p_node_input, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
             qontrol::UNIQUE);
     connect(m_test_electrum_btn, &QPushButton::clicked, this, &Settings::actionTestElectrum,
             qontrol::UNIQUE);
-    connect(m_electrum_url, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
+    connect(m_electrum_url_input, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
             qontrol::UNIQUE);
     connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady, qontrol::UNIQUE);
     connect(this, &Settings::p2pTestReady, this, &Settings::onP2pTestReady, qontrol::UNIQUE);
@@ -131,15 +131,15 @@ auto Settings::actionSave() -> void {
     auto config = config_from_file(accountName);
 
     // Update BlindBit URL
-    auto url = m_blindbit_url->text().toStdString();
+    auto url = m_blindbit_url_input->text().toStdString();
     config->set_blindbit_url(rust::String(url));
 
     // Update P2P node address
-    auto p2pNode = m_p2p_node->text().trimmed().toStdString();
+    auto p2pNode = m_p2p_node_input->text().trimmed().toStdString();
     config->set_p2p_node(rust::String(p2pNode));
 
     // Update Electrum URL
-    auto electrumUrl = m_electrum_url->text().trimmed().toStdString();
+    auto electrumUrl = m_electrum_url_input->text().trimmed().toStdString();
     config->set_electrum_url(rust::String(electrumUrl));
 
     // Update network
@@ -150,7 +150,7 @@ auto Settings::actionSave() -> void {
     // Save to file
     config->to_file();
 
-    m_current_url = m_blindbit_url->text();
+    m_current_url = m_blindbit_url_input->text();
 
     emit configSaved();
 }
@@ -197,7 +197,7 @@ auto Settings::actionToggleElectrum() -> void {
 }
 
 auto Settings::actionTestBackend() -> void {
-    auto url = m_blindbit_url->text().trimmed();
+    auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "BlindBit URL is empty");
         AppController::execModal(modal);
@@ -216,7 +216,7 @@ auto Settings::actionTestBackend() -> void {
 }
 
 auto Settings::fetchBackendInfo() -> void {
-    auto url = m_blindbit_url->text().trimmed();
+    auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty())
         return;
 
@@ -260,7 +260,7 @@ auto Settings::onBackendInfoReady(BackendInfo info) -> void {
     }
 
     bool networkMatch = (info.network == m_current_network);
-    m_blindbit_url->setText(QString::fromStdString(std::string(info.url.c_str())));
+    m_blindbit_url_input->setText(QString::fromStdString(std::string(info.url.c_str())));
 
     m_backend_verified = networkMatch;
     updateButtons();
@@ -291,7 +291,7 @@ auto Settings::invalidateBackendTest() -> void {
 }
 
 auto Settings::actionTestP2p() -> void {
-    auto addr = m_p2p_node->text().trimmed();
+    auto addr = m_p2p_node_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "P2P node address is empty");
         AppController::execModal(modal);
@@ -334,7 +334,7 @@ auto Settings::invalidateP2pTest() -> void {
 }
 
 auto Settings::actionTestElectrum() -> void {
-    auto addr = m_electrum_url->text().trimmed();
+    auto addr = m_electrum_url_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal("Error", "Electrum address is empty");
         AppController::execModal(modal);
@@ -387,9 +387,9 @@ auto Settings::updateButtons() -> void {
     m_save_btn->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
     m_toggle_blindbit_btn->setEnabled(m_backend_verified || blindbitRunning);
     m_toggle_electrum_btn->setEnabled(m_electrum_verified || m_electrum_running);
-    m_blindbit_url->setEnabled(!blindbitRunning);
+    m_blindbit_url_input->setEnabled(!blindbitRunning);
     m_test_btn->setEnabled(!blindbitRunning);
-    m_electrum_url->setEnabled(!m_electrum_running);
+    m_electrum_url_input->setEnabled(!m_electrum_running);
     m_test_electrum_btn->setEnabled(!m_electrum_running);
 }
 
@@ -423,7 +423,7 @@ auto Settings::view() -> void {
 
     auto *urlRow = (new qontrol::Row)
                        ->push(urlLabel)
-                       ->push(m_blindbit_url)
+                       ->push(m_blindbit_url_input)
                        ->pushSpacer(H_SPACER)
                        ->push(m_test_btn)
                        ->pushSpacer();
@@ -433,7 +433,7 @@ auto Settings::view() -> void {
 
     auto *p2pRow = (new qontrol::Row)
                        ->push(p2pLabel)
-                       ->push(m_p2p_node)
+                       ->push(m_p2p_node_input)
                        ->pushSpacer(H_SPACER)
                        ->push(m_test_p2p_btn)
                        ->pushSpacer();
@@ -443,7 +443,7 @@ auto Settings::view() -> void {
 
     auto *electrumRow = (new qontrol::Row)
                             ->push(electrumLabel)
-                            ->push(m_electrum_url)
+                            ->push(m_electrum_url_input)
                             ->pushSpacer(H_SPACER)
                             ->push(m_test_electrum_btn)
                             ->pushSpacer();

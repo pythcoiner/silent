@@ -65,9 +65,9 @@ auto InputW::widget() -> QWidget * {
 }
 
 OutputW::OutputW(Send *screen, int id) {
-    m_address = new QLineEdit;
-    m_address->setFixedWidth(300);
-    m_address->setPlaceholderText("Silent Payment Address");
+    m_address_input = new QLineEdit;
+    m_address_input->setFixedWidth(300);
+    m_address_input->setPlaceholderText("Silent Payment Address");
 
     m_address_indicator = new QLabel();
     m_address_indicator->setFixedWidth(20);
@@ -76,15 +76,15 @@ OutputW::OutputW(Send *screen, int id) {
     m_delete_btn = new QPushButton();
     QIcon closeIcon = m_delete_btn->style()->standardIcon(QStyle::SP_DialogCloseButton);
     m_delete_btn->setIcon(closeIcon);
-    m_delete_btn->setFixedWidth(m_address->minimumSizeHint().height());
-    m_delete_btn->setFixedHeight(m_address->minimumSizeHint().height());
+    m_delete_btn->setFixedWidth(m_address_input->minimumSizeHint().height());
+    m_delete_btn->setFixedHeight(m_address_input->minimumSizeHint().height());
 
     m_delete_spacer = new QWidget;
     m_delete_spacer->setFixedWidth(V_SPACER);
 
-    m_amount = new QLineEdit;
-    m_amount->setFixedWidth(95);
-    m_amount->setPlaceholderText("0.002 BTC");
+    m_amount_input = new QLineEdit;
+    m_amount_input->setFixedWidth(95);
+    m_amount_input->setPlaceholderText("0.002 BTC");
 
     m_amount_indicator = new QLabel();
     m_amount_indicator->setFixedWidth(20);
@@ -94,9 +94,9 @@ OutputW::OutputW(Send *screen, int id) {
     m_amount_spacer->setFixedWidth(95 + 20);  // amount + indicator width
     m_amount_spacer->setVisible(false);
 
-    m_label = new QLineEdit;
-    m_label->setFixedWidth(2 * INPUT_WIDTH);
-    m_label->setPlaceholderText("Label");
+    m_label_input = new QLineEdit;
+    m_label_input->setFixedWidth(2 * INPUT_WIDTH);
+    m_label_input->setPlaceholderText("Label");
 
     m_max = new QCheckBox;
     m_max->setStyleSheet(R"(
@@ -113,16 +113,16 @@ OutputW::OutputW(Send *screen, int id) {
     m_max_label->setFont(f);
 
     // Connect to process() which handles validation updates
-    QObject::connect(m_address, &QLineEdit::textChanged, screen, &Send::process);
-    QObject::connect(m_amount, &QLineEdit::textChanged, screen, &Send::process);
+    QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::process);
+    QObject::connect(m_amount_input, &QLineEdit::textChanged, screen, &Send::process);
 
     auto *addrRow = (new qontrol::Row)
                         ->push(m_delete_btn)
                         ->push(m_delete_spacer)
-                        ->push(m_address)
+                        ->push(m_address_input)
                         ->push(m_address_indicator)
                         ->pushSpacer(H_SPACER)
-                        ->push(m_amount)
+                        ->push(m_amount_input)
                         ->push(m_amount_indicator)
                         ->push(m_amount_spacer)
                         ->pushSpacer(H_SPACER)
@@ -131,7 +131,7 @@ OutputW::OutputW(Send *screen, int id) {
                         ->push(m_max_label)
                         ->pushSpacer();
 
-    auto *labelRow = (new qontrol::Row)->push(m_label)->pushSpacer();
+    auto *labelRow = (new qontrol::Row)->push(m_label_input)->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->pushSpacer(V_SPACER)
@@ -168,13 +168,13 @@ auto OutputW::enableMax(bool max) -> void {
 }
 
 auto OutputW::setAmountVisible(bool visible) -> void {
-    m_amount->setVisible(visible);
+    m_amount_input->setVisible(visible);
     m_amount_indicator->setVisible(visible);
     m_amount_spacer->setVisible(!visible);
 }
 
 auto OutputW::clearAmount() -> void {
-    m_amount->clear();
+    m_amount_input->clear();
 }
 
 auto OutputW::isMax() -> bool {
@@ -186,13 +186,13 @@ auto Send::onFeeToggled() -> void {
     if (m_fee_toggle->isChecked()) {
         m_fee_label->setText("sats/vb");
         // sats/vb: 3 decimal places max (milli-sats precision)
-        auto *validator = new QDoubleValidator(0.001, 1000000.0, 3, m_fee_value);
+        auto *validator = new QDoubleValidator(0.001, 1000000.0, 3, m_fee_value_input);
         validator->setNotation(QDoubleValidator::StandardNotation);
-        m_fee_value->setValidator(validator);
+        m_fee_value_input->setValidator(validator);
     } else {
         m_fee_label->setText("sats");
         // sats: integers only
-        m_fee_value->setValidator(new QIntValidator(1, 100000000, m_fee_value));
+        m_fee_value_input->setValidator(new QIntValidator(1, 100000000, m_fee_value_input));
     }
     process();
 }
@@ -225,9 +225,9 @@ auto Send::init() -> void {
     m_fee_toggle->setChecked(true); // Default to sats/vb mode
     m_fee_toggle->setFixedSize(40, 20);
 
-    m_fee_value = new QLineEdit;
-    m_fee_value->setFixedWidth(100);
-    m_fee_value->setText("1");
+    m_fee_value_input = new QLineEdit;
+    m_fee_value_input->setFixedWidth(100);
+    m_fee_value_input->setText("1");
 
     m_fee_indicator = new QLabel;
     m_fee_indicator->setFixedWidth(20);
@@ -239,7 +239,7 @@ auto Send::init() -> void {
     m_fee_row = (new qontrol::Row)
                     ->push(m_fee_toggle)
                     ->pushSpacer(V_SPACER)
-                    ->push(m_fee_value)
+                    ->push(m_fee_value_input)
                     ->push(m_fee_indicator)
                     ->pushSpacer(V_SPACER)
                     ->push(m_fee_label)
@@ -256,28 +256,28 @@ auto Send::init() -> void {
     auto *totalLabel = new QLabel("Total selected:");
     totalLabel->setFixedWidth(labelWidth);
     totalLabel->setAlignment(Qt::AlignRight);
-    m_inputs_total = new QLineEdit();
-    m_inputs_total->setFixedWidth(InputW::VALUE_WIDTH);
-    m_inputs_total->setAlignment(Qt::AlignRight);
-    m_inputs_total->setEnabled(false);
-    m_inputs_total_row = (new qontrol::Row)
+    m_inputs_total_input = new QLineEdit();
+    m_inputs_total_input->setFixedWidth(InputW::VALUE_WIDTH);
+    m_inputs_total_input->setAlignment(Qt::AlignRight);
+    m_inputs_total_input->setEnabled(false);
+    m_inputs_total_input_row = (new qontrol::Row)
                              ->push(totalLabel)
                              ->pushSpacer(H_SPACER)
-                             ->push(m_inputs_total)
+                             ->push(m_inputs_total_input)
                              ->pushSpacer();
-    m_inputs_total_row->setVisible(false);
+    m_inputs_total_input_row->setVisible(false);
 
     // Inputs minimum row
     auto *minLabel = new QLabel("Amount to select:");
     minLabel->setFixedWidth(labelWidth);
     minLabel->setAlignment(Qt::AlignRight);
-    m_inputs_min = new QLineEdit();
-    m_inputs_min->setFixedWidth(InputW::VALUE_WIDTH);
-    m_inputs_min->setAlignment(Qt::AlignRight);
-    m_inputs_min->setEnabled(false);
-    m_inputs_min_row =
-        (new qontrol::Row)->push(minLabel)->pushSpacer(H_SPACER)->push(m_inputs_min)->pushSpacer();
-    m_inputs_min_row->setVisible(false);
+    m_inputs_min_input = new QLineEdit();
+    m_inputs_min_input->setFixedWidth(InputW::VALUE_WIDTH);
+    m_inputs_min_input->setAlignment(Qt::AlignRight);
+    m_inputs_min_input->setEnabled(false);
+    m_inputs_min_input_row =
+        (new qontrol::Row)->push(minLabel)->pushSpacer(H_SPACER)->push(m_inputs_min_input)->pushSpacer();
+    m_inputs_min_input_row->setVisible(false);
 
     m_auto_coin_selection = new QCheckBox("Auto coin selection");
     m_auto_coin_selection->setChecked(true);
@@ -301,7 +301,7 @@ auto Send::doConnect() -> void {
     connect(m_controller, &AccountController::updateCoins, this, &Send::onCoinsUpdated,
             qontrol::UNIQUE);
     connect(m_fee_toggle, &QCheckBox::toggled, this, &Send::onFeeToggled, qontrol::UNIQUE);
-    connect(m_fee_value, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
+    connect(m_fee_value_input, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
     connect(this, &Send::signReady, this, &Send::onSignResult, qontrol::UNIQUE);
     connect(this, &Send::broadcastReady, this, &Send::onBroadcastResult, qontrol::UNIQUE);
 }
@@ -404,8 +404,8 @@ auto Send::inputsView() -> QWidget * {
     auto availableCoins = m_controller->getCoins();
 
     // Unparent persistent rows
-    m_inputs_total_row->setParent(nullptr);
-    m_inputs_min_row->setParent(nullptr);
+    m_inputs_total_input_row->setParent(nullptr);
+    m_inputs_min_input_row->setParent(nullptr);
 
     // Clear old checkbox references
     m_coin_checkboxes.clear();
@@ -495,8 +495,8 @@ auto Send::inputsView() -> QWidget * {
                     ->pushSpacer(10)
                     ->push(m_coins_scroll)
                     ->pushSpacer(V_SPACER)
-                    ->push(m_inputs_min_row)
-                    ->push(m_inputs_total_row)
+                    ->push(m_inputs_min_input_row)
+                    ->push(m_inputs_total_input_row)
                     ->pushSpacer();
 
     return col;
@@ -699,10 +699,10 @@ auto Send::updateInputsTotal() -> void {
 
     if (totalSelected > 0) {
         double fValue = static_cast<double>(totalSelected) / SATS;
-        m_inputs_total->setText(QString::number(fValue, 'f', 8) + " BTC");
-        m_inputs_total_row->setVisible(true);
+        m_inputs_total_input->setText(QString::number(fValue, 'f', 8) + " BTC");
+        m_inputs_total_input_row->setVisible(true);
     } else {
-        m_inputs_total_row->setVisible(false);
+        m_inputs_total_input_row->setVisible(false);
     }
 
     // Calculate minimum required from outputs
@@ -718,10 +718,10 @@ auto Send::updateInputsTotal() -> void {
 
     if (minRequired > 0) {
         double fValue = static_cast<double>(minRequired) / SATS;
-        m_inputs_min->setText(QString::number(fValue, 'f', 8) + " BTC");
-        m_inputs_min_row->setVisible(true);
+        m_inputs_min_input->setText(QString::number(fValue, 'f', 8) + " BTC");
+        m_inputs_min_input_row->setVisible(true);
     } else {
-        m_inputs_min_row->setVisible(false);
+        m_inputs_min_input_row->setVisible(false);
     }
 }
 
@@ -768,11 +768,11 @@ auto Send::updateInputsTitle() -> void {
 }
 
 auto OutputW::address() -> QString {
-    return m_address->text();
+    return m_address_input->text();
 }
 
 auto OutputW::amount() -> std::optional<uint64_t> {
-    auto amountStr = m_amount->text();
+    auto amountStr = m_amount_input->text();
     bool ok = false;
     auto amountBtc = amountStr.toDouble(&ok);
     if (!ok) {
@@ -782,11 +782,11 @@ auto OutputW::amount() -> std::optional<uint64_t> {
 }
 
 auto OutputW::label() -> QString {
-    return m_label->text();
+    return m_label_input->text();
 }
 
 auto OutputW::updateAddressValidation() -> void {
-    QString addr = m_address->text();
+    QString addr = m_address_input->text();
     if (addr.isEmpty()) {
         setValidationIndicator(m_address_indicator, "", false);
     } else {
@@ -796,7 +796,7 @@ auto OutputW::updateAddressValidation() -> void {
 }
 
 auto OutputW::updateAmountValidation() -> void {
-    QString text = m_amount->text();
+    QString text = m_amount_input->text();
     if (text.isEmpty()) {
         setValidationIndicator(m_amount_indicator, "", false);
     } else {
@@ -812,7 +812,7 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
     bool ok = false;
 
     // Fee handling: toggle ON = sats/vb (rate), toggle OFF = sats (absolute)
-    auto feeValue = m_fee_value->text().toDouble(&ok);
+    auto feeValue = m_fee_value_input->text().toDouble(&ok);
     if (!ok || feeValue <= 0) {
         return std::nullopt;
     }
@@ -874,7 +874,7 @@ auto Send::updateOutputValidations() -> void {
 
 auto Send::updateFeeValidation() -> void {
     qDebug() << "Send::updateFeeValidation()";
-    QString text = m_fee_value->text();
+    QString text = m_fee_value_input->text();
     if (text.isEmpty()) {
         setValidationIndicator(m_fee_indicator, "", false);
     } else {
@@ -979,7 +979,7 @@ auto Send::sendTransaction() -> void {
 
     auto txidPreview = QString::fromStdString(std::string(psbt->get_txid_preview().c_str()));
     auto fee = m_fee_estimate_label->isVisible()
-                   ? static_cast<uint64_t>(m_fee_value->text().toDouble() > 0 ? m_fee_value->text().toDouble() : 0)
+                   ? static_cast<uint64_t>(m_fee_value_input->text().toDouble() > 0 ? m_fee_value_input->text().toDouble() : 0)
                    : 0;
 
     // Use the fee from the last simulation if available

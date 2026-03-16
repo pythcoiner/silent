@@ -49,9 +49,9 @@ public:
     auto clearAmount() -> void;
 
 private:
-    QLineEdit *m_address = nullptr;
-    QLineEdit *m_label = nullptr;
-    QLineEdit *m_amount = nullptr;
+    QLineEdit *m_address_input = nullptr;
+    QLineEdit *m_label_input = nullptr;
+    QLineEdit *m_amount_input = nullptr;
     QPushButton *m_delete_btn = nullptr;
     QWidget *m_delete_spacer = nullptr;
     QCheckBox *m_max = nullptr;
@@ -118,7 +118,7 @@ private:
     QWidget *m_inputs_frame = nullptr;
 
     qontrol::widgets::ToggleSwitch *m_fee_toggle = nullptr;
-    QLineEdit *m_fee_value = nullptr;
+    QLineEdit *m_fee_value_input = nullptr;
     QLabel *m_fee_label = nullptr;
     QLabel *m_fee_indicator = nullptr;
     qontrol::Row *m_fee_row = nullptr;
@@ -129,10 +129,10 @@ private:
     QPushButton *m_add_output_btn = nullptr;
     QScrollArea *m_coins_scroll = nullptr;
 
-    qontrol::Row *m_inputs_total_row = nullptr;
-    QLineEdit *m_inputs_total = nullptr;
-    qontrol::Row *m_inputs_min_row = nullptr;
-    QLineEdit *m_inputs_min = nullptr;
+    qontrol::Row *m_inputs_total_input_row = nullptr;
+    QLineEdit *m_inputs_total_input = nullptr;
+    qontrol::Row *m_inputs_min_input_row = nullptr;
+    QLineEdit *m_inputs_min_input = nullptr;
     QCheckBox *m_auto_coin_selection = nullptr;
 
     QPushButton *m_clear_outputs_btn = nullptr;
