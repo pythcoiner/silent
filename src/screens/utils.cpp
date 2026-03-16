@@ -2,7 +2,6 @@
 #include <QPainter>
 #include <QPen>
 #include <Qontrol>
-#include <qboxlayout.h>
 #include <qframe.h>
 #include <qnamespace.h>
 
@@ -17,15 +16,14 @@ auto margin(QWidget *widget, int margin) -> QWidget * {
 }
 
 auto frame(QWidget *widget) -> QWidget * {
-    auto *frame = new Frame;
-    frame->setFrameShape(QFrame::Box);
-    frame->setFrameShadow(QFrame::Sunken);
-    auto *layout = new QVBoxLayout(frame);
-    layout->addWidget(widget);
-    widget->setParent(frame);
+    auto *f = new Frame;
+    f->setFrameShape(QFrame::Box);
+    f->setFrameShadow(QFrame::Sunken);
+    auto *col = (new qontrol::Column)->push(widget);
     int m = 10;
-    layout->setContentsMargins(m, m, m, m);
-    return frame;
+    col->layout()->setContentsMargins(m, m, m, m);
+    f->setLayout(col->layout());
+    return f;
 }
 
 auto toBitcoin(uint64_t sats, bool with_unit) -> QString {

@@ -3,8 +3,6 @@
 #include "screens/utils.h"
 #include <QBrush>
 #include <QFrame>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 
 static auto formatEta(uint64_t secs) -> QString {
     auto hours = secs / 3600;
@@ -81,21 +79,16 @@ auto StatusBar::initUI() -> void {
                          ->pushSpacer();
 
     // Combine with equal proportions
-    auto *contentRow = new QHBoxLayout;
-    contentRow->setContentsMargins(10, 2, 10, 2);
-    contentRow->setSpacing(0);
-    contentRow->addWidget(leftRow, 1);
-    contentRow->addWidget(vline);
-    contentRow->addWidget(rightRow, 1);
+    auto *contentRow = (new qontrol::Row)->push(leftRow)->push(vline)->push(rightRow);
+    contentRow->layout()->setContentsMargins(10, 2, 10, 2);
+    contentRow->layout()->setSpacing(0);
 
     // Vertical layout: separator on top, content below
-    auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-    layout->addWidget(separator);
-    layout->addLayout(contentRow);
+    auto *mainCol = (new qontrol::Column)->push(separator)->push(contentRow);
+    mainCol->layout()->setContentsMargins(0, 0, 0, 0);
+    mainCol->layout()->setSpacing(0);
 
-    setLayout(layout);
+    setLayout(mainCol->layout());
 }
 
 auto StatusBar::loadBlindbitUrl() -> void {

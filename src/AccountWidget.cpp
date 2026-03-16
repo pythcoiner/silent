@@ -2,7 +2,6 @@
 #include "AccountController.h"
 #include "StatusBar.h"
 #include <Qontrol>
-#include <qboxlayout.h>
 #include <qpushbutton.h>
 #include <qsizepolicy.h>
 
@@ -37,18 +36,15 @@ auto AccountWidget::initUI() -> void {
     connect(settingsBtn, &QPushButton::clicked, m_controller, &AccountController::settingsClicked);
 
     // Create screen container
-    m_screen_container = new QWidget(this);
-    m_screen_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto *containerLayout = new QVBoxLayout(m_screen_container);
-    containerLayout->setContentsMargins(0, 0, 0, 0);
+    auto *container = new qontrol::Column;
+    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    container->layout()->setContentsMargins(0, 0, 0, 0);
+    m_screen_container = container;
 
     // Wrap menu + screen container in horizontal layout
-    auto *contentWidget = new QWidget(this);
-    auto *contentLayout = new QHBoxLayout(contentWidget);
-    contentLayout->setContentsMargins(0, 0, 0, 0);
-    contentLayout->setSpacing(0);
-    contentLayout->addWidget(m_menu);
-    contentLayout->addWidget(m_screen_container, 1);
+    auto *contentWidget = (new qontrol::Row)->push(m_menu)->push(m_screen_container);
+    contentWidget->layout()->setContentsMargins(0, 0, 0, 0);
+    contentWidget->layout()->setSpacing(0);
 
     // Create status bar
     m_status_bar = new StatusBar(m_controller, this);
@@ -70,12 +66,10 @@ auto AccountWidget::initUI() -> void {
     m_controller->startScanner();
 
     // Create main vertical layout with content + status bar
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(0);
-    mainLayout->addWidget(contentWidget, 1);
-    mainLayout->addWidget(m_status_bar);
-    setLayout(mainLayout);
+    auto *mainCol = (new qontrol::Column)->push(contentWidget)->push(m_status_bar);
+    mainCol->layout()->setContentsMargins(0, 0, 0, 0);
+    mainCol->layout()->setSpacing(0);
+    setLayout(mainCol->layout());
 }
 
 auto AccountWidget::loadPanel(qontrol::Panel *panel) -> void {
