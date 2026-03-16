@@ -43,14 +43,14 @@ auto Settings::init() -> void {
     m_blindbit_url->setText(m_current_url);
     m_blindbit_url->setEnabled(!m_controller->isScannerRunning());
 
-    m_btn_test = new QPushButton("Test");
+    m_test_btn = new QPushButton("Test");
 
     m_p2p_node = new QLineEdit;
     m_p2p_node->setFixedWidth(3 * INPUT_WIDTH);
     m_p2p_node->setPlaceholderText("127.0.0.1:8333");
     m_p2p_node->setText(m_current_p2p_node);
 
-    m_btn_test_p2p = new QPushButton("Test");
+    m_test_p2p_btn = new QPushButton("Test");
 
     m_electrum_url = new QLineEdit;
     m_electrum_url->setFixedWidth(3 * INPUT_WIDTH);
@@ -58,7 +58,7 @@ auto Settings::init() -> void {
     m_electrum_url->setText(m_current_electrum_url);
     m_electrum_url->setEnabled(!m_controller->isScannerRunning());
 
-    m_btn_test_electrum = new QPushButton("Test");
+    m_test_electrum_btn = new QPushButton("Test");
 
     m_network_selector = new QComboBox;
     m_network_selector->addItem("Regtest", static_cast<int>(Network::Regtest));
@@ -77,20 +77,20 @@ auto Settings::init() -> void {
     m_info_height = new QLabel("--");
     m_info_tweaks = new QLabel("--");
 
-    m_btn_save = new QPushButton("Save Settings");
-    m_btn_toggle_blindbit =
+    m_save_btn = new QPushButton("Save Settings");
+    m_toggle_blindbit_btn =
         new QPushButton(m_controller->isScannerRunning() ? "Disconnect Blindbit" : "Connect Blindbit");
-    m_btn_toggle_electrum =
+    m_toggle_electrum_btn =
         new QPushButton(m_electrum_running ? "Disconnect Electrum" : "Connect Electrum");
 }
 
 auto Settings::doConnect() -> void {
-    connect(m_btn_save, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
-    connect(m_btn_toggle_blindbit, &QPushButton::clicked, this, &Settings::actionToggleBlindbit,
+    connect(m_save_btn, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
+    connect(m_toggle_blindbit_btn, &QPushButton::clicked, this, &Settings::actionToggleBlindbit,
             qontrol::UNIQUE);
-    connect(m_btn_toggle_electrum, &QPushButton::clicked, this, &Settings::actionToggleElectrum,
+    connect(m_toggle_electrum_btn, &QPushButton::clicked, this, &Settings::actionToggleElectrum,
             qontrol::UNIQUE);
-    connect(m_btn_test, &QPushButton::clicked, this, &Settings::actionTestBackend, qontrol::UNIQUE);
+    connect(m_test_btn, &QPushButton::clicked, this, &Settings::actionTestBackend, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scannerStateChanged, this,
             &Settings::updateBlindbitToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumConnected, this,
@@ -101,10 +101,10 @@ auto Settings::doConnect() -> void {
             qontrol::UNIQUE);
     connect(m_blindbit_url, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
             qontrol::UNIQUE);
-    connect(m_btn_test_p2p, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
+    connect(m_test_p2p_btn, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
     connect(m_p2p_node, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
             qontrol::UNIQUE);
-    connect(m_btn_test_electrum, &QPushButton::clicked, this, &Settings::actionTestElectrum,
+    connect(m_test_electrum_btn, &QPushButton::clicked, this, &Settings::actionTestElectrum,
             qontrol::UNIQUE);
     connect(m_electrum_url, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
             qontrol::UNIQUE);
@@ -164,7 +164,7 @@ auto Settings::actionToggleBlindbit() -> void {
     }
 
     if (m_controller->isScannerRunning()) {
-        m_btn_toggle_blindbit->setEnabled(false);
+        m_toggle_blindbit_btn->setEnabled(false);
         accountOpt.value()->stop_scanner();
         clearBackendInfo();
     } else {
@@ -186,7 +186,7 @@ auto Settings::actionToggleElectrum() -> void {
     }
 
     if (m_electrum_running) {
-        m_btn_toggle_electrum->setEnabled(false);
+        m_toggle_electrum_btn->setEnabled(false);
         accountOpt.value()->stop_electrum();
     } else {
         if (!accountOpt.value()->start_electrum()) {
@@ -204,8 +204,8 @@ auto Settings::actionTestBackend() -> void {
         return;
     }
 
-    m_btn_test->setEnabled(false);
-    m_btn_test->setText("Testing...");
+    m_test_btn->setEnabled(false);
+    m_test_btn->setText("Testing...");
 
     auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
@@ -229,8 +229,8 @@ auto Settings::fetchBackendInfo() -> void {
 }
 
 auto Settings::onBackendInfoReady(BackendInfo info) -> void {
-    m_btn_test->setEnabled(true);
-    m_btn_test->setText("Test");
+    m_test_btn->setEnabled(true);
+    m_test_btn->setText("Test");
 
     if (!info.is_ok) {
         m_backend_verified = false;
@@ -298,8 +298,8 @@ auto Settings::actionTestP2p() -> void {
         return;
     }
 
-    m_btn_test_p2p->setEnabled(false);
-    m_btn_test_p2p->setText("Testing...");
+    m_test_p2p_btn->setEnabled(false);
+    m_test_p2p_btn->setText("Testing...");
 
     auto network = m_current_network;
     auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
@@ -311,8 +311,8 @@ auto Settings::actionTestP2p() -> void {
 }
 
 auto Settings::onP2pTestReady(ConnectionResult result) -> void {
-    m_btn_test_p2p->setEnabled(true);
-    m_btn_test_p2p->setText("Test");
+    m_test_p2p_btn->setEnabled(true);
+    m_test_p2p_btn->setText("Test");
 
     if (!result.is_ok) {
         m_p2p_verified = false;
@@ -341,8 +341,8 @@ auto Settings::actionTestElectrum() -> void {
         return;
     }
 
-    m_btn_test_electrum->setEnabled(false);
-    m_btn_test_electrum->setText("Testing...");
+    m_test_electrum_btn->setEnabled(false);
+    m_test_electrum_btn->setText("Testing...");
 
     auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
         auto result = ::test_electrum(rust::String(addr));
@@ -353,8 +353,8 @@ auto Settings::actionTestElectrum() -> void {
 }
 
 auto Settings::onElectrumTestReady(ConnectionResult result) -> void {
-    m_btn_test_electrum->setEnabled(true);
-    m_btn_test_electrum->setText("Test");
+    m_test_electrum_btn->setEnabled(true);
+    m_test_electrum_btn->setText("Test");
 
     if (!result.is_ok) {
         m_electrum_verified = false;
@@ -384,13 +384,13 @@ auto Settings::clearBackendInfo() -> void {
 
 auto Settings::updateButtons() -> void {
     bool blindbitRunning = m_controller->isScannerRunning();
-    m_btn_save->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
-    m_btn_toggle_blindbit->setEnabled(m_backend_verified || blindbitRunning);
-    m_btn_toggle_electrum->setEnabled(m_electrum_verified || m_electrum_running);
+    m_save_btn->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
+    m_toggle_blindbit_btn->setEnabled(m_backend_verified || blindbitRunning);
+    m_toggle_electrum_btn->setEnabled(m_electrum_verified || m_electrum_running);
     m_blindbit_url->setEnabled(!blindbitRunning);
-    m_btn_test->setEnabled(!blindbitRunning);
+    m_test_btn->setEnabled(!blindbitRunning);
     m_electrum_url->setEnabled(!m_electrum_running);
-    m_btn_test_electrum->setEnabled(!m_electrum_running);
+    m_test_electrum_btn->setEnabled(!m_electrum_running);
 }
 
 auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) -> void {
@@ -401,8 +401,8 @@ auto Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) ->
 }
 
 auto Settings::updateBlindbitToggleButton(bool running) -> void {
-    if (m_btn_toggle_blindbit != nullptr) {
-        m_btn_toggle_blindbit->setText(running ? "Disconnect Blindbit" : "Connect Blindbit");
+    if (m_toggle_blindbit_btn != nullptr) {
+        m_toggle_blindbit_btn->setText(running ? "Disconnect Blindbit" : "Connect Blindbit");
     }
     updateButtons();
 }
@@ -410,8 +410,8 @@ auto Settings::updateBlindbitToggleButton(bool running) -> void {
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto Settings::updateElectrumToggleButton() -> void {
     m_electrum_running = !m_electrum_running;
-    if (m_btn_toggle_electrum != nullptr) {
-        m_btn_toggle_electrum->setText(m_electrum_running ? "Disconnect Electrum"
+    if (m_toggle_electrum_btn != nullptr) {
+        m_toggle_electrum_btn->setText(m_electrum_running ? "Disconnect Electrum"
                                                          : "Connect Electrum");
     }
     updateButtons();
@@ -425,7 +425,7 @@ auto Settings::view() -> void {
                        ->push(urlLabel)
                        ->push(m_blindbit_url)
                        ->pushSpacer(H_SPACER)
-                       ->push(m_btn_test)
+                       ->push(m_test_btn)
                        ->pushSpacer();
 
     auto *p2pLabel = new QLabel("P2P Node:");
@@ -435,7 +435,7 @@ auto Settings::view() -> void {
                        ->push(p2pLabel)
                        ->push(m_p2p_node)
                        ->pushSpacer(H_SPACER)
-                       ->push(m_btn_test_p2p)
+                       ->push(m_test_p2p_btn)
                        ->pushSpacer();
 
     auto *electrumLabel = new QLabel("Electrum Server:");
@@ -445,7 +445,7 @@ auto Settings::view() -> void {
                             ->push(electrumLabel)
                             ->push(m_electrum_url)
                             ->pushSpacer(H_SPACER)
-                            ->push(m_btn_test_electrum)
+                            ->push(m_test_electrum_btn)
                             ->pushSpacer();
 
     auto *networkLabel = new QLabel("Network:");
@@ -476,11 +476,11 @@ auto Settings::view() -> void {
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
-                          ->push(m_btn_toggle_blindbit)
+                          ->push(m_toggle_blindbit_btn)
                           ->pushSpacer(H_SPACER)
-                          ->push(m_btn_toggle_electrum)
+                          ->push(m_toggle_electrum_btn)
                           ->pushSpacer(H_SPACER)
-                          ->push(m_btn_save)
+                          ->push(m_save_btn)
                           ->pushSpacer();
 
     auto *col = (new qontrol::Column)

@@ -31,14 +31,14 @@ protected:
 private:
     AccountController *m_controller = nullptr;
     QWidget *m_main_widget = nullptr;
-    QPushButton *m_btn_copy = nullptr;
+    QPushButton *m_copy_btn = nullptr;
     rust::String m_sp_address;
     bool m_has_sub_accounts = false;
-    QPushButton *m_btn_new_segwit = nullptr;
-    QPushButton *m_btn_copy_segwit = nullptr;
+    QPushButton *m_new_segwit_btn = nullptr;
+    QPushButton *m_copy_segwit_btn = nullptr;
     QLabel *m_segwit_addr_display = nullptr;
-    QPushButton *m_btn_new_taproot = nullptr;
-    QPushButton *m_btn_copy_taproot = nullptr;
+    QPushButton *m_new_taproot_btn = nullptr;
+    QPushButton *m_copy_taproot_btn = nullptr;
     QLabel *m_taproot_addr_display = nullptr;
 };
 

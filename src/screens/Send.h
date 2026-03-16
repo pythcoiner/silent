@@ -52,7 +52,7 @@ private:
     QLineEdit *m_address = nullptr;
     QLineEdit *m_label = nullptr;
     QLineEdit *m_amount = nullptr;
-    QPushButton *m_delete = nullptr;
+    QPushButton *m_delete_btn = nullptr;
     QWidget *m_delete_spacer = nullptr;
     QCheckBox *m_max = nullptr;
     QLabel *m_max_label = nullptr;
@@ -137,7 +137,7 @@ private:
 
     QPushButton *m_clear_outputs_btn = nullptr;
     QPushButton *m_clear_inputs_btn = nullptr;
-    QPushButton *m_send_button = nullptr;
+    QPushButton *m_send_btn = nullptr;
 
     QLabel *m_fee_estimate_label = nullptr;
 

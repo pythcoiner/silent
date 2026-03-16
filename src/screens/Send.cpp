@@ -73,11 +73,11 @@ OutputW::OutputW(Send *screen, int id) {
     m_address_indicator->setFixedWidth(20);
     m_address_indicator->setAlignment(Qt::AlignCenter);
 
-    m_delete = new QPushButton();
-    QIcon closeIcon = m_delete->style()->standardIcon(QStyle::SP_DialogCloseButton);
-    m_delete->setIcon(closeIcon);
-    m_delete->setFixedWidth(m_address->minimumSizeHint().height());
-    m_delete->setFixedHeight(m_address->minimumSizeHint().height());
+    m_delete_btn = new QPushButton();
+    QIcon closeIcon = m_delete_btn->style()->standardIcon(QStyle::SP_DialogCloseButton);
+    m_delete_btn->setIcon(closeIcon);
+    m_delete_btn->setFixedWidth(m_address->minimumSizeHint().height());
+    m_delete_btn->setFixedHeight(m_address->minimumSizeHint().height());
 
     m_delete_spacer = new QWidget;
     m_delete_spacer->setFixedWidth(V_SPACER);
@@ -117,7 +117,7 @@ OutputW::OutputW(Send *screen, int id) {
     QObject::connect(m_amount, &QLineEdit::textChanged, screen, &Send::process);
 
     auto *addrRow = (new qontrol::Row)
-                        ->push(m_delete)
+                        ->push(m_delete_btn)
                         ->push(m_delete_spacer)
                         ->push(m_address)
                         ->push(m_address_indicator)
@@ -140,8 +140,8 @@ OutputW::OutputW(Send *screen, int id) {
                     ->push(labelRow)
                     ->pushSpacer(2 * V_SPACER);
 
-    m_delete->setProperty("outputId", id);
-    QObject::connect(m_delete, &QPushButton::clicked, screen, &Send::onOutputDeleteClicked,
+    m_delete_btn->setProperty("outputId", id);
+    QObject::connect(m_delete_btn, &QPushButton::clicked, screen, &Send::onOutputDeleteClicked,
                      qontrol::UNIQUE);
 
     m_max->setProperty("outputId", id);
@@ -156,7 +156,7 @@ auto OutputW::widget() -> QWidget * {
 }
 
 auto OutputW::setDeletable(bool deletable) -> void {
-    m_delete->setVisible(deletable);
+    m_delete_btn->setVisible(deletable);
     m_delete_spacer->setVisible(deletable);
 }
 
@@ -214,7 +214,7 @@ auto Send::init() -> void {
     m_inputs_column = (new qontrol::Column);
 
     m_add_output_btn = new QPushButton("+ Add an Output");
-    m_send_button = new QPushButton("Send");
+    m_send_btn = new QPushButton("Send");
     m_clear_outputs_btn = new QPushButton("Clear");
 
     m_fee_estimate_label = new QLabel();
@@ -293,7 +293,7 @@ auto Send::init() -> void {
 auto Send::doConnect() -> void {
     qDebug() << "Send::doConnect()";
     connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput, qontrol::UNIQUE);
-    connect(m_send_button, &QPushButton::clicked, this, &Send::sendTransaction, qontrol::UNIQUE);
+    connect(m_send_btn, &QPushButton::clicked, this, &Send::sendTransaction, qontrol::UNIQUE);
     connect(m_clear_outputs_btn, &QPushButton::clicked, this, &Send::clearOutputs, qontrol::UNIQUE);
     connect(m_clear_inputs_btn, &QPushButton::clicked, this, &Send::clearInputs, qontrol::UNIQUE);
     connect(m_auto_coin_selection, &QCheckBox::toggled, this, &Send::onAutoSelectionToggled,
@@ -363,7 +363,7 @@ auto Send::outputsView() -> QWidget * {
                         ->pushSpacer()
                         ->push(m_clear_outputs_btn)
                         ->pushSpacer()
-                        ->push(m_send_button)
+                        ->push(m_send_btn)
                         ->pushSpacer();
 
     m_fee_row->setParent(nullptr);
@@ -565,7 +565,7 @@ auto Send::outputSetMax(int id) -> void {
 auto Send::setBroadcastable(bool broadcastable) -> void {
     qDebug() << "Send::setBroadcastable()" << broadcastable;
     m_broadcastable = broadcastable;
-    m_send_button->setEnabled(broadcastable);
+    m_send_btn->setEnabled(broadcastable);
 }
 
 auto Send::clearOutputs() -> void {
@@ -861,7 +861,7 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
 
 auto Send::setSpendable(bool spendable) -> void {
     qDebug() << "Send::setSpendable()" << spendable;
-    m_send_button->setEnabled(spendable);
+    m_send_btn->setEnabled(spendable);
 }
 
 auto Send::updateOutputValidations() -> void {

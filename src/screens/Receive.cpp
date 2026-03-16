@@ -24,36 +24,36 @@ auto Receive::init() -> void {
         m_has_sub_accounts = m_controller->getAccount().has_value() &&
                              m_controller->getAccount().value()->has_sub_accounts();
     }
-    m_btn_copy = new QPushButton("Copy");
+    m_copy_btn = new QPushButton("Copy");
 
     if (m_has_sub_accounts) {
         m_segwit_addr_display = new QLabel("");
         m_segwit_addr_display->setFixedWidth(600);
         m_segwit_addr_display->setWordWrap(true);
 
-        m_btn_new_segwit = new QPushButton("Generate");
-        m_btn_copy_segwit = new QPushButton("Copy");
+        m_new_segwit_btn = new QPushButton("Generate");
+        m_copy_segwit_btn = new QPushButton("Copy");
 
         m_taproot_addr_display = new QLabel("");
         m_taproot_addr_display->setFixedWidth(600);
         m_taproot_addr_display->setWordWrap(true);
 
-        m_btn_new_taproot = new QPushButton("Generate");
-        m_btn_copy_taproot = new QPushButton("Copy");
+        m_new_taproot_btn = new QPushButton("Generate");
+        m_copy_taproot_btn = new QPushButton("Copy");
     }
 }
 
 auto Receive::doConnect() -> void {
-    connect(m_btn_copy, &QPushButton::clicked, this, &Receive::onCopyAddress, qontrol::UNIQUE);
+    connect(m_copy_btn, &QPushButton::clicked, this, &Receive::onCopyAddress, qontrol::UNIQUE);
 
     if (m_has_sub_accounts) {
-        connect(m_btn_new_segwit, &QPushButton::clicked, this, &Receive::onNewSegwitAddr,
+        connect(m_new_segwit_btn, &QPushButton::clicked, this, &Receive::onNewSegwitAddr,
                 qontrol::UNIQUE);
-        connect(m_btn_copy_segwit, &QPushButton::clicked, this, &Receive::onCopySegwitAddr,
+        connect(m_copy_segwit_btn, &QPushButton::clicked, this, &Receive::onCopySegwitAddr,
                 qontrol::UNIQUE);
-        connect(m_btn_new_taproot, &QPushButton::clicked, this, &Receive::onNewTaprootAddr,
+        connect(m_new_taproot_btn, &QPushButton::clicked, this, &Receive::onNewTaprootAddr,
                 qontrol::UNIQUE);
-        connect(m_btn_copy_taproot, &QPushButton::clicked, this, &Receive::onCopyTaprootAddr,
+        connect(m_copy_taproot_btn, &QPushButton::clicked, this, &Receive::onCopyTaprootAddr,
                 qontrol::UNIQUE);
     }
 }
@@ -113,7 +113,7 @@ auto Receive::view() -> void {
 
     auto *addrRow = (new qontrol::Row)->push(addrLabel)->push(addrDisplay)->pushSpacer();
 
-    auto *btnRow = (new qontrol::Row)->pushSpacer()->push(m_btn_copy)->pushSpacer();
+    auto *btnRow = (new qontrol::Row)->pushSpacer()->push(m_copy_btn)->pushSpacer();
 
     auto *col = (new qontrol::Column)
                     ->pushSpacer(50)
@@ -131,9 +131,9 @@ auto Receive::view() -> void {
 
         auto *segwitBtnRow = (new qontrol::Row)
                                  ->pushSpacer()
-                                 ->push(m_btn_new_segwit)
+                                 ->push(m_new_segwit_btn)
                                  ->pushSpacer(H_SPACER)
-                                 ->push(m_btn_copy_segwit)
+                                 ->push(m_copy_segwit_btn)
                                  ->pushSpacer();
 
         col->pushSpacer(30)
@@ -150,9 +150,9 @@ auto Receive::view() -> void {
 
         auto *taprootBtnRow = (new qontrol::Row)
                                   ->pushSpacer()
-                                  ->push(m_btn_new_taproot)
+                                  ->push(m_new_taproot_btn)
                                   ->pushSpacer(H_SPACER)
-                                  ->push(m_btn_copy_taproot)
+                                  ->push(m_copy_taproot_btn)
                                   ->pushSpacer();
 
         col->pushSpacer(30)
