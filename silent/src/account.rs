@@ -400,18 +400,43 @@ impl Account {
         // Handle inputs
         if !tx_template.input_outpoints.is_empty() {
             // Manual coin selection
-            let all_coins = inner.account.coins();
+            let sp_coins = inner.account.coins();
             for outpoint_str in &tx_template.input_outpoints {
                 let outpoint = parse_outpoint(outpoint_str)?;
-                let entry = all_coins.get(&outpoint).ok_or_else(|| {
-                    AccountError::Transaction(format!("Coin {outpoint_str} not found in wallet"))
-                })?;
-                if !entry.is_spendable() {
-                    return Err(AccountError::Transaction(format!(
-                        "Coin {outpoint_str} is not spendable"
-                    )));
+                // Try SP coins first
+                if let Some(entry) = sp_coins.get(&outpoint) {
+                    if !entry.is_spendable() {
+                        return Err(AccountError::Transaction(format!(
+                            "Coin {outpoint_str} is not spendable"
+                        )));
+                    }
+                    builder.add_input(sp_coin_entry_to_coin(outpoint, entry));
+                } else {
+                    // Try sub-account coins
+                    let mut found = false;
+                    for sub in inner.account.sub_accounts() {
+                        let sub_coins = sub.coins();
+                        if let Some(entry) = sub_coins.get(&outpoint) {
+                            if matches!(
+                                entry.status(),
+                                bwk_sp::bwk_tx::CoinStatus::Spent
+                                    | bwk_sp::bwk_tx::CoinStatus::BeingSpend
+                            ) {
+                                return Err(AccountError::Transaction(format!(
+                                    "Coin {outpoint_str} is not spendable"
+                                )));
+                            }
+                            builder.add_input(entry.coin.clone());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if !found {
+                        return Err(AccountError::Transaction(format!(
+                            "Coin {outpoint_str} not found in wallet"
+                        )));
+                    }
                 }
-                builder.add_input(sp_coin_entry_to_coin(outpoint, entry));
             }
         } else if has_max {
             // Drain: add all spendable coins
