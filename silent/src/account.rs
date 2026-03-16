@@ -146,13 +146,18 @@ impl Account {
     }
 
     /// Take ownership of the notification receiver for use in a dedicated thread.
-    /// Can only be called once; subsequent calls will panic.
+    /// Can only be called once; subsequent calls return a disconnected receiver.
     pub fn take_receiver(&mut self) -> Box<NotificationReceiver> {
-        let inner = self.inner.as_mut().expect("Account not initialized");
-        let receiver = inner
-            .receiver
-            .take()
-            .expect("Notification receiver already taken");
+        let Some(inner) = self.inner.as_mut() else {
+            log::error!("take_receiver: Account not initialized");
+            let (_tx, rx) = mpsc::channel();
+            return Box::new(NotificationReceiver { receiver: rx });
+        };
+        let Some(receiver) = inner.receiver.take() else {
+            log::error!("take_receiver: Notification receiver already taken");
+            let (_tx, rx) = mpsc::channel();
+            return Box::new(NotificationReceiver { receiver: rx });
+        };
         Box::new(NotificationReceiver { receiver })
     }
 

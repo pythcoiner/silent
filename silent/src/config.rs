@@ -278,7 +278,9 @@ static DATADIR_OVERRIDE: OnceLock<PathBuf> = OnceLock::new();
 /// Override the data directory. Intended for testing.
 /// Must be called before any other config operations. Can only be set once.
 pub fn set_datadir(path: PathBuf) {
-    DATADIR_OVERRIDE.set(path).expect("datadir already set");
+    if DATADIR_OVERRIDE.set(path).is_err() {
+        log::error!("set_datadir: datadir already set");
+    }
 }
 
 /// Returns the base data directory for Silent.
@@ -292,14 +294,26 @@ pub fn datadir() -> PathBuf {
     }
     #[cfg(target_os = "linux")]
     let dir = {
-        let mut dir = dirs::home_dir().expect("home directory not found");
+        let mut dir = match dirs::home_dir() {
+            Some(d) => d,
+            None => {
+                log::error!("datadir: home directory not found, falling back to /tmp");
+                PathBuf::from("/tmp")
+            }
+        };
         dir.push(".silent");
         dir
     };
 
     #[cfg(not(target_os = "linux"))]
     let dir = {
-        let mut dir = dirs::config_dir().expect("config directory not found");
+        let mut dir = match dirs::config_dir() {
+            Some(d) => d,
+            None => {
+                log::error!("datadir: config directory not found, falling back to /tmp");
+                PathBuf::from("/tmp")
+            }
+        };
         dir.push("Silent");
         dir
     };
@@ -317,15 +331,15 @@ fn maybe_create_dir(dir: &PathBuf) {
             use std::os::unix::fs::DirBuilderExt;
 
             let mut builder = DirBuilder::new();
-            builder
-                .mode(0o700)
-                .recursive(true)
-                .create(dir)
-                .expect("failed to create directory");
+            if let Err(e) = builder.mode(0o700).recursive(true).create(dir) {
+                log::error!("failed to create directory {}: {e}", dir.display());
+            }
         }
 
         #[cfg(not(unix))]
-        fs::create_dir_all(dir).expect("failed to create directory");
+        if let Err(e) = fs::create_dir_all(dir) {
+            log::error!("failed to create directory {}: {e}", dir.display());
+        }
     }
 }
 
