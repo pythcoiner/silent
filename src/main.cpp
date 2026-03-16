@@ -2,9 +2,13 @@
 #include "MainWindow.h"
 #include "metatypes.h"
 #include <QApplication>
+#include <QStyleFactory>
 
 auto main(int argc, char *argv[]) -> int {
     QApplication app(argc, argv);
+#ifdef Q_OS_LINUX
+    app.setStyle(QStyleFactory::create("Fusion"));
+#endif
 
     // Register CXX types for cross-thread signal-slot connections
     qRegisterMetaType<BackendInfo>();
