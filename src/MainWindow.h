@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QCloseEvent>
-#include <QHash>
 #include <QList>
 #include <QPair>
 #include <QTabWidget>
