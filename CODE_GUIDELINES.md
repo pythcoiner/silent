@@ -316,6 +316,24 @@ void view() {
 connect(source, &Source::signal, dest, &Dest::slot, qontrol::UNIQUE);
 ```
 
+**Prefer `clicked` over `toggled` for toggle widgets with side effects.** `toggled`
+fires on both user clicks and programmatic `setChecked()` calls, which causes
+feedback loops when a slot updates the toggle state. `clicked` only fires on user
+interaction, eliminating the problem:
+```cpp
+// good — clicked only fires on user interaction
+connect(m_toggle, &QCheckBox::clicked, this, &MyClass::onToggled, qontrol::UNIQUE);
+
+// bad — toggled fires on setChecked() too, requires blockSignals()
+connect(m_toggle, &QCheckBox::toggled, this, &MyClass::onToggled, qontrol::UNIQUE);
+```
+
+`blockSignals()` is acceptable only when the widget genuinely lacks a user-only
+signal and programmatic state changes would trigger handlers with side effects
+(network calls, state mutations). Always add a comment explaining why
+`blockSignals()` is needed. Never use it as a lazy substitute for connecting to the
+right signal.
+
 **Lambdas in `connect()` are FORBIDDEN.** Always create named slots. Lambdas make
 signal-slot connections harder to read, test, and debug. They also prevent using
 `qontrol::UNIQUE` for duplicate connection prevention. The only exception is when

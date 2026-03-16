@@ -37,9 +37,9 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
     }
 
     // Connect toggle signals
-    connect(m_toggle, &qontrol::widgets::ToggleSwitch::toggled, this, &StatusBar::onToggled,
+    connect(m_toggle, &qontrol::widgets::ToggleSwitch::clicked, this, &StatusBar::onToggled,
             qontrol::UNIQUE);
-    connect(m_electrum_toggle, &qontrol::widgets::ToggleSwitch::toggled, this,
+    connect(m_electrum_toggle, &qontrol::widgets::ToggleSwitch::clicked, this,
             &StatusBar::onElectrumToggled, qontrol::UNIQUE);
 }
 
@@ -114,10 +114,7 @@ auto StatusBar::loadElectrumUrl() -> void {
 auto StatusBar::updateConnectionState(bool connected) -> void {
     m_connected = connected;
 
-    // Update toggle state without triggering signal
-    m_toggle->blockSignals(true);
     m_toggle->setChecked(connected);
-    m_toggle->blockSignals(false);
 
     // Update toggle color and status text
     if (connected) {
@@ -157,9 +154,7 @@ auto StatusBar::updateScanError(rust::String error) -> void {
 auto StatusBar::onElectrumConnected(QString address) -> void {
     m_electrum_connected = true;
 
-    m_electrum_toggle->blockSignals(true);
     m_electrum_toggle->setChecked(true);
-    m_electrum_toggle->blockSignals(false);
 
     m_electrum_toggle->setBrush(QBrush(QColor(0, 180, 0))); // Green
     m_electrum_toggle->update();
@@ -170,9 +165,7 @@ auto StatusBar::onElectrumConnected(QString address) -> void {
 auto StatusBar::onElectrumDisconnected() -> void {
     m_electrum_connected = false;
 
-    m_electrum_toggle->blockSignals(true);
     m_electrum_toggle->setChecked(false);
-    m_electrum_toggle->blockSignals(false);
 
     m_electrum_toggle->setBrush(QBrush(QColor(180, 0, 0))); // Red
     m_electrum_toggle->update();
