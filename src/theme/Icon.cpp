@@ -5,6 +5,7 @@
 #include "resources/icon/settings.h"
 #include "resources/icon/trash_2.h"
 #include "resources/icon/upload.h"
+#include "resources/icon/history.h"
 #include "resources/icon/pencil.h"
 #include "resources/icon/x.h"
 #include <QByteArray>
@@ -80,6 +81,14 @@ auto pencil() -> QIcon {
     const auto &p = theme->palette();
     const auto &ip = theme->iconPalette();
     return renderIcon(embedded_icon::PENCIL, ip.defaultIcon.size, p.text,
+                      ip.defaultIcon.strokeWidth);
+}
+
+auto history() -> QIcon {
+    auto *theme = Theme::get();
+    const auto &p = theme->palette();
+    const auto &ip = theme->iconPalette();
+    return renderIcon(embedded_icon::HISTORY, ip.defaultIcon.size, p.text,
                       ip.defaultIcon.strokeWidth);
 }
 

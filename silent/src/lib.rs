@@ -46,6 +46,7 @@ mod ffi {
         WaitingForBlocks,
         NewBlocksDetected,
         CoinUpdate,
+        PaymentUpdated,
         AddressTipChanged,
         ElectrumStarted,
         ElectrumConnected,

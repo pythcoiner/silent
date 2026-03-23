@@ -17,6 +17,7 @@ AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(
     m_controller = new AccountController(account, this);
     initUI();
     m_controller->loadPanels();
+    m_controller->loadPanel("history");
 }
 
 void AccountWidget::initUI() {
@@ -30,11 +31,16 @@ void AccountWidget::initUI() {
     int p = resolve(Padding::XS);
     m_menu->layout()->setContentsMargins(p, p, p, p);
 
+    auto *historyBtn = new Button("  History", ButtonRole::Menu);
+    historyBtn->setIcon(icon::history());
+    historyBtn->setIconSize(QSize(20, 20));
+    historyBtn->setCheckable(true);
+    historyBtn->setChecked(true);
+    historyBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto *coinsBtn = new Button("  Coins", ButtonRole::Menu);
     coinsBtn->setIcon(icon::coins());
     coinsBtn->setIconSize(QSize(20, 20));
     coinsBtn->setCheckable(true);
-    coinsBtn->setChecked(true);
     coinsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto *sendBtn = new Button("  Send", ButtonRole::Menu);
     sendBtn->setIcon(icon::send());
@@ -53,13 +59,16 @@ void AccountWidget::initUI() {
 
     auto *btnGroup = new QButtonGroup(this);
     btnGroup->setExclusive(true);
+    btnGroup->addButton(historyBtn);
     btnGroup->addButton(coinsBtn);
     btnGroup->addButton(sendBtn);
     btnGroup->addButton(recvBtn);
     btnGroup->addButton(settingsBtn);
     settingsBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    m_menu->push(coinsBtn)
+    m_menu->push(historyBtn)
+        ->pushSpacer(resolve(Spacing::S))
+        ->push(coinsBtn)
         ->pushSpacer(resolve(Spacing::S))
         ->push(sendBtn)
         ->pushSpacer(resolve(Spacing::S))
@@ -67,6 +76,8 @@ void AccountWidget::initUI() {
         ->pushSpacer()
         ->push(settingsBtn);
 
+    connect(historyBtn, &QPushButton::clicked, m_controller, &AccountController::historyClicked,
+            qontrol::UNIQUE);
     connect(coinsBtn, &QPushButton::clicked, m_controller, &AccountController::coinsClicked,
             qontrol::UNIQUE);
     connect(sendBtn, &QPushButton::clicked, m_controller, &AccountController::sendClicked,

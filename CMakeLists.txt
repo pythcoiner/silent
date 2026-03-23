@@ -60,6 +60,8 @@ set(SOURCES
     src/screens/modals/CreateAccount.cpp
     src/screens/utils.h
     src/screens/utils.cpp
+    src/screens/History.h
+    src/screens/History.cpp
     src/screens/Coins.h
     src/screens/Coins.cpp
     src/screens/Receive.h

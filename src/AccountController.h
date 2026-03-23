@@ -20,6 +20,7 @@ public:
     auto screen(const QString &screen) -> std::optional<qontrol::Screen *>;
     auto loadPanels() -> void;
     auto getCoins() -> rust::Vec<RustCoin>;
+    auto getPaymentHistory() -> rust::Vec<RustTx>;
     auto getSpAddress() -> rust::String;
     auto coins() -> qontrol::Screen *;
     auto getAccount() -> std::optional<rust::Box<Account>> &;
@@ -47,6 +48,7 @@ public slots:
     auto stop() -> void;
 
     // Screen button actions
+    auto historyClicked() -> void;
     auto coinsClicked() -> void;
     auto sendClicked() -> void;
     auto receiveClicked() -> void;

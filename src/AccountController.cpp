@@ -2,6 +2,7 @@
 #include "AccountWidget.h"
 #include "AppController.h"
 #include "screens/Coins.h"
+#include "screens/History.h"
 #include "screens/Receive.h"
 #include "screens/Send.h"
 #include "screens/Settings.h"
@@ -175,6 +176,11 @@ auto AccountController::handleNotification(Notification notif) -> void {
 }
 
 auto AccountController::loadPanels() -> void {
+    // Create History screen panel
+    auto *historyScreen = new screen::History(this);
+    auto *historyPanel = new qontrol::Panel(historyScreen, "history");
+    this->insertPanel(historyPanel);
+
     // Create Coins screen panel
     auto *coinsScreen = new screen::Coins(this);
     auto *coinsPanel = new qontrol::Panel(coinsScreen, "coins");
@@ -194,6 +200,10 @@ auto AccountController::loadPanels() -> void {
     auto *settingsScreen = new screen::Settings(this);
     auto *settingsPanel = new qontrol::Panel(settingsScreen, "settings");
     this->insertPanel(settingsPanel);
+}
+
+auto AccountController::historyClicked() -> void {
+    this->loadPanel("history");
 }
 
 auto AccountController::coinsClicked() -> void {
@@ -252,6 +262,13 @@ auto AccountController::getCoins() -> rust::Vec<RustCoin> {
         return spendable;
     }
     return rust::Vec<RustCoin>();
+}
+
+auto AccountController::getPaymentHistory() -> rust::Vec<RustTx> {
+    if (m_account.has_value()) {
+        return m_account.value()->payment_history();
+    }
+    return rust::Vec<RustTx>();
 }
 
 auto AccountController::getSpAddress() -> rust::String {

@@ -597,7 +597,7 @@ impl Account {
         }
     }
 
-    /// Broadcast a signed transaction to the network via P2P.
+    /// Broadcast a signed transaction to the network via Electrum.
     pub fn broadcast_transaction(&self, signed_tx_hex: String) -> TxResult {
         use bitcoin::consensus::encode::deserialize_hex;
         use bitcoin::Transaction;
@@ -1168,6 +1168,10 @@ fn convert_sp_notification(sp_notif: SpNotification) -> Notification {
         } => Notification {
             flag: NotificationFlag::NewBlocksDetected,
             payload: format!("{from_height},{to_height}"),
+        },
+        SpNotification::PaymentUpdated => Notification {
+            flag: NotificationFlag::PaymentUpdated,
+            payload: String::new(),
         },
     }
 }

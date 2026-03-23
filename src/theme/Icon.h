@@ -14,5 +14,6 @@ auto send() -> QIcon;
 auto receive() -> QIcon;
 auto settings() -> QIcon;
 auto pencil() -> QIcon;
+auto history() -> QIcon;
 
 } // namespace icon

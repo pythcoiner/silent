@@ -166,11 +166,14 @@ impl Config {
 
     /// Convert to bwk-sp::Config.
     pub fn to_sp_config(&self) -> SpConfig {
+        let (electrum_host, electrum_port) = parse_electrum_url(&self.electrum_url);
         let mut config = SpConfig::new(
             self.account_name.clone(),
             self.network.into(),
             self.mnemonic.clone(),
             self.blindbit_url.clone(),
+            electrum_host.unwrap_or_default(),
+            electrum_port.unwrap_or(0),
             self.data_dir.clone(),
         );
         config.set_dust_limit(self.dust_limit);
