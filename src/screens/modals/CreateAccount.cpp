@@ -184,7 +184,8 @@ void CreateAccount::onCreate() {
 }
 
 void CreateAccount::onNetworkChanged() {
-    bool isMainnet =
+    bool isMainnet = false;
+    isMainnet =
         static_cast<Network>(m_network_combo->currentData().toInt()) == Network::Bitcoin;
 
     m_generate_btn->setEnabled(!isMainnet);

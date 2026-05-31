@@ -11,12 +11,12 @@
 namespace screen {
 
 using theme::Button;
-using theme::ButtonRole;
 using theme::Label;
 using theme::LabelRole;
 
-Receive::Receive(AccountController *ctrl) {
-    m_controller = ctrl;
+Receive::Receive(AccountController *ctrl)
+    : m_controller(ctrl)
+    , m_sp_address("") {
     this->init();
     this->doConnect();
     this->view();
@@ -61,6 +61,7 @@ void Receive::doConnect() {
     }
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Receive::onCopyAddress() {
     QApplication::clipboard()->setText(QString(m_sp_address.c_str()));
 }

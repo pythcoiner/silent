@@ -45,6 +45,14 @@ Diagnostics:
       readability-identifier-length,
       readability-redundant-access-specifiers,
       readability-magic-numbers,
+      performance-enum-size,
+      readability-function-cognitive-complexity,
+      performance-unnecessary-copy-initialization,
+      modernize-use-trailing-return-type,
+      llvm-include-order,
+      misc-unused-using-decls,
+      readability-redundant-member-init,
+      readability-math-missing-parentheses,
     ]
     # options can be found at https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html
     CheckOptions:
@@ -62,7 +70,5 @@ Diagnostics:
       readability-identifier-naming.ConstantCase: UPPER_CASE
       readability-identifier-naming.EnumConstantCase: CamelCase
       readability-identifier-naming.LocalConstantCase: lower_case
-      readability-identifier-naming.LocalConstantPrefix: c_
       misc-unused-parameters.StrictMode: true
       misc-unused-parameters.IgnoreVirtual: true
-

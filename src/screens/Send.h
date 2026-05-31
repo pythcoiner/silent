@@ -171,7 +171,7 @@ private:
     std::optional<rust::Box<PsbtResult>> m_psbt_result = std::nullopt;
     std::optional<TransactionTemplate> m_tx_template = std::nullopt;
     QString m_signed_tx_hex;
-    QList<RustCoin> m_selected_coins;
+    QList<RustCoin> m_selected_coins{};
     QStringList m_auto_selected_outpoints;
     QHash<QString, theme::Checkbox *> m_coin_checkboxes;
     CoinState m_last_coin_state{};

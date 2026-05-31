@@ -43,6 +43,7 @@ auto AppController::initState() -> void {
     thread->start();
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AppController::addAccount(const QString &name) -> void {
     auto *window = AppController::window();
     auto *win = dynamic_cast<MainWindow *>(window);
@@ -145,7 +146,9 @@ auto AppController::isAccountOpen(const QString &name) const -> bool {
 
 auto AppController::onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
                                            const QString &electrum) -> void {
-    m_regtest_defaults = RegtestDefaultsInfo{blindbit, p2p, electrum};
+    m_regtest_defaults = RegtestDefaultsInfo{.blindbit_url = blindbit,
+                                             .p2p_node = p2p,
+                                             .electrum_url = electrum};
 }
 
 auto AppController::regtestDefaults() const -> std::optional<RegtestDefaultsInfo> {

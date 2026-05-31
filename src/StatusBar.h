@@ -25,7 +25,7 @@ public slots:
     void updateScanProgress(uint32_t height, uint32_t tip);
     void updateWaitingForBlocks(uint32_t tip_height);
     void updateScanError(rust::String error);
-    void onElectrumConnected(QString address);
+    void onElectrumConnected(const QString &address);
     void onElectrumDisconnected();
     void reloadUrl();
 

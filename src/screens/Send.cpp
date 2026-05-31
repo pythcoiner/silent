@@ -863,6 +863,7 @@ void Send::setSpendable(bool spendable) {
     m_send_btn->setEnabled(spendable);
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Send::updateOutputValidations() {
     qDebug() << "Send::updateOutputValidations()";
     for (auto *out : m_outputs) {

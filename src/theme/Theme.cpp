@@ -34,11 +34,11 @@ public:
     void drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPainter *painter,
                        const QWidget *widget = nullptr) const override {
         if (pe == PE_IndicatorTabClose) {
-            constexpr int iconSize = 10;
+            constexpr int icon_size = 10;
             auto ic = standardIcon(SP_TabCloseButton, opt, widget);
-            auto pix = ic.pixmap(iconSize, iconSize);
-            int x = opt->rect.x() + (opt->rect.width() - iconSize) / 2;
-            int y = opt->rect.y() + (opt->rect.height() - iconSize) / 2;
+            auto pix = ic.pixmap(icon_size, icon_size);
+            int x = opt->rect.x() + (opt->rect.width() - icon_size) / 2;
+            int y = opt->rect.y() + (opt->rect.height() - icon_size) / 2;
             painter->drawPixmap(x, y, pix);
             return;
         }

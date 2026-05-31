@@ -1,5 +1,6 @@
 #include "StatusBar.h"
 #include "AccountController.h"
+#include "i18n/Tr.h"
 #include "screens/utils.h"
 #include "theme/Label.h"
 #include "theme/Toggle.h"
@@ -37,9 +38,9 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
 
     // Set initial electrum state (sub-accounts auto-start on construction)
     if (!m_electrum_url.isEmpty()) {
-        m_electrum_status_label->setText("Connecting...");
+        m_electrum_status_label->setText(TR("status-connecting"));
     } else {
-        m_electrum_status_label->setText("Not configured");
+        m_electrum_status_label->setText(TR("status-not-configured"));
     }
 
     // Connect toggle signals
@@ -124,41 +125,41 @@ void StatusBar::updateConnectionState(bool connected) {
     m_toggle->setChecked(connected);
 
     if (connected) {
-        m_status_label->setText("Scanning...");
+        m_status_label->setText(TR("status-scanning"));
     } else {
-        m_status_label->setText("Disconnected");
+        m_status_label->setText(TR("status-disconnected"));
     }
 }
 
 void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
     if (height < tip) {
         auto eta = m_controller->etaSecs();
-        QString text = QString("Scanning... %1 / %2").arg(height).arg(tip);
+        QString text = TR("status-scanning-progress").arg(height).arg(tip);
         if (eta > 0) {
             text += QString(" \u2022 %1").arg(formatEta(eta));
         }
         m_status_label->setText(text);
     } else {
         // Synced
-        m_status_label->setText(QString("Connected to blindbit-oracle at %1").arg(m_blindbit_url));
+        m_status_label->setText(TR("status-connected-blindbit").arg(m_blindbit_url));
     }
 }
 
 void StatusBar::updateWaitingForBlocks(uint32_t tip_height) {
-    m_status_label->setText(QString("Synced at block %1 • Watching...").arg(tip_height));
+    m_status_label->setText(TR("status-synced-watching").arg(tip_height));
 }
 
 void StatusBar::updateScanError(rust::String error) {
     QString errorStr = QString::fromStdString(std::string(error.c_str()));
-    m_status_label->setText(QString("Error: %1").arg(errorStr));
+    m_status_label->setText(mapBackendErrorSummary(errorStr));
 }
 
-void StatusBar::onElectrumConnected(QString address) {
+void StatusBar::onElectrumConnected(const QString &address) {
     m_electrum_connected = true;
 
     m_electrum_toggle->setChecked(true);
 
-    m_electrum_status_label->setText(QString("Connected to electrum at %1").arg(address));
+    m_electrum_status_label->setText(TR("status-connected-electrum").arg(address));
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -167,7 +168,7 @@ void StatusBar::onElectrumDisconnected() {
 
     m_electrum_toggle->setChecked(false);
 
-    m_electrum_status_label->setText("Electrum disconnected");
+    m_electrum_status_label->setText(TR("status-electrum-disconnected"));
 }
 
 void StatusBar::reloadUrl() {
@@ -182,10 +183,10 @@ void StatusBar::onToggled(bool checked) {
     }
 
     if (checked) {
-        m_status_label->setText("Connecting...");
+        m_status_label->setText(TR("status-connecting"));
         accountOpt.value()->start_scanner();
     } else {
-        m_status_label->setText("Disconnecting...");
+        m_status_label->setText(TR("status-disconnecting"));
         accountOpt.value()->stop_scanner();
     }
 }
@@ -197,10 +198,10 @@ void StatusBar::onElectrumToggled(bool checked) {
     }
 
     if (checked) {
-        m_electrum_status_label->setText("Connecting...");
+        m_electrum_status_label->setText(TR("status-connecting"));
         accountOpt.value()->start_electrum();
     } else {
-        m_electrum_status_label->setText("Disconnecting...");
+        m_electrum_status_label->setText(TR("status-disconnecting"));
         accountOpt.value()->stop_electrum();
     }
 }

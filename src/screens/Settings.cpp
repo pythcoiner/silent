@@ -270,7 +270,8 @@ void Settings::onBackendInfoReady(BackendInfo info) {
         break;
     }
 
-    bool networkMatch = (info.network == m_current_network);
+    bool networkMatch = false;
+    networkMatch = (info.network == m_current_network);
     m_blindbit_url_input->setText(QString::fromStdString(std::string(info.url.c_str())));
 
     m_backend_verified = networkMatch;

@@ -222,6 +222,7 @@ auto AccountController::settingsClicked() -> void {
     this->loadPanel("settings");
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::simulateTx(TransactionTemplate tx) -> TransactionSimulation {
     if (m_account.has_value()) {
         return m_account.value()->simulate_transaction(std::move(tx));
@@ -234,6 +235,7 @@ auto AccountController::simulateTx(TransactionTemplate tx) -> TransactionSimulat
     return sim;
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::startScanner() -> void {
     if (m_account.has_value()) {
         m_account.value()->start_scanner();
@@ -250,6 +252,7 @@ auto AccountController::stop() -> void {
     }
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::getCoins() -> rust::Vec<RustCoin> {
     if (m_account.has_value()) {
         auto all = m_account.value()->coins();
@@ -264,6 +267,7 @@ auto AccountController::getCoins() -> rust::Vec<RustCoin> {
     return rust::Vec<RustCoin>();
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::getPaymentHistory() -> rust::Vec<RustTx> {
     if (m_account.has_value()) {
         return m_account.value()->payment_history();
@@ -271,6 +275,7 @@ auto AccountController::getPaymentHistory() -> rust::Vec<RustTx> {
     return rust::Vec<RustTx>();
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::getSpAddress() -> rust::String {
     if (m_account.has_value()) {
         return m_account.value()->sp_address();
@@ -278,6 +283,7 @@ auto AccountController::getSpAddress() -> rust::String {
     return rust::String("");
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AccountController::coins() -> qontrol::Screen * {
     auto scr = screen("coins");
     if (scr.has_value()) {

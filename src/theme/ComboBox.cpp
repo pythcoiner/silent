@@ -73,11 +73,11 @@ void ComboBox::showPopup() {
 }
 
 auto ComboBox::renderChevron(const QColor &color) -> QString {
-    static QString s_cached_path;
-    static QColor s_cached_color;
+    static QString sCachedPath;
+    static QColor sCachedColor;
 
-    if (!s_cached_path.isEmpty() && s_cached_color == color) {
-        return s_cached_path;
+    if (!sCachedPath.isEmpty() && sCachedColor == color) {
+        return sCachedPath;
     }
 
     auto svg = QString(embedded_icon::CHEVRON_DOWN);
@@ -91,10 +91,10 @@ auto ComboBox::renderChevron(const QColor &color) -> QString {
     renderer.render(&painter);
 
     auto dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    s_cached_path = dir + "/silent_chevron_down.png";
-    pixmap.save(s_cached_path);
-    s_cached_color = color;
-    return s_cached_path;
+    sCachedPath = dir + "/silent_chevron_down.png";
+    pixmap.save(sCachedPath);
+    sCachedColor = color;
+    return sCachedPath;
 }
 
 auto ComboBox::qss(const Palette &p) -> QString {

@@ -22,7 +22,7 @@ History::History(AccountController *ctrl) {
 }
 
 void History::init() {
-    const int hPad = 7;
+    int hPad = 7;
 
     m_h_direction = new Label("Direction", LabelRole::InfoLabel);
     m_h_direction->setFixedWidth(DIR_W);

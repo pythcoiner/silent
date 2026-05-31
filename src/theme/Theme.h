@@ -26,7 +26,7 @@ signals:
 
 private:
     explicit Theme(QObject *parent = nullptr);
-    static Theme *s_instance;
+    static Theme *s_instance; // NOLINT(readability-identifier-naming)
     ThemeMode m_mode = ThemeMode::Dark;
     Palette m_palette = Palette::dark();
     FontPalette m_font_palette = FontPalette::dark();

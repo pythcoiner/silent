@@ -33,7 +33,7 @@ Coins::Coins(AccountController *ctrl) {
 
 void Coins::init() {
     // Match Display padding (6px) + border (1px) = 7px left indent
-    const int hPad = 7;
+    int hPad = 7;
 
     m_h_type = new Label("Type", LabelRole::InfoLabel);
     m_h_type->setFixedWidth(TYPE_W);
