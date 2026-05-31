@@ -1,0 +1,551 @@
+# Silent Plugin System
+
+Silent is extensible through plugins. External logic (new account kinds, data
+feeds, extra tabs, settings sections, themes) can be loaded at runtime from a
+plugins folder without rebuilding the app.
+
+This document describes the architecture and the contract a plugin author works
+against. It is the design reference; implementation lands incrementally.
+
+## Core Model: Plugin, Module, Instance, Capabilities
+
+There is **no taxonomy of module "types".** There are three levels and a single
+invariant:
+
+- **Plugin**: the loaded **library** (`.so`/`.dll`/`.dylib`) plus its sidecar
+  metadata. A plugin **contains one or more modules** and exposes them to the host
+  (`modules() -> [IModule*]`). It is the unit of distribution, discovery, and
+  enable/disable; it is not itself a module.
+- **Module** (`IModule`): a unit of functionality inside a plugin. It owns its
+  instances and their IDs: `list()` asks for the instances it **can start** as
+  `(id, name)` pairs (the launcher renders one button per entry, labelled by name),
+  and `startInstance(id)` brings one up. The module manages any persistence; the host
+  does not own instance state.
+- **Instance** (`IInstance`): a configured, running entity created from a module.
+  **The invariant: every instance is an `IInstance`.** An `IInstance` exposes the
+  **data** capabilities (`IAccount`, `IFeed`, `ISigner`, `IThemeProvider`) as
+  sub-objects; which ones a given instance actually offers is decided **per
+  capability** by `implemented()`.
+
+`implemented()` is a **hardcoded, compile-time constant** (`const`): a capability is
+either built into this instance or it is not. If `implemented()` is `false` the
+capability is **inert**: its methods do nothing and it **never emits a result
+signal**. Discovery is therefore just "check `implemented()`": no registrar, no
+`qobject_cast` probing.
+
+**UI is not a capability; it is pushed.** An instance does not expose tab/settings/
+wizard interfaces for the host to pull. Instead the instance **calls the host** to
+register a widget and gets back an id it later uses to update or remove it:
+`openTab(widget, this) -> TabId`, `addSettingSection(widget, this) -> SectionId`,
+`openWizard(widget, this) -> WizardId` (with `close`/`del` counterparts). A headless
+instance (e.g. a feed) simply never calls them.
+
+Cardinality follows from the invariant: each data capability appears **once per
+instance**. More of something means more instances. A wallet module with three
+accounts is **three instances**, each an `IInstance` whose account capability is
+`implemented()`. A price-feed instance has its feed `implemented()` and pushes no UI.
+
+| Data capability  | What it provides                                       |
+|------------------|-------------------------------------------------------|
+| `IAccount`       | An account: coins, addresses, balance                 |
+| `IFeed`          | Pushed data: fee rate, conversion rate, raw bytes     |
+| `ISigner`        | Full interface to a signing device                    |
+| `IThemeProvider` | Named color palettes selectable in Settings           |
+
+An "account type" (SP, miniscript, Liana, bark) is a module whose instances have the
+account capability implemented and that push a tab (and usually a create wizard);
+signing is a **separate** capability (`ISigner`), not part of the account. A
+price-feed module's instances have the feed capability implemented and push no UI. An
+aggregated-graph instance has no data capability implemented, pushes a tab, and
+*consumes* other instances' accounts + feeds. Nothing is special-cased.
+
+```
+   app start: the launcher asks every enabled module what it can start:
+             module->list()  -> instances(req, [(id, name)])  // startable, not live
+             launcher renders one button per (id, name)
+
+   user clicks a button:
+             module->startInstance(id)
+             module constructs the IInstance and calls
+                 host->registerInstance(id, instance)
+             the instance then PUSHES any UI it wants:
+                 host->openTab(widget, instance)            -> TabId
+                 host->addSettingSection(widget, instance)  -> SectionId
+                 host->openWizard(widget, instance)         -> WizardId
+             and exposes data via its capabilities, gated by implemented():
+                 instance->account()->implemented()  -> true / false
+                 (false => inert: no-op, never emits a result signal)
+```
+
+> A **plugin** is one delivery vehicle for modules; the modules it contains
+> implement `IModule` / `IInstance` exactly like built-in ones.
+
+## Built-in vs External Modules
+
+Modules reach the app two ways; the module/instance/capability contract is identical
+either way.
+
+- **Built-in**: shipped in mainline Silent, **statically linked** into the binary
+  (e.g. the Silent Payments module). Trusted, always enabled. Registered via
+  `Q_IMPORT_PLUGIN`.
+- **External (a plugin)**: a **library + metadata** loaded at runtime from
+  `~/.silent/plugins/`. One plugin **contains one or more modules**. Disabled by
+  default; the user enables the plugin, which brings up all of its modules.
+
+## Distribution Unit: Library + Metadata
+
+Every external plugin ships as **two files**:
+
+```
+~/.silent/plugins/
+  myplugin/
+    libmyplugin.so          # the library
+    myplugin.json           # sidecar metadata (id, name, version, capabilities...)
+    i18n/
+      silent_en.lang        # optional translations (see below)
+      silent_fr.lang
+```
+
+The host **reads the sidecar metadata before the library is ever loaded.** This
+read-before-load ordering is the load-time boundary: a disabled plugin is
+*discovered* (its metadata is listed in Settings) but its library is **never
+`dlopen`'d** and **no plugin code runs** until the user enables it.
+
+> The metadata format is defined now and is forward-compatible. How metadata may
+> later be *used for trust* (hashing the library, verifying a signature against a
+> trusted key set) is intentionally out of scope for the initial implementation.
+> Only the `library + metadata` structure and the read-first ordering are fixed.
+
+## Lifecycle: Discover, Enable, Activate
+
+1. **Discover.** On startup the host scans `~/.silent/plugins/`, reads each sidecar
+   metadata file, and lists every plugin in global Settings. Newly discovered
+   plugins are **disabled by default**. Discovery is metadata-only (no `dlopen`),
+   so it is cheap and side-effect free. A **Rescan** button in global Settings
+   re-runs it on demand: a plugin dropped into the folder while the app is running
+   shows up without a restart. Rescan only updates the discovered list; it never
+   loads or unloads code or changes the enabled state of plugins already present.
+2. **Enable** (user action in Settings). The host `dlopen`s the library
+   (`QPluginLoader::load()`) and asks the plugin for its modules
+   (`modules() -> [IModule*]`). For each module the host calls `autoStart()`
+   (starting those instances at once) and `list()` (the launcher renders a button per
+   entry for the rest); see "Instance lifecycle". This happens **live, in-session,
+   with no restart**: launcher buttons, tabs, settings sections, and themes appear
+   immediately.
+3. **Disable.** The host stops every instance of every module in the plugin (each
+   removes its pushed UI, stops its thread, withdraws its capabilities from
+   discovery) then unloads the library.
+
+### Instance lifecycle
+
+The **module owns its instances and their IDs.** It is free to persist them however
+it likes (the SP module, for example, keeps `~/.silent/<id>/config.json`); the host
+keeps no instance state. The module exposes:
+
+- `list()`: asks for the instances this module **can start**, delivered as
+  `(id, name)` pairs on the `instances(ReqId, ...)` signal. These are not live
+  instances; the launcher renders one button per entry, labelled by name.
+- `autoStart()`: asks for the ids the host must start **immediately after the module
+  loads**, delivered on the `autoStart(ReqId, ...)` signal (e.g. feeds, signing-device
+  modules).
+- `startInstance(id)`: bring an instance up. The module constructs the `IInstance`
+  (on its own thread), calls `host->registerInstance(id, instance)`, and the instance
+  then pushes any UI it wants and exposes its `implemented()` capabilities.
+
+(`meta()` is the module's only synchronous method: a hardcoded `const`, like a
+capability's `implemented()`. Everything else is a request, `ReqId` + signal.)
+
+An instance is brought up by one of:
+
+- **Auto-start on load**: right after a module loads, the host calls `autoStart()`
+  and starts every id it returns. Used for headless modules (feeds, signing devices)
+  that should come up without a user click.
+- **The launcher**: the user clicks a button from the `instances` list, which calls
+  `startInstance(id)`. Creating a *new* instance is the same path: the module offers a
+  "create" entry in that list; clicking it starts an instance that pushes a create
+  wizard (`host->openWizard(...)`), persisting itself on finish, discarding on cancel.
+- **Another instance**: an instance may ask a module to start further instances.
+
+Because instances appear and disappear at runtime, **discovery is dynamic**:
+consumers must not cache the account/feed/signer set at startup. Subscribe to the
+host's events (below) and re-query when they fire.
+
+## The Host
+
+The host is a **singleton**, reached via `Host::get()`. It is the single
+read/discovery point into the rest of the app: a module registers its instances,
+anyone enumerates the live instances, an instance pushes UI, and code reaches
+translations and events. Nothing is passed an `IHost*`; code calls `Host::get()`
+directly.
+
+```cpp
+class Host {
+public:
+    static Host *get();                       // singleton accessor
+
+    // a module calls this when it instantiates an instance, so the host can
+    // track it. The module owns the id.
+    void registerInstance(const QString &id, IInstance *instance);
+
+    // discovery: the live instances. A consumer gates each capability on its
+    // implemented() (e.g. inst->account()->implemented()).
+    QList<IInstance*> instances() const;
+
+    // UI is PUSHED by the instance: it supplies a widget + itself, gets back an id,
+    // and later updates or removes the widget by that id. The host owns the
+    // id -> widget map. All of an instance's UI is removed on its teardown.
+    using TabId = quint64;  using SectionId = quint64;  using WizardId = quint64;
+
+    TabId     openTab(QWidget *content, IInstance *owner);           // at most one/instance
+    void      setTabTitle(TabId tab, const QString &title);          // dynamic, any time
+    void      closeTab(TabId tab);
+
+    SectionId addSettingSection(QWidget *content, IInstance *owner); // global Settings
+    void      delSettingSection(SectionId section);
+
+    WizardId  openWizard(QWidget *content, IInstance *owner);        // modal-ish flow
+    void      closeWizard(WizardId wizard);
+
+    HostI18n   *i18n();                       // translations (see i18n section)
+    HostEvents *events();                     // event bus: NAMED slots (never lambdas)
+};
+
+class HostEvents : public QObject {
+    Q_OBJECT
+signals:
+    void instanceRegistered(QString id);
+    void instanceRemoved(QString id);
+};
+```
+
+## Threading Model
+
+**Each instance lives in its own `QThread`.** Consequently **no interface method
+blocks and no method returns mutable instance state synchronously** (reading that
+state from another thread would be a data race).
+
+- The **only** synchronous methods are the ones that never touch mutable state:
+  `implemented()` on each capability, `meta()` on a plugin/module, and `id()` on an
+  instance (set once at instantiation, immutable thereafter). These are safe to call
+  directly across the thread boundary.
+- **Every other method is a request**: it returns a `ReqId` immediately, the work
+  runs on the instance's (or module's) thread, and the result is delivered later by a
+  **signal** carrying that same `ReqId`. Because *every* such method is a request,
+  method names carry **no `request` prefix**: `coins()`, `signWithDescriptor(...)`,
+  `list()` are all requests by definition.
+
+```cpp
+using ReqId = quint64;   // correlates a request with its result signal
+```
+
+**Signals live on the capability** that owns the request, not on the host. A request
+method and its result signal **share a name**, distinguished by signature: the method
+takes the inputs and returns a `ReqId`; the signal carries the `ReqId` plus the
+result (method `coins()` -> signal `coins(ReqId, QList<...>)`; connect with
+`qOverload`). The consumer **connects its own named slot directly to the capability
+object** and matches emissions by `ReqId` (`if (req == mine)`). **The host does not
+route responses**: there is no `ReqId -> slot` table; correlation is the caller's,
+via the id carried in the signal. Consumers may **unregister** when done (named slots
+only, never lambdas; `qontrol::UNIQUE`). Streaming updates (e.g. coins, balance, fee
+rate) use the same signals: connect once and every update arrives; a `ReqId` of 0
+marks an unsolicited push not tied to a specific request. If a capability's
+`implemented()` is `false`, calling its methods is a no-op and **no result signal is
+ever emitted**. Results are delivered to the GUI thread via queued signals.
+
+## Capability Interfaces
+
+These are the **data** capabilities only; **UI is pushed to the host** (see The
+Host), not exposed as an interface. Each capability is its own `QObject` (so it can
+carry its own methods *and* signals), pure-virtual, declared with
+`Q_DECLARE_INTERFACE`, using only Qt/std types across the boundary (see ABI rules).
+**Each carries its own `implemented()`** (a hardcoded, compile-time `const`, the only
+synchronous method). Every other method is a request (returns a `ReqId`; result on
+that capability's matching signal).
+
+> Because a class cannot multiply-inherit `QObject`, `IInstance` does **not** inherit
+> the capabilities; it **composes** them, exposing each as a sub-object accessor
+> (`account()`, `feed()`, `signer()`, `theme()`). Each sub-object lives in the
+> instance's thread and emits its own signals.
+
+The host is a **singleton** (`Host::get()`), so methods never take an `IHost*`.
+Sketches:
+
+```cpp
+// The plugin: the loaded library. Contains one or more modules. This is the type
+// QPluginLoader resolves (Q_PLUGIN_METADATA); the host asks it for its modules.
+class IPlugin {
+public:
+    virtual ~IPlugin() = default;
+    virtual QMap<QString,QString> meta() const = 0;     // plugin id, name, version...
+    virtual QList<IModule*> modules() const = 0;        // one or more
+};
+
+// A module: a unit of functionality inside a plugin. Owns its instances and their
+// IDs (+ persistence). A QObject so it can deliver results by signal.
+class IModule : public QObject {
+    Q_OBJECT
+public:
+    virtual QMap<QString,QString> meta() const = 0;     // hardcoded const: sync
+    virtual ReqId list()      = 0;          // -> instances(req, [(id, name)])
+    virtual ReqId autoStart() = 0;          // -> autoStart(req, [id]) to start on load
+    virtual void  startInstance(const QString &id) = 0;  // construct + register it
+signals:
+    void instances(ReqId, QList<QPair<QString,QString>>);  // (id, name) it can start
+    void autoStart(ReqId, QStringList);                    // ids to start immediately
+    // error carries an OPTIONAL ReqId: set when the error answers a specific
+    // request, empty for a spontaneous/connection error not tied to one.
+    void error(std::optional<ReqId>, QString message);
+};
+
+// Each capability is a QObject: implemented() (sync const) + request methods + the
+// result signals for those requests. implemented()==false => inert (no-op, never
+// emits). Method and result signal share a name (distinguished by signature).
+// EVERY capability also exposes:
+//   - raw(QByteArray) -> raw(ReqId, QByteArray): a generic escape hatch for
+//     custom, capability-defined calls not covered by the typed methods.
+//   - error(std::optional<ReqId>, QString): failures; the ReqId is set when the
+//     error answers a specific request, empty for a spontaneous error.
+
+// An account: coins, addresses, balance. Signing is NOT part of this capability;
+// it is the separate ISigner capability.
+class IAccount : public QObject {
+    Q_OBJECT
+public:
+    virtual bool  implemented() const = 0;
+    virtual ReqId name()    = 0;
+    virtual ReqId info()    = 0;       // kind, displayName...
+    virtual ReqId coins()   = 0;
+    virtual ReqId balance() = 0;
+    virtual ReqId newReceiveAddress() = 0;
+    virtual ReqId newChangeAddress()  = 0;
+    virtual ReqId raw(const QByteArray &request) = 0;   // custom, on demand
+signals:
+    void name(ReqId, QString);
+    void info(ReqId, QMap<QString,QString>);
+    void coins(ReqId, QList<plugin::Coin>);
+    void balance(ReqId, plugin::Balance);
+    void receiveAddress(ReqId, QString address);
+    void changeAddress(ReqId, QString address);
+    void raw(ReqId, QByteArray response);
+    void error(std::optional<ReqId>, QString message);
+};
+
+// A data feed. No subtypes: one capability that pushes typed updates (whichever a
+// given feed produces), typically with ReqId 0 (unsolicited push).
+class IFeed : public QObject {
+    Q_OBJECT
+public:
+    virtual bool  implemented() const = 0;
+    virtual ReqId raw(const QByteArray &request) = 0;   // custom, on demand
+signals:
+    void feeRate(ReqId, double satvb);
+    void conversionRate(ReqId, QString currency, double value);
+    void raw(ReqId, QByteArray response);
+    void error(std::optional<ReqId>, QString message);
+};
+
+// A signer, the Qt/std projection of bwk's `Signer` trait as implemented by
+// `HwSigner` (over the lower-level `HWI` device trait). Descriptor-based, not
+// policy-based. id/fingerprint/wallet_name are set at construction and immutable
+// (sync-safe); everything else talks to the device and is a request.
+class ISigner : public QObject {
+    Q_OBJECT
+public:
+    virtual bool    implemented() const = 0;
+    // immutable accessors (set at construction; sync-safe)
+    virtual QString id()          const = 0;
+    virtual QString fingerprint() const = 0;   // master fingerprint
+    virtual QString walletName()  const = 0;
+    // requests (touch the device): result on the matching signal
+    virtual ReqId init() = 0;                                       // open/handshake
+    virtual ReqId info() = 0;                                       // device kind, version...
+    virtual ReqId getXpub(const QString &derivationPath) = 0;
+    virtual ReqId isDescriptorRegistered(const QString &descriptor) = 0;
+    virtual ReqId registerDescriptor(const QString &descriptor) = 0;
+    virtual ReqId signWithDescriptor(const QString &psbtBase64,
+                                     const QString &descriptor) = 0;  // -> updated PSBT
+    virtual ReqId raw(const QByteArray &request) = 0;              // custom, on demand
+signals:
+    void initialized(ReqId);
+    void info(ReqId, QMap<QString,QString>);     // device kind, version...
+    void xpub(ReqId, QString xpub);
+    void descriptorRegistered(ReqId, bool ok);
+    void descriptorIsRegistered(ReqId, bool isRegistered);
+    void signed_(ReqId, QString psbtBase64);     // PSBT signed with the descriptor
+    void raw(ReqId, QByteArray response);
+    void error(std::optional<ReqId>, QString message);
+};
+
+class IThemeProvider : public QObject {      // named palettes
+    Q_OBJECT
+public:
+    virtual bool  implemented() const = 0;
+    virtual ReqId themes() = 0;
+    virtual ReqId palette(const QString &name) = 0;
+    virtual ReqId raw(const QByteArray &request) = 0;   // custom, on demand
+signals:
+    void themes(ReqId, QStringList);
+    void palette(ReqId, theme::Palette);
+    void raw(ReqId, QByteArray response);
+    void error(std::optional<ReqId>, QString message);
+};
+
+// THE INVARIANT: every instance is an IInstance. It composes the capabilities
+// (each a QObject living in the instance's own QThread) and exposes them by
+// accessor. A capability is active iff its implemented() is true; otherwise it is
+// inert and never emits. (UI is pushed to the host, not exposed here.)
+class IInstance {
+public:
+    virtual ~IInstance() = default;
+    virtual QString id() const = 0;       // set at instantiation; immutable (sync-safe)
+    virtual void    stop() = 0;           // teardown (pushed UI removed, thread stopped)
+
+    virtual IAccount       *account() = 0;
+    virtual IFeed          *feed()    = 0;
+    virtual ISigner        *signer()  = 0;
+    virtual IThemeProvider *theme()   = 0;
+};
+```
+
+A consumer reaches a capability via its accessor and gates on `implemented()`, e.g.
+`instance->account()->implemented()`; if true it issues requests and connects that
+capability's signals to named slots. The host needed by any of this is reached
+through the singleton `Host::get()`, not passed in.
+
+Neutral data types crossing the boundary live in the SDK (no Rust types, see ABI
+rules):
+
+```cpp
+namespace plugin {
+struct Coin    { QString outpoint; quint64 value; quint32 height;
+                 QString label; bool spent; QString accountType; };
+struct Balance { quint64 confirmed; quint64 unconfirmed; };
+}
+```
+
+### Accounts are uniform
+
+`IAccount` is one interface for **every** account kind; the kind ("sp", "miniscript",
+"liana", "bark") is just `info()` metadata, not a subtype. Code that drives sibling
+accounts treats them all the same. The account capability covers coins, addresses,
+and balance; it **does not include signing methods** (signing is the separate
+`ISigner` capability, see below). Fine-grained, kind-specific extension capabilities
+can be added later if a real cross-account kind-specific operation appears.
+
+### Feeds
+
+A feed is a single capability (`IFeed`), no subtypes. It pushes up to three kinds of
+update on its own signals (typically with `ReqId == 0`, since these are unsolicited
+pushes a consumer subscribes to):
+
+- `feeRate(ReqId, double satvb)`: current fee-rate estimate.
+- `conversionRate(ReqId, QString currency, double value)`: BTC/FIAT price.
+- `raw(ReqId, QByteArray data)`: feed-defined raw bytes for anything not covered by
+  the typed signals.
+
+A consumer walks `Host::get()->instances()`, gates on `feed()->implemented()`, and
+connects the signals it cares about:
+
+```cpp
+for (auto *inst : Host::get()->instances()) {
+    auto *f = inst->feed();
+    if (!f->implemented()) continue;
+    connect(f, &IFeed::conversionRate, this, &MyWidget::onPrice, qontrol::UNIQUE);
+}
+```
+
+Mainline Silent ships **no feeds**. Fee rate and conversion rate arrive as plugins;
+UI that consumes them must degrade gracefully when none is present.
+
+### Signing devices are a separate capability
+
+`ISigner` is the full interface to a signer, a distinct capability separate from
+`IAccount` (the account capability has no signing methods). A consumer that needs a
+signature walks `Host::get()->instances()` for ones whose `signer()->implemented()`
+is true, matches by `fingerprint()`, and routes the PSBT plus the relevant descriptor
+through `signWithDescriptor`.
+
+`ISigner` mirrors bwk's **`Signer`** trait as implemented by `HwSigner` (which itself
+sits over the lower-level `HWI` device trait). It is **descriptor-based**:
+- immutable accessors `id()`, `fingerprint()`, `walletName()` (set at construction);
+- requests `init()`, `info()` (device kind / version), `getXpub(path)`,
+  `isDescriptorRegistered(descriptor)`, `registerDescriptor(descriptor)`, and
+  `signWithDescriptor(psbt, descriptor)`.
+
+Every request talks to a physical device, so (per the Threading Model) it returns a
+`ReqId` and the result arrives on the matching signal. The C++ interface is the
+Qt/std projection of the trait across the module boundary; a signer module typically
+wraps a `bwk` `HwSigner` internally via CXX.
+
+## Inter-Account Operation: Send To / Spend From Siblings
+
+A key use case is moving funds between sibling accounts (e.g. a consolidation or
+swap plugin). The account capability has no signing methods, so signing always routes
+through one or more `ISigner` instances.
+
+- **Send TO a sibling**: pick a recipient instance from `Host::get()->instances()`
+  (gated on `account()->implemented()`), call `account()->newReceiveAddress()`, and
+  read the address off its `receiveAddress(ReqId, ...)` signal.
+- **Spend FROM a sibling**: call the source `account()->coins()`, assemble a PSBT
+  spanning the chosen UTXOs, then route the PSBT + descriptor to the `signer()`
+  instance(s) holding the keys via `signWithDescriptor` (the signed PSBT arrives on
+  the `signed_` signal); combine partial signatures and broadcast. PSBTs cross the
+  boundary as base64 strings.
+
+> Cross-account PSBT construction over multiple accounts' UTXOs may need wallet-core
+> support in `bwk-sp`, coordinated separately. The signing path (`ISigner`) exists
+> from the start; the full multi-account build flow lands once core support is in
+> place.
+
+## ABI & Linking Rules (Plugin Authors Must Read)
+
+Silent statically links Qt, and the host binary acts as the **single Qt provider**:
+plugins link **no Qt of their own** and resolve Qt symbols against the host at load
+time. This keeps one Qt in the process so signals, meta-types, and singletons stay
+unified. Consequences:
+
+- **Toolchain lock.** A plugin must be built against the **same Qt version and a
+  compatible compiler ABI** as the host. `QPluginLoader` enforces a build-key check
+  and refuses mismatched plugins (logged, not crashed).
+- **Boundary types are Qt/std only.** Everything crossing the host/plugin boundary
+  uses C++ virtual interfaces and `QString`/`QList`/PODs/base64 strings, **never
+  `rust::*` types.** A plugin may use Rust internally and bridge it with CXX
+  *inside* its own library; that Rust never crosses the boundary.
+- **Supported Qt surface is fixed at host build.** A plugin may use **no more Qt
+  than the host embeds.** The default supported surface is **Qt Core, Gui, Widgets,
+  Svg + the qontrol framework.** Using Qt machinery the host did not link will fail
+  to resolve at load time. Extending the surface requires a host change (an anchor
+  upstreamed into the host build) and ships with the next host release. Plugins are
+  runtime-loadable, but the Qt surface is build-time-fixed. This is intentional for
+  a security-sensitive wallet.
+
+## Plugin Translations (i18n)
+
+Modules reuse Silent's existing `.lang` translation system (see
+[I18N.md](I18N.md)): same catalog format, same author scripts.
+
+- **Delivery.** Ship `.lang` catalogs alongside the library at
+  `~/.silent/plugins/<id>/i18n/silent_<locale>.lang`. On enable, the host loads the
+  current locale's catalog; on language change it reloads, so plugin text switches
+  **live** like host text.
+- **Namespacing.** Plugin keys are automatically prefixed with the plugin id, so a
+  plugin's `TR("send-title")` becomes `"<id>.send-title"` internally and cannot
+  collide with host or sibling-plugin keys. Authors write **unprefixed** keys and
+  `.lang` files exactly as in mainline.
+- **Macro.** The SDK provides a plugin-side `TR(...)` that injects the id prefix;
+  call sites read identically to host code.
+
+## Authoring Checklist
+
+1. Implement `IPlugin` and its `IModule`(s); each module's `IInstance` composes the
+   capability objects you need (leave the rest `implemented() == false`). Push UI to
+   the host (`openTab` / `addSettingSection` / `openWizard`).
+2. Follow the project [code guidelines](../CODE_GUIDELINES.md): named slots (no
+   lambdas in `connect`), three-phase widget lifecycle (`init`/`doConnect`/`view`),
+   `screen::`/`modal::` namespaces, `m_` members, composite widgets exposing
+   `widget()`, toggles via `&QCheckBox::toggled`.
+3. Build against the plugin SDK headers; link no Qt of your own; match the host Qt
+   version/toolchain.
+4. Ship `library + <id>.json` metadata (plus optional `i18n/*.lang`) under
+   `~/.silent/plugins/<id>/`.
+5. The plugin installs disabled; enable it from global Settings.
