@@ -1157,10 +1157,6 @@ fn convert_sp_notification(sp_notif: SpNotification) -> Notification {
             flag: NotificationFlag::NewBlocksDetected,
             payload: format!("{from_height},{to_height}"),
         },
-        SpNotification::PaymentUpdated => Notification {
-            flag: NotificationFlag::PaymentUpdated,
-            payload: String::new(),
-        },
     }
 }
 

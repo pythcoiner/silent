@@ -88,7 +88,7 @@
         outputHashes = {
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
           "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
-          "bwk-sp-0.1.0" = "sha256-QlCb0qXRuI3kmlHsEE4nKqpOZkAxrhDacrYQUoWT9g4=";
+          "bwk-sp-0.1.0" = "sha256-eaQsBHZB2tQBdB2iy+DDpHxQAFK1GYBidwuw08EYa+c=";
           "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
           "blindbitd-0.0.1" = "sha256-XfO7P9uVLbw8mpiqLZbUoKw8XsxqM1MyeBuq6TKeZ24=";
           "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
@@ -135,9 +135,9 @@ git = "https://github.com/pythcoiner/ureq.git"
 branch = "gzip"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/pythcoiner/bwk.git?rev=c3f31e827bca177c4b87efb6d515a790c71eb563"]
+[source."git+https://github.com/pythcoiner/bwk.git?rev=fb0adf5af6968552149579d94c339eaf25500664"]
 git = "https://github.com/pythcoiner/bwk.git"
-rev = "c3f31e827bca177c4b87efb6d515a790c71eb563"
+rev = "fb0adf5af6968552149579d94c339eaf25500664"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
