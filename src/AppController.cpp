@@ -90,11 +90,11 @@ auto AppController::onCreateAccount() -> void {
 auto AppController::createAccount(const QString &name, const QString &mnemonic, Network network,
                                   const QString &blindbit_url, const QString &p2p_node,
                                   const QString &electrum_url) -> void {
-    // Create config with default dust limit of 546 sats
+    // Create config with default dust limit of 546 sats, owned by the SP module
     auto config =
         new_config(rust::String(name.toStdString()), network, rust::String(mnemonic.toStdString()),
                    rust::String(blindbit_url.toStdString()), rust::String(p2p_node.toStdString()),
-                   rust::String(electrum_url.toStdString()), 546);
+                   rust::String(electrum_url.toStdString()), 546, rust::String("sp"));
 
     // Save config to file
     config->to_file();

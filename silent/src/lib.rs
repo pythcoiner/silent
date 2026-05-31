@@ -276,6 +276,7 @@ mod ffi {
 
     extern "Rust" {
         /// Create a new config.
+        #[allow(clippy::too_many_arguments)]
         fn new_config(
             account_name: String,
             network: Network,
@@ -284,6 +285,7 @@ mod ffi {
             p2p_node: String,
             electrum_url: String,
             dust_limit: u64,
+            plugin_id: String,
         ) -> Box<Config>;
 
         /// Load config from file.
@@ -333,6 +335,12 @@ mod ffi {
 
         /// Set dust limit (0 to unset).
         fn set_dust_limit(self: &mut Config, limit: u64);
+
+        /// Get plugin/module identifier.
+        fn get_plugin_id(self: &Config) -> String;
+
+        /// Set plugin/module identifier.
+        fn set_plugin_id(self: &mut Config, plugin_id: String);
     }
 
     // ===== Account Methods =====

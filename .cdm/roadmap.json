@@ -106,7 +106,7 @@
         {
           "id": "phase-7-item-1",
           "name": "Plugin-side id-prefixing TR macro",
-          "completed": false,
+          "completed": true,
           "sub_items": [],
           "linked_task_ids": [
             "phase-7.task-1"

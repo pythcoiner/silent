@@ -52,9 +52,9 @@ Status: **Complete** (1/1)
 
 ## Phase 7: SDK: plugin-side TR macro
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Plugin-side id-prefixing TR macro
+- [x] Plugin-side id-prefixing TR macro
 
 ---
 
@@ -228,7 +228,7 @@ Status: **Not Started** (0/1)
 | Phase 4: SDK: ISigner + IThemeProvider | Complete | 1/1 |
 | Phase 5: SDK: IInstance + mock smoke test | Complete | 1/1 |
 | Phase 6: SDK: Host + HostEvents interface | Complete | 1/1 |
-| Phase 7: SDK: plugin-side TR macro | Not Started | 0/1 |
+| Phase 7: SDK: plugin-side TR macro | Complete | 1/1 |
 | Phase 8: Rust: plugin_id on Config | Not Started | 0/1 |
 | Phase 9: Rust: app-state persistence | Not Started | 0/1 |
 | Phase 10: Host: singleton + instance registry | Not Started | 0/1 |
@@ -249,4 +249,4 @@ Status: **Not Started** (0/1)
 | Phase 25: Build: Nix link flags | Not Started | 0/1 |
 | Phase 26: Example plugin: skeleton | Not Started | 0/1 |
 | Phase 27: Example plugin: capability + i18n | Not Started | 0/1 |
-| **Total** | | **6/27** |
+| **Total** | | **7/27** |

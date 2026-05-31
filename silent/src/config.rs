@@ -71,9 +71,16 @@ pub struct Config {
     pub electrum_url: String,
     /// Optional dust limit in satoshis
     pub dust_limit: Option<u64>,
+    /// Plugin/module identifier that owns this account
+    #[serde(default = "default_plugin_id")]
+    pub plugin_id: String,
     /// Base directory for account data
     #[serde(skip)]
     pub data_dir: PathBuf,
+}
+
+fn default_plugin_id() -> String {
+    "sp".into()
 }
 
 /// Serde serialization helpers for Network.
@@ -116,6 +123,7 @@ impl Config {
             p2p_node,
             electrum_url,
             dust_limit,
+            plugin_id: default_plugin_id(),
             data_dir,
         }
     }
@@ -271,6 +279,16 @@ impl Config {
     pub fn set_dust_limit(&mut self, limit: u64) {
         self.dust_limit = if limit > 0 { Some(limit) } else { None };
     }
+
+    /// Get plugin/module identifier.
+    pub fn get_plugin_id(&self) -> String {
+        self.plugin_id.clone()
+    }
+
+    /// Set plugin/module identifier.
+    pub fn set_plugin_id(&mut self, plugin_id: String) {
+        self.plugin_id = plugin_id;
+    }
 }
 
 /// Override for the data directory. Once set, all calls to `datadir()` use this path.
@@ -369,6 +387,7 @@ pub(crate) fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
 // CXX FFI functions
 
 /// Create a new config.
+#[allow(clippy::too_many_arguments)]
 pub fn new_config(
     account_name: String,
     network: Network,
@@ -377,13 +396,14 @@ pub fn new_config(
     p2p_node: String,
     electrum_url: String,
     dust_limit: u64,
+    plugin_id: String,
 ) -> Box<Config> {
     let dust = if dust_limit > 0 {
         Some(dust_limit)
     } else {
         None
     };
-    Box::new(Config::new(
+    let mut config = Config::new(
         account_name,
         network,
         mnemonic,
@@ -391,7 +411,9 @@ pub fn new_config(
         p2p_node,
         electrum_url,
         dust,
-    ))
+    );
+    config.set_plugin_id(plugin_id);
+    Box::new(config)
 }
 
 /// Delete an account's data from disk.
@@ -403,6 +425,27 @@ pub fn delete_config(account_name: String) -> bool {
             log::error!("failed to delete account '{account_name}': {e}");
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_deserialize_without_plugin_id_defaults_to_sp() {
+        let json = r#"{
+            "account_name":"test_account",
+            "network":"Signet",
+            "mnemonic":"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            "blindbit_url":"http://localhost:50001",
+            "p2p_node":"",
+            "electrum_url":"",
+            "dust_limit":546
+        }"#;
+
+        let config: Config = serde_json::from_str(json).expect("config json should deserialize");
+        assert_eq!(config.plugin_id, "sp");
     }
 }
 
