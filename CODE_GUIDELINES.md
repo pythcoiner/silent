@@ -152,6 +152,11 @@ not alphabetically.
 `m_*_column` (qontrol::Column), `m_*_row` (qontrol::Row), `m_*_table`
 (QTableWidget), `m_*_timer` (QTimer), `m_*_frame` (framed widgets).
 
+**Local const usage policy:**
+- Avoid `const` for routine local temporaries and scalar locals (`bool`, `int`, `QString`, etc.) in normal flow.
+- `const` is still preferred for references/iterators in read-only traversal and APIs where immutability is part of the contract (for example: `for (const auto &item : items)`).
+- Use named constants (`c_*` or shared constants) only when the value is truly a stable, intentional constant, not just a one-off local.
+
 ## C++: Clangd Lint Rules
 
 The `.clangd` config enforces clang-tidy checks and `UnusedIncludes: Strict`. All

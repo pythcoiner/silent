@@ -1,5 +1,6 @@
 #include "Receive.h"
 #include "AccountController.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/Label.h"
 #include "utils.h"
@@ -29,21 +30,23 @@ void Receive::init() {
         m_has_sub_accounts = m_controller->getAccount().has_value() &&
                              m_controller->getAccount().value()->has_sub_accounts();
     }
-    m_copy_btn = new Button("Copy");
+    m_copy_btn = new Button;
 
     if (m_has_sub_accounts) {
         m_segwit_addr_label = new Label("", LabelRole::Mono);
         m_segwit_addr_label->setWordWrap(true);
 
-        m_new_segwit_btn = new Button("Generate");
-        m_copy_segwit_btn = new Button("Copy");
+        m_new_segwit_btn = new Button;
+        m_copy_segwit_btn = new Button;
 
         m_taproot_addr_label = new Label("", LabelRole::Mono);
         m_taproot_addr_label->setWordWrap(true);
 
-        m_new_taproot_btn = new Button("Generate");
-        m_copy_taproot_btn = new Button("Copy");
+        m_new_taproot_btn = new Button;
+        m_copy_taproot_btn = new Button;
     }
+
+    retranslateUi();
 }
 
 void Receive::doConnect() {
@@ -103,7 +106,7 @@ void Receive::onCopyTaprootAddr() {
 }
 
 void Receive::view() {
-    auto *addrLabel = new Label("Silent Payment Address:", LabelRole::InfoLabel);
+    auto *addrLabel = new Label(TR("receive-silent-payment-address"), LabelRole::InfoLabel);
 
     // Display the SP address (large, copyable)
     auto addrQStr = QString(m_sp_address.c_str());
@@ -122,7 +125,7 @@ void Receive::view() {
 
     if (m_has_sub_accounts) {
         // Segwit address section
-        auto *segwitLabel = new Label("Segwit Address:", LabelRole::InfoLabel);
+        auto *segwitLabel = new Label(TR("receive-segwit-address"), LabelRole::InfoLabel);
 
         auto *segwitAddrRow =
             (new qontrol::Row)->push(segwitLabel)->push(m_segwit_addr_label)->pushSpacer();
@@ -140,7 +143,7 @@ void Receive::view() {
             ->push(segwitBtnRow);
 
         // Taproot address section
-        auto *taprootLabel = new Label("Taproot Address:", LabelRole::InfoLabel);
+        auto *taprootLabel = new Label(TR("receive-taproot-address"), LabelRole::InfoLabel);
 
         auto *taprootAddrRow =
             (new qontrol::Row)->push(taprootLabel)->push(m_taproot_addr_label)->pushSpacer();
@@ -166,6 +169,32 @@ void Receive::view() {
     auto *oldLayout = this->layout();
     delete oldLayout;
     this->setLayout(m_main_widget->layout());
+}
+
+void Receive::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+        view();
+    }
+    qontrol::Screen::changeEvent(event);
+}
+
+void Receive::retranslateUi() {
+    if (m_copy_btn != nullptr) {
+        m_copy_btn->setText(TR("common-copy"));
+    }
+    if (m_new_segwit_btn != nullptr) {
+        m_new_segwit_btn->setText(TR("common-generate"));
+    }
+    if (m_copy_segwit_btn != nullptr) {
+        m_copy_segwit_btn->setText(TR("common-copy"));
+    }
+    if (m_new_taproot_btn != nullptr) {
+        m_new_taproot_btn->setText(TR("common-generate"));
+    }
+    if (m_copy_taproot_btn != nullptr) {
+        m_copy_taproot_btn->setText(TR("common-copy"));
+    }
 }
 
 } // namespace screen

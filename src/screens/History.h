@@ -2,6 +2,7 @@
 
 #include "theme/Palette.h"
 #include <Qontrol>
+#include <qevent.h>
 #include <qscrollarea.h>
 #include <qwidget.h>
 #include <silent.h>
@@ -31,6 +32,8 @@ protected:
     void init() override;
     void doConnect() override;
     void view() override;
+    void changeEvent(QEvent *event) override;
+    void retranslateUi();
 
 private:
     CoinState m_state{};

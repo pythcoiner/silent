@@ -28,6 +28,8 @@ auto frame(QWidget *widget) -> QWidget *;
 auto toBitcoin(uint64_t sats, bool with_unit = true) -> QString;
 auto shortenOutpoint(const QString &outpoint) -> QString;
 auto coinsCount(uint64_t count) -> QString;
+auto mapBackendErrorSummary(const QString &raw_error) -> QString;
+auto formatBackendErrorDetails(const QString &raw_error) -> QString;
 
 class Frame : public QFrame {
     Q_OBJECT

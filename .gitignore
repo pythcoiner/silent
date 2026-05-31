@@ -4,3 +4,8 @@ lib/
 silent/target/
 result
 .cache/
+.cdm/logs/
+i18n/*.ts
+__pycache__/
+*.pyc
+scripts/__pycache__/*

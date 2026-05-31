@@ -1,5 +1,6 @@
 #include "ConfirmSend.h"
 #include "../utils.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/Label.h"
 #include <Qontrol>
@@ -16,7 +17,7 @@ ConfirmSend::ConfirmSend(const QStringList &recipients, uint64_t fee, const QStr
     : m_recipients(recipients),
       m_fee(fee),
       m_txid_preview(txid_preview) {
-    setWindowTitle("Confirm Transaction");
+    setWindowTitle(TR("confirm-transaction-title"));
     resize(500, 300);
     init();
     doConnect();
@@ -28,22 +29,22 @@ void ConfirmSend::init() {
     for (const auto &line : m_recipients) {
         details += line + "\n";
     }
-    details += "\nFee: " + toBitcoin(m_fee);
-    details += "\nTxid: " + m_txid_preview;
+    details += "\n" + TR("confirm-send-fee").arg(toBitcoin(m_fee));
+    details += "\n" + TR("confirm-send-txid").arg(m_txid_preview);
 
     m_details_label = new Label(details);
     m_details_label->setWordWrap(true);
     m_details_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    m_cancel_btn = new Button("Cancel");
-    m_confirm_btn = new Button("Confirm", ButtonRole::Primary);
+    m_cancel_btn = new Button(TR("common-cancel"));
+    m_confirm_btn = new Button(TR("common-confirm"), ButtonRole::Primary);
 
-    m_status_label = new Label("Broadcasting...");
+    m_status_label = new Label(TR("confirm-send-broadcasting"));
     m_status_label->setAlignment(Qt::AlignCenter);
     m_status_label->setWordWrap(true);
     m_status_label->setVisible(false);
 
-    m_ok_btn = new Button("OK", ButtonRole::Primary);
+    m_ok_btn = new Button(TR("common-ok"), ButtonRole::Primary);
     m_ok_btn->setVisible(false);
 }
 
@@ -71,9 +72,9 @@ void ConfirmSend::setBroadcasting() {
 void ConfirmSend::setResult(bool ok, const QString &message) {
     m_details_label->setVisible(false);
     if (ok) {
-        m_status_label->setText("Transaction Sent\n\nTxid: " + message);
+        m_status_label->setText(TR("confirm-send-success").arg(message));
     } else {
-        m_status_label->setText("Broadcast Failed\n\n" + message);
+        m_status_label->setText(TR("confirm-send-failed").arg(message));
     }
     m_status_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_ok_btn->setVisible(true);
@@ -99,6 +100,33 @@ void ConfirmSend::view() {
                     ->pushSpacer();
 
     setMainWidget(margin(col));
+}
+
+void ConfirmSend::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+    }
+    qontrol::Modal::changeEvent(event);
+}
+
+void ConfirmSend::retranslateUi() {
+    setWindowTitle(TR("confirm-transaction-title"));
+
+    QString details;
+    for (const auto &line : m_recipients) {
+        details += line + "\n";
+    }
+    details += "\n" + TR("confirm-send-fee").arg(toBitcoin(m_fee));
+    details += "\n" + TR("confirm-send-txid").arg(m_txid_preview);
+    m_details_label->setText(details);
+
+    m_cancel_btn->setText(TR("common-cancel"));
+    m_confirm_btn->setText(TR("common-confirm"));
+    m_ok_btn->setText(TR("common-ok"));
+
+    if (m_status_label->isVisible() && !m_ok_btn->isVisible()) {
+        m_status_label->setText(TR("confirm-send-broadcasting"));
+    }
 }
 
 } // namespace modal

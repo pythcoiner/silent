@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Qontrol>
+#include <qevent.h>
 #include <qtmetamacros.h>
 
 namespace theme {
@@ -34,6 +35,8 @@ protected:
     void init() override;
     void doConnect() override;
     void view() override;
+    void changeEvent(QEvent *event) override;
+    void retranslateUi();
 
 private:
     AccountController *m_controller = nullptr;

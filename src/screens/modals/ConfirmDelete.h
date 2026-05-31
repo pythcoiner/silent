@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <Qontrol>
+#include <qevent.h>
 
 namespace theme {
 class Button;
@@ -29,6 +30,8 @@ protected:
     void init();
     void doConnect();
     void view();
+    void changeEvent(QEvent *event) override;
+    void retranslateUi();
 
 private:
     QString m_name;

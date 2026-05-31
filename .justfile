@@ -111,3 +111,15 @@ clean:
     rm -rf build
     rm -f lib/libsilent.* lib/libtemplar.*
     rm -rf lib/include
+
+# Add i18n language boilerplate (locale + autonym)
+i18n-add locale name:
+    python3 scripts/i18n/add_lang.py {{locale}} {{name}}
+
+# Add new i18n id + NONE placeholders for locales
+i18n-id id text:
+    python3 scripts/i18n/add_entry.py {{id}} {{text}}
+
+# List pending untranslated locale entries (NONE)
+i18n-pending:
+    rg '=> "NONE"$' i18n/silent_*.lang

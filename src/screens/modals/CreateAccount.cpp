@@ -2,6 +2,7 @@
 #include "../utils.h"
 #include "AppController.h"
 #include "common.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/ComboBox.h"
 #include "theme/Input.h"
@@ -21,7 +22,7 @@ using theme::LabelRole;
 using theme::TextEdit;
 
 CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
-    setWindowTitle("Create Account");
+    setWindowTitle(TR("create-account-title"));
     init();
     doConnect();
     view();
@@ -30,41 +31,41 @@ CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
 
 void CreateAccount::init() {
     m_name_input = new Input;
-    m_name_input->setPlaceholderText("Enter account name");
+    m_name_input->setPlaceholderText(TR("create-account-placeholder-name"));
 
     m_mnemonic_input = new TextEdit;
-    m_mnemonic_input->setPlaceholderText("Mnemonic phrase");
+    m_mnemonic_input->setPlaceholderText(TR("create-account-placeholder-mnemonic"));
     m_mnemonic_input->setMaximumHeight(50);
     m_mnemonic_input->setMinimumWidth(200);
 
-    m_generate_btn = new Button("Generate");
+    m_generate_btn = new Button(TR("common-generate"));
 
     m_network_combo = new ComboBox;
-    m_network_combo->addItem("Regtest", static_cast<int>(Network::Regtest));
-    m_network_combo->addItem("Signet", static_cast<int>(Network::Signet));
-    m_network_combo->addItem("Testnet", static_cast<int>(Network::Testnet));
-    m_network_combo->addItem("Bitcoin", static_cast<int>(Network::Bitcoin));
+    m_network_combo->addItem(TR("network-regtest"), static_cast<int>(Network::Regtest));
+    m_network_combo->addItem(TR("network-signet"), static_cast<int>(Network::Signet));
+    m_network_combo->addItem(TR("network-testnet"), static_cast<int>(Network::Testnet));
+    m_network_combo->addItem(TR("network-bitcoin"), static_cast<int>(Network::Bitcoin));
     m_network_combo->setCurrentIndex(0);
 
     m_blindbit_input = new Input;
-    m_blindbit_input->setPlaceholderText("http://localhost:8080");
-    m_blindbit_input->setText("http://localhost:8080");
+    m_blindbit_input->setPlaceholderText(TR("create-account-placeholder-blindbit"));
+    m_blindbit_input->setText(TR("create-account-default-blindbit"));
 
     m_p2p_input = new Input;
-    m_p2p_input->setPlaceholderText("127.0.0.1:18444");
+    m_p2p_input->setPlaceholderText(TR("create-account-placeholder-p2p"));
 
-    m_test_btn = new Button("Test");
-    m_test_p2p_btn = new Button("Test");
+    m_test_btn = new Button(TR("common-test"));
+    m_test_p2p_btn = new Button(TR("common-test"));
 
     m_electrum_input = new Input;
-    m_electrum_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
+    m_electrum_input->setPlaceholderText(TR("settings-placeholder-electrum"));
 
-    m_test_electrum_btn = new Button("Test");
+    m_test_electrum_btn = new Button(TR("common-test"));
 
-    m_create_btn = new Button("Create", ButtonRole::Primary);
+    m_create_btn = new Button(TR("create-account-action-create"), ButtonRole::Primary);
     m_create_btn->setEnabled(false);
 
-    m_cancel_btn = new Button("Cancel");
+    m_cancel_btn = new Button(TR("common-cancel"));
 }
 
 void CreateAccount::doConnect() {
@@ -102,38 +103,38 @@ void CreateAccount::doConnect() {
 
 void CreateAccount::view() {
     auto *nameRow = (new qontrol::Row)
-                        ->push(new Label("Account Name:", LabelRole::InputLabel))
+                        ->push(new Label(TR("create-account-name"), LabelRole::InputLabel))
                         ->pushSpacer(resolve(Spacing::XS))
                         ->push(m_name_input);
 
     auto *mnemonicRow = (new qontrol::Row)
-                            ->push(new Label("Mnemonic:", LabelRole::InputLabel))
+                            ->push(new Label(TR("create-account-mnemonic"), LabelRole::InputLabel))
                             ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_mnemonic_input);
 
     auto *generateRow = (new qontrol::Row)->pushSpacer()->push(m_generate_btn)->pushSpacer();
 
     auto *networkRow = (new qontrol::Row)
-                           ->push(new Label("Network:", LabelRole::InputLabel))
+                           ->push(new Label(TR("settings-network"), LabelRole::InputLabel))
                            ->pushSpacer(resolve(Spacing::XS))
                            ->push(m_network_combo);
 
     auto *urlRow = (new qontrol::Row)
-                       ->push(new Label("BlindBit URL:", LabelRole::InputLabel))
+                       ->push(new Label(TR("settings-blindbit-url"), LabelRole::InputLabel))
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_blindbit_input)
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_btn);
 
     auto *p2pRow = (new qontrol::Row)
-                       ->push(new Label("P2P Node:", LabelRole::InputLabel))
+                       ->push(new Label(TR("settings-p2p-node"), LabelRole::InputLabel))
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_p2p_input)
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_p2p_btn);
 
     auto *electrumRow = (new qontrol::Row)
-                            ->push(new Label("Electrum:", LabelRole::InputLabel))
+                            ->push(new Label(TR("create-account-electrum"), LabelRole::InputLabel))
                             ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_electrum_input)
                             ->pushSpacer(resolve(Spacing::XS))
@@ -199,12 +200,12 @@ void CreateAccount::onTestBackend() {
     auto url = m_blindbit_input->text().trimmed();
     if (url.isEmpty()) {
         AppController::execModal(
-            new qontrol::Modal("Invalid Input", "BlindBit URL cannot be empty."));
+            new qontrol::Modal(TR("create-account-invalid-input"), TR("create-account-blindbit-empty")));
         return;
     }
 
     m_test_btn->setEnabled(false);
-    m_test_btn->setText("Testing...");
+    m_test_btn->setText(TR("common-testing"));
 
     auto *thread = QThread::create([this, url = url.toStdString()]() {
         auto info = ::get_backend_info(rust::String(url));
@@ -216,31 +217,30 @@ void CreateAccount::onTestBackend() {
 
 void CreateAccount::onBackendInfoReady(BackendInfo info) {
     m_test_btn->setEnabled(true);
-    m_test_btn->setText("Test");
+    m_test_btn->setText(TR("common-test"));
 
     if (!info.is_ok) {
         m_backend_verified = false;
         onUpdateCreateButton();
-        AppController::execModal(
-            new qontrol::Modal("Connection Failed",
-                               QString("Failed to connect to backend:\n%1")
-                                   .arg(QString::fromStdString(std::string(info.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(info.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-connection-failed"), message));
         return;
     }
 
     QString networkStr;
     switch (info.network) {
     case Network::Regtest:
-        networkStr = "Regtest";
+        networkStr = TR("network-regtest");
         break;
     case Network::Signet:
-        networkStr = "Signet";
+        networkStr = TR("network-signet");
         break;
     case Network::Testnet:
-        networkStr = "Testnet";
+        networkStr = TR("network-testnet");
         break;
     case Network::Bitcoin:
-        networkStr = "Bitcoin";
+        networkStr = TR("network-bitcoin");
         break;
     }
 
@@ -252,26 +252,20 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
     m_backend_verified = networkMatch;
     onUpdateCreateButton();
 
-    auto yn = [](bool v) -> const char * { return v ? "Yes" : "No"; };
+    auto yn = [](bool v) -> QString { return v ? TR("common-yes") : TR("common-no"); };
     QString msg =
-        QString("Network: %1%2\n"
-                "Block Height: %3\n\n"
-                "Capabilities:\n"
-                "  Tweaks Only: %4\n"
-                "  Full Basic: %5\n"
-                "  Full + Dust Filter: %6\n"
-                "  Cut-Through + Dust Filter: %7")
+        TR("create-account-backend-info-template")
             .arg(networkStr)
             .arg(networkMatch
-                     ? ""
-                     : QString(" (mismatch: selected %1)").arg(m_network_combo->currentText()))
+                     ? QString()
+                     : TR("create-account-network-mismatch-suffix").arg(m_network_combo->currentText()))
             .arg(info.height)
             .arg(yn(info.tweaks_only))
             .arg(yn(info.tweaks_full_basic))
             .arg(yn(info.tweaks_full_with_dust_filter))
             .arg(yn(info.tweaks_cut_through_with_dust_filter));
 
-    auto *modal = new qontrol::Modal("Backend Info", msg);
+    auto *modal = new qontrol::Modal(TR("settings-backend-info"), msg);
     modal->setFixedSize(300, 230);
     AppController::execModal(modal);
 }
@@ -305,12 +299,12 @@ void CreateAccount::onTestP2p() {
     auto addr = m_p2p_input->text().trimmed();
     if (addr.isEmpty()) {
         AppController::execModal(
-            new qontrol::Modal("Invalid Input", "P2P node address cannot be empty."));
+            new qontrol::Modal(TR("create-account-invalid-input"), TR("create-account-p2p-empty")));
         return;
     }
 
     m_test_p2p_btn->setEnabled(false);
-    m_test_p2p_btn->setText("Testing...");
+    m_test_p2p_btn->setText(TR("common-testing"));
 
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
     auto *thread = QThread::create([this, addr = addr.toStdString(), network]() {
@@ -323,15 +317,14 @@ void CreateAccount::onTestP2p() {
 
 void CreateAccount::onP2pTestReady(ConnectionResult result) {
     m_test_p2p_btn->setEnabled(true);
-    m_test_p2p_btn->setText("Test");
+    m_test_p2p_btn->setText(TR("common-test"));
 
     if (!result.is_ok) {
         m_p2p_verified = false;
         onUpdateCreateButton();
-        AppController::execModal(new qontrol::Modal(
-            "P2P Test Failed",
-            QString("Failed to connect to P2P node:\n%1")
-                .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(result.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-p2p-test-failed"), message));
         return;
     }
 
@@ -348,12 +341,12 @@ void CreateAccount::onTestElectrum() {
     auto addr = m_electrum_input->text().trimmed();
     if (addr.isEmpty()) {
         AppController::execModal(
-            new qontrol::Modal("Invalid Input", "Electrum address cannot be empty."));
+            new qontrol::Modal(TR("create-account-invalid-input"), TR("create-account-electrum-empty")));
         return;
     }
 
     m_test_electrum_btn->setEnabled(false);
-    m_test_electrum_btn->setText("Testing...");
+    m_test_electrum_btn->setText(TR("common-testing"));
 
     auto *thread = QThread::create([this, addr = addr.toStdString()]() {
         auto result = ::test_electrum(rust::String(addr));
@@ -365,15 +358,14 @@ void CreateAccount::onTestElectrum() {
 
 void CreateAccount::onElectrumTestReady(ConnectionResult result) {
     m_test_electrum_btn->setEnabled(true);
-    m_test_electrum_btn->setText("Test");
+    m_test_electrum_btn->setText(TR("common-test"));
 
     if (!result.is_ok) {
         m_electrum_verified = false;
         onUpdateCreateButton();
-        AppController::execModal(new qontrol::Modal(
-            "Electrum Test Failed",
-            QString("Failed to connect to Electrum server:\n%1")
-                .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(result.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-electrum-test-failed"), message));
         return;
     }
 
