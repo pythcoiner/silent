@@ -26,8 +26,19 @@ set_target_properties(silent_rust PROPERTIES
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core Svg)
 
-# qontrol framework (vendored in lib/qontrol)
-add_subdirectory(lib/qontrol)
+# qontrol framework (prefer vendored lib/qontrol, otherwise fetch pinned commit)
+if(EXISTS "${CMAKE_SOURCE_DIR}/lib/qontrol/CMakeLists.txt")
+    add_subdirectory(lib/qontrol)
+else()
+    include(FetchContent)
+    FetchContent_Declare(
+        qontrol_src
+        GIT_REPOSITORY https://github.com/pythcoiner/qontrol.git
+        GIT_TAG 7bc317d
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(qontrol_src)
+endif()
 add_subdirectory(src/plugin/sdk)
 
 set(CMAKE_AUTOMOC ON)
