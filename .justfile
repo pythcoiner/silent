@@ -3,6 +3,7 @@ qontrol_commit := "7bc317d"
 
 nix := env("NIX", "nix")
 nix_flags := "--extra-experimental-features 'nix-command flakes'"
+lint_base_commit := "68e75c4"
 
 # Build Linux
 build:
@@ -85,6 +86,20 @@ lint: lint-rust lint-cpp
 
 # Full-repo lint (Rust + full C++)
 lint-full: lint-rust lint-cpp-full
+
+# Simulate CI lint job locally
+ci-lint:
+    scripts/lint/rust_lint_commits.sh "{{lint_base_commit}}...HEAD"
+    if [ ! -f lib/include/silent.h ]; then bash build.sh; fi
+    cmake -B build .
+    scripts/lint/clang_tidy_diff_commits.sh "{{lint_base_commit}}...HEAD"
+    python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
+    python3 scripts/i18n/generate_ts.py --out-dir /tmp/opencode/i18n-ci-check
+
+# Simulate full CI pipeline locally (lint + tests + local build)
+ci: ci-lint
+    cargo test --manifest-path silent/Cargo.toml
+    just build-local
 
 # Auto-fix clang-tidy warnings
 fix:

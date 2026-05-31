@@ -4,6 +4,7 @@
 
 #![allow(dead_code)]
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::Duration;
 
@@ -53,7 +54,13 @@ pub fn create_test_account(account_name: &str, blindbit_url: &str) -> Account {
 
 /// Generate unique test account name.
 pub fn test_account_name() -> String {
-    format!("test_account_{}", std::process::id())
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("system time should be after epoch")
+        .as_nanos();
+    format!("test_account_{}_{}_{}", std::process::id(), nanos, seq)
 }
 
 /// Cleanup test account directory.

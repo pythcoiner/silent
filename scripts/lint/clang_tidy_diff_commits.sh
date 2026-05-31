@@ -55,7 +55,7 @@ if [[ -z "$range" ]]; then
     fi
 fi
 
-mapfile -t commits < <(git rev-list --reverse "$range")
+mapfile -t commits < <(git rev-list --reverse --no-merges "$range")
 
 if [[ ${#commits[@]} -eq 0 ]]; then
     echo "No commits in range: $range"
