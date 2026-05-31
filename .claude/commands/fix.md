@@ -1,27 +1,33 @@
 # Bug Fix Wizard
 
-This command guides users through adding a bug fix task to an existing cm (Claude Code Manager) project. The wizard collects bug details through a conversational flow and then updates the project artifacts (tasks.json, optionally ROADMAP.md).
+This command guides users through adding a bug fix task to an existing cdm (Codex Manager) project. The wizard collects bug details, investigates autonomously, and presents a complete fix plan for the user to confirm via `/end`.
 
 ## Prerequisites
 
-Requires: `.cm/` directory with `tasks.json`. If not present, run `/cm` first.
+Requires: `.cdm/` directory with `tasks.json`. If not present, run `/cdm` first.
 
 ## CRITICAL: Scope Limitations
 
 This command ONLY updates planning files:
-- `.cm/tasks.json` - Add fix task definition
-- `.cm/ROADMAP.md` - Optionally add checkbox entry
+- `.cdm/tasks.json` - Add fix task definition
+- `.cdm/ROADMAP.md` - Optionally add checkbox entry
 
 This command does NOT:
 - Implement any code fixes
-- Run `cm run` or execute tasks
-- Make changes outside `.cm/` directory
+- Run `cdm run` or execute tasks
+- Make changes outside `.cdm/` directory
 
-After the wizard completes, the user must manually run `cm run` to start the fix.
+After the wizard completes, the user must manually run `cdm run` to start the fix.
 
-## Important: Interactive Flow
+## CRITICAL: Minimal Interaction
 
-You MUST follow this wizard flow step by step. Do NOT skip steps or modify files until you have gathered all the required information and received user confirmation.
+The wizard has exactly TWO user interactions:
+1. **Step 1** — User describes the bug
+2. **Step 5** — Handoff to `/end` (user confirms by running `/end`)
+
+Everything in between (classification, investigation, fix approach, phase plan, task placement) is done AUTONOMOUSLY by the assistant. Do NOT ask for confirmation at intermediate steps. Do NOT ask "does this match?", "does this look correct?", "agree?", etc. Just do the work and present the final result.
+
+If the user wants to correct something, they will say so after seeing the summary. You do NOT need to ask.
 
 ---
 
@@ -40,160 +46,67 @@ Wait for the user's response before proceeding.
 
 ---
 
-## Step 2: Bug Classification
+## Step 2: Autonomous Analysis
 
-### Step 2.1: Severity
+After receiving the bug description, do ALL of the following WITHOUT asking for confirmation:
 
-**Ask the user:**
+### 2.1: Classify the Bug
 
-> What is the **severity**?
->
-> - **Critical**: System crash, data loss, security vulnerability
-> - **High**: Major feature broken, no workaround
-> - **Medium**: Feature impaired, workaround exists
-> - **Low**: Minor issue, cosmetic problem
+Infer severity and category from the description:
+- **Severity**: Critical / High / Medium / Low
+- **Category**: Logic error / Crash/panic / Performance / UI/UX / Data corruption / Security / Other
 
-Wait for the user's response before proceeding.
-
-### Step 2.2: Category
-
-**Ask the user:**
-
-> What **category** is this bug?
->
-> - Logic error
-> - Crash/panic
-> - Performance issue
-> - UI/UX problem
-> - Data corruption
-> - Security issue
-> - Other: [specify]
-
-Wait for the user's response before proceeding.
-
----
-
-## Step 3: Investigation
-
-**Analyze the codebase to locate the bug:**
+### 2.2: Investigate the Codebase
 
 1. Read relevant files mentioned by the user
 2. Search for related code patterns
 3. Identify the root cause location
 4. Determine affected components
 
-**Present your findings:**
+### 2.3: Design the Fix
 
-> ## Investigation Results
->
-> **Likely location:**
-> - `path/to/file.rs` - [specific function or line range]
->
-> **Root cause analysis:**
-> [Brief explanation of what's causing the bug]
->
-> **Affected components:**
-> - [Component 1]
-> - [Component 2]
->
-> **Related files to review:**
-> - `file1.rs` - [why relevant]
-> - `file2.rs` - [why relevant]
->
-> Does this match your understanding? Any additional context?
+1. Determine the fix approach
+2. List required changes
+3. Assess risk and testing strategy
 
-Wait for the user's response before proceeding.
+### 2.4: Determine Task Placement
+
+Analyze existing phases in `tasks.json` and decide placement:
+- If there's a current active phase with related work, add to it
+- Otherwise, create a new phase
+- Use your judgment — don't ask the user
+
+### 2.5: Generate Phase Plan
+
+If creating a new phase, generate a detailed phase plan following the `.cdm/agents/PLAN.md` template.
 
 ---
 
-## Step 4: Fix Approach
+## Step 3: Present Combined Summary
 
-**Propose a fix approach:**
+Present ALL results in a single message:
 
-> ## Proposed Fix
+> ## Fix Summary
 >
-> **Approach:**
-> [Description of how to fix the bug]
+> **Bug:** [summary]
+> **Severity:** [severity] | **Category:** [category]
 >
+> ### Investigation
+> **Root cause:** [brief explanation]
+> **Location:** `path/to/file.rs` - [specific function or line range]
+>
+> ### Fix Approach
 > **Changes required:**
 > 1. [File 1]: [Change description]
 > 2. [File 2]: [Change description]
 >
-> **Testing strategy:**
-> - [ ] Unit test for the specific bug case
-> - [ ] Regression tests for related functionality
-> - [ ] Manual verification steps
+> **Risk:** [Low/Medium/High]
 >
-> **Risk assessment:**
-> - Impact scope: [Low/Medium/High]
-> - Regression risk: [Low/Medium/High]
->
-> Does this approach look correct? Any concerns?
-
-Wait for the user's response before proceeding.
-
----
-
-## Step 5: Generate Phase Plan
-
-**If creating a new phase for the fix, generate a detailed phase plan following the PLAN.md template.**
-
-Read the `.cm/agents/PLAN.md` template for the required format. For bug fixes, the plan should include:
-
-1. **Objective** - What the fix accomplishes
-2. **Background** - Bug description, impact, current state
-3. **Root Cause Analysis** - Why the bug occurs
-4. **Fix Strategy** - How the fix works
-5. **Implementation Steps** - Numbered list with file paths
-6. **Files to Modify** - Each file with specific changes
-7. **Success Criteria** - Bug no longer reproduces, tests pass
-8. **Regression Prevention** - Tests or guards to prevent recurrence
-9. **Verification** - Commands to verify the fix
-
-**Present the generated plan to the user:**
-
-> Here's the detailed fix plan for this phase:
->
-> [Generated plan content following PLAN.md template]
->
-> Does this plan look correct? Would you like any modifications?
-
-Wait for the user's response before proceeding. (Skip this step if adding to an existing phase.)
-
----
-
-## Step 6: Task Placement
-
-**Analyze existing tasks and ask:**
-
-> Where should this fix be placed in the task queue?
->
-> **Options:**
-> 1. **Immediate**: Add as next pending task (high priority)
-> 2. **Current phase**: Add to end of current phase
-> 3. **Specific phase**: Add to [phase-name]
-> 4. **Deferred**: Add to backlog for later
->
-> **Current phase:** [phase-name] ([N] pending tasks)
->
-> Which priority level?
-
-Wait for the user's response before proceeding.
-
----
-
-## Step 7: Confirmation
-
-**Present the complete fix task:**
-
-> ## Fix Task Summary
->
-> **Bug:** [summary]
-> **Severity:** [severity]
+> ### Task
 > **Task ID:** [generated-task-id]
+> **Placement:** [phase and position]
 >
-> **Plan file to create:** `.cm/plans/plan-[task-id].md`
-> (containing detailed fix instructions)
+> **Plan file:** `.cdm/plans/plan-[phase].md`
 >
 > **Task definition:**
 > ```json
@@ -207,24 +120,20 @@ Wait for the user's response before proceeding.
 >     "files_to_read": ["affected/files.rs"],
 >     "prior_review_issues": ["[bug description]"]
 >   },
->   "plan_file": ".cm/plans/plan-[task-id].md"
+>   "plan_file": ".cdm/plans/plan-[phase].task-[n].md"
 > }
 > ```
->
-> **Placement:** [phase and position]
->
-> Does this look correct? Reply "yes" to add the fix task, or provide corrections.
 
-Wait for explicit user confirmation before modifying files.
+Do NOT ask for confirmation here. Proceed directly to Step 4.
 
 ---
 
-## Step 8: Handoff to /end
+## Step 4: Handoff to /end
 
-After confirmation:
+Immediately after the summary:
 
-> Ready to save. Run `/end` to write changes to tasks.json and roadmap.json.
-> Then run `cm` when ready to implement.
+> Run `/end` to save changes to tasks.json and roadmap.json.
+> Then run `cdm` when ready to implement.
 
 Do NOT modify files. Wait for `/end`.
 
@@ -232,7 +141,7 @@ Do NOT modify files. Wait for `/end`.
 
 ## Phase Template (for new fix phases)
 
-When creating a new phase for a fix, use this JSON template. The `plan` field contains the detailed fix plan generated in Step 5.
+When creating a new phase for a fix, use this JSON template. The `plan` field contains the detailed fix plan generated in Step 2.5.
 
 ```json
 {
@@ -250,9 +159,9 @@ When creating a new phase for a fix, use this JSON template. The `plan` field co
 
 ## Fix Task Template
 
-**IMPORTANT:** For each fix phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed fix instructions. All tasks in the phase reference this plan file via the `plan_file` field.
+**IMPORTANT:** Create a **separate plan file per task** at `.cdm/plans/plan-X.task-Y.md` (where X is the phase number and Y is the task number). Each task's `plan_file` field must point to its own dedicated file containing only that task's instructions. **Never** point multiple tasks to the same plan file — this causes prompt bloat and review failures.
 
-Create plan file at `.cm/plans/plan-X.md`:
+Create plan file at `.cdm/plans/plan-X.task-1.md`:
 ```markdown
 Fix [bug summary]:
 
@@ -300,7 +209,7 @@ Task JSON:
       "Expected: [behavior]"
     ]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cdm/plans/plan-X.task-1.md"
 }
 ```
 
@@ -311,10 +220,10 @@ Task JSON:
 If the wizard encounters issues:
 
 ### Missing Prerequisites
-> I couldn't find `.cm/tasks.json`. Please run `/cm` first to initialize the project, then try `/fix` again.
+> I couldn't find `.cdm/tasks.json`. Please run `/cdm` first to initialize the project, then try `/fix` again.
 
 ### Invalid tasks.json
-> The tasks.json file appears to be invalid. Please run `cm --validate` to check for errors.
+> The tasks.json file appears to be invalid. Please run `cdm --validate` to check for errors.
 
 ### Conflicting Task IDs
 > Task ID "[id]" already exists. I'll use "[new-id]" instead.

@@ -1,24 +1,24 @@
 # Feature Wizard
 
-This command guides users through adding a new feature to an existing cm (Claude Code Manager) project. The wizard collects feature requirements through a conversational flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
+This command guides users through adding a new feature to an existing cdm (Codex Manager) project. The wizard collects feature requirements through a conversational flow and then updates the project artifacts (PLAN.md, ROADMAP.md, tasks.json).
 
 ## Prerequisites
 
-Requires: `.cm/` directory with `tasks.json`, `PLAN.md`, and `ROADMAP.md`. If not present, run `/cm` first.
+Requires: `.cdm/` directory with `tasks.json`, `PLAN.md`, and `ROADMAP.md`. If not present, run `/cdm` first.
 
 ## CRITICAL: Scope Limitations
 
 This command ONLY updates planning files:
-- `.cm/PLAN.md` - Add feature documentation
-- `.cm/roadmap.json` - Add roadmap items
-- `.cm/tasks.json` - Add task definitions
+- `.cdm/PLAN.md` - Add feature documentation
+- `.cdm/roadmap.json` - Add roadmap items
+- `.cdm/tasks.json` - Add task definitions
 
 This command does NOT:
 - Implement any code
-- Run `cm run` or execute tasks
-- Make changes outside `.cm/` directory
+- Run `cdm run` or execute tasks
+- Make changes outside `.cdm/` directory
 
-After the wizard completes, the user must manually run `cm run` to start
+After the wizard completes, the user must manually run `cdm run` to start
 implementation.
 
 ## Important: Interactive Flow
@@ -91,8 +91,8 @@ Wait for the user's response before proceeding.
 
 **Analyze the existing codebase:**
 
-1. Read the current `.cm/PLAN.md` to understand project architecture
-2. Read the current `.cm/tasks.json` to understand task structure
+1. Read the current `.cdm/PLAN.md` to understand project architecture
+2. Read the current `.cdm/tasks.json` to understand task structure
 3. Identify which modules/components will be affected
 4. Determine if new modules need to be created
 
@@ -119,21 +119,20 @@ Wait for the user's response before proceeding.
 
 **Ask the user:**
 
-> Let's break this feature into implementation tasks.
+> Let's confirm the implementation plan for this feature.
 >
-> I suggest the following breakdown:
+> By default this feature will be implemented as **a single task** within its phase — that produces the best agent results. I'll only break it into multiple tasks if you've asked for that explicitly (e.g., "separate the tests", "split into backend and frontend").
 >
-> 1. **[Task 1]** - [Description, estimated complexity]
-> 2. **[Task 2]** - [Description, estimated complexity]
-> 3. **[Task 3]** - [Description, estimated complexity]
-> ...
+> Proposed task: **[Single task description, sized at ~80–300 LoC]**
 >
-> Each task should be:
+> The task should be:
 > - Completable in a single agent session
 > - Independently testable
 > - Have clear success criteria
+> - **A minimal meaningful changeset** — one reviewable commit producing a visible, demoable artifact ("show me the work")
+> - Sized at ~80–300 LoC as a guideline (go over when the work is genuinely cohesive and would lose meaning if split)
 >
-> Would you like to modify this breakdown?
+> Want me to split this into multiple tasks, or does the single-task plan work?
 
 Wait for the user's response before proceeding.
 
@@ -143,7 +142,7 @@ Wait for the user's response before proceeding.
 
 **Using the information gathered, generate a detailed phase plan following the PLAN.md template.**
 
-Read the `.cm/agents/PLAN.md` template for the required format. The plan must include:
+Read the `.cdm/agents/PLAN.md` template for the required format. The plan must include:
 
 1. **Objective** - What the phase accomplishes
 2. **Background** - Why this change is needed, current state, consequences
@@ -251,9 +250,9 @@ Wait for the user's response before proceeding.
 > - [dependency 2]
 >
 > **Files to update:**
-> - `.cm/PLAN.md` - Add feature documentation
-> - `.cm/ROADMAP.md` - Add feature tasks with checkboxes
-> - `.cm/tasks.json` - Add task definitions
+> - `.cdm/PLAN.md` - Add feature documentation
+> - `.cdm/ROADMAP.md` - Add feature tasks with checkboxes
+> - `.cdm/tasks.json` - Add task definitions
 >
 > Does this look correct? Reply "yes" to update the files, or provide corrections.
 
@@ -266,7 +265,7 @@ Wait for explicit user confirmation before modifying files.
 After confirmation:
 
 > Ready to save. Run `/end` to write changes to tasks.json, roadmap.json, and PLAN.md.
-> Then run `cm` when ready to implement.
+> Then run `cdm` when ready to implement.
 
 Do NOT modify files. Wait for `/end`.
 
@@ -292,11 +291,11 @@ When creating a new phase, use this JSON template. The `plan` field contains the
 
 ## Task Templates
 
-**IMPORTANT:** For each phase, create a plan file at `.cm/plans/plan-X.md` (where X is the phase number) containing the detailed instructions for all tasks in that phase. All tasks in the phase reference this same plan file via the `plan_file` field.
+**IMPORTANT:** Create a **separate plan file per task** at `.cdm/plans/plan-X.task-Y.md` (where X is the phase number and Y is the task number). Each task's `plan_file` field must point to its own dedicated file containing only that task's instructions. **Never** point multiple tasks to the same plan file — this causes prompt bloat and review failures.
 
 ### Implementation Task Template
 
-Create plan file at `.cm/plans/plan-X.md`:
+Create plan file at `.cdm/plans/plan-X.task-1.md`:
 ```markdown
 Implement [component] for [feature]:
 
@@ -322,13 +321,13 @@ Task JSON:
     "files_to_read": [],
     "code_style_excerpt": null
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cdm/plans/plan-X.task-1.md"
 }
 ```
 
 ### Test Task Template
 
-Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+Create plan file at `.cdm/plans/plan-X.task-2.md`:
 ```markdown
 Add tests for [component]:
 
@@ -351,13 +350,13 @@ Task JSON:
   "context": {
     "files_to_read": ["src/component.rs"]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cdm/plans/plan-X.task-2.md"
 }
 ```
 
 ### Review Task Template
 
-Plan file at `.cm/plans/plan-X.md` (same file as implementation):
+Create plan file at `.cdm/plans/plan-X.task-3.md`:
 ```markdown
 Review [feature] implementation:
 
@@ -379,7 +378,7 @@ Task JSON:
   "context": {
     "files_to_read": ["src/feature/"]
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cdm/plans/plan-X.task-3.md"
 }
 ```
 
@@ -402,11 +401,11 @@ Task JSON:
 If the wizard encounters issues:
 
 ### Missing Prerequisites
-> I couldn't find `.cm/tasks.json`. Please run `/cm` first to initialize the
+> I couldn't find `.cdm/tasks.json`. Please run `/cdm` first to initialize the
 project, then try `/feat` again.
 
 ### Invalid tasks.json
-> The tasks.json file appears to be invalid. Please run `cm --validate` to check for
+> The tasks.json file appears to be invalid. Please run `cdm --validate` to check for
 errors.
 
 ### Conflicting Task IDs
