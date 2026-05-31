@@ -132,4 +132,3 @@ are left alone).
 
 Delete `silent/vendor/` and `silent/.cargo/config.toml`. Cargo will fetch from
 crates.io and git as usual.
-

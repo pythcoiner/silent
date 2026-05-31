@@ -5,11 +5,11 @@
 use std::sync::mpsc;
 use std::time::Duration;
 
-use bwk_sp::spdk_core::RecipientAddress;
 use bwk_sp::bwk::TxListenerNotif;
+use bwk_sp::spdk_core::RecipientAddress;
 use bwk_sp::{
-    Account as SpAccount, AccountError, Notification as BwkNotification, ScanMode,
-    SpNotification, SpRecipientAddress,
+    Account as SpAccount, AccountError, Notification as BwkNotification, ScanMode, SpNotification,
+    SpRecipientAddress,
 };
 
 use crate::config::Config;
@@ -688,10 +688,7 @@ impl Account {
     }
     /// Validate a prepared transaction via Electrum before signing.
     /// Checks for output address reuse and already-spent inputs.
-    pub fn validate_before_sign(
-        &self,
-        psbt_result: &PsbtResult,
-    ) -> crate::ffi::PsbtValidation {
+    pub fn validate_before_sign(&self, psbt_result: &PsbtResult) -> crate::ffi::PsbtValidation {
         let err_validation = |error: String| crate::ffi::PsbtValidation {
             is_ok: false,
             error,
@@ -721,8 +718,7 @@ impl Account {
                         "Input #{idx}: {outpoint} already spent in {spending_txid}"
                     ));
                 }
-                let is_valid =
-                    issue.reused_outputs.is_empty() && issue.spent_inputs.is_empty();
+                let is_valid = issue.reused_outputs.is_empty() && issue.spent_inputs.is_empty();
                 crate::ffi::PsbtValidation {
                     is_ok: true,
                     error: String::new(),
@@ -738,11 +734,7 @@ impl Account {
 
     /// Log all details of a failed broadcast for debugging/reproduction.
     /// Called from C++ as a separate step after broadcast_transaction returns an error.
-    pub fn log_failed_broadcast(
-        &self,
-        tx_template: TransactionTemplate,
-        signed_tx_hex: String,
-    ) {
+    pub fn log_failed_broadcast(&self, tx_template: TransactionTemplate, signed_tx_hex: String) {
         use bitcoin::consensus::encode::deserialize_hex;
         use bitcoin::Transaction;
 
@@ -796,11 +788,18 @@ fn log_failed_broadcast_impl(
     log::error!("=== BROADCAST FAILED ===");
 
     // Transaction template (original intent)
-    log::error!("tx_template: fee_rate={} fee={}", tx_template.fee_rate, tx_template.fee);
+    log::error!(
+        "tx_template: fee_rate={} fee={}",
+        tx_template.fee_rate,
+        tx_template.fee
+    );
     for (i, out) in tx_template.outputs.iter().enumerate() {
         log::error!(
             "  tmpl_output[{i}]: address={} amount={} label={} max={}",
-            out.address, out.amount, out.label, out.max
+            out.address,
+            out.amount,
+            out.label,
+            out.max
         );
     }
     if !tx_template.input_outpoints.is_empty() {
@@ -882,8 +881,8 @@ fn log_failed_broadcast_impl(
 /// Issues found during PSBT validation.
 #[derive(Debug, Clone)]
 struct PsbtValidationIssue {
-    reused_outputs: Vec<(usize, String)>,               // (output_index, address_string)
-    spent_inputs: Vec<(usize, String, String)>,          // (input_index, outpoint, spending_txid)
+    reused_outputs: Vec<(usize, String)>, // (output_index, address_string)
+    spent_inputs: Vec<(usize, String, String)>, // (input_index, outpoint, spending_txid)
 }
 
 /// Validate a PSBT via Electrum before signing.
@@ -902,10 +901,8 @@ fn validate_psbt_via_electrum(
     let host = host.ok_or("Invalid electrum URL: missing host")?;
     let port = port.ok_or("Invalid electrum URL: missing port")?;
 
-    let mut client =
-        bwk_sp::bwk::bwk_electrum::client::Client::new_local(&host, port).map_err(|e| {
-            format!("Connection to {electrum_url} failed: {e}")
-        })?;
+    let mut client = bwk_sp::bwk::bwk_electrum::client::Client::new_local(&host, port)
+        .map_err(|e| format!("Connection to {electrum_url} failed: {e}"))?;
 
     let mut reused_outputs = Vec::new();
     let mut spent_inputs = Vec::new();
@@ -952,9 +949,7 @@ fn validate_psbt_via_electrum(
             match fetch_or_cache_tx(&mut client, &mut tx_cache, outpoint.txid) {
                 Ok(tx) => tx.output[outpoint.vout as usize].script_pubkey.clone(),
                 Err(e) => {
-                    log::warn!(
-                        "validate_psbt: failed to fetch prev tx for input #{idx}: {e}"
-                    );
+                    log::warn!("validate_psbt: failed to fetch prev tx for input #{idx}: {e}");
                     continue;
                 }
             }
@@ -979,20 +974,14 @@ fn validate_psbt_via_electrum(
             let tx = match fetch_or_cache_tx(&mut client, &mut tx_cache, *txid) {
                 Ok(tx) => tx,
                 Err(e) => {
-                    log::warn!(
-                        "validate_psbt: failed to fetch tx {txid} for input #{idx}: {e}"
-                    );
+                    log::warn!("validate_psbt: failed to fetch tx {txid} for input #{idx}: {e}");
                     continue;
                 }
             };
 
             for tx_input in &tx.input {
                 if tx_input.previous_output == outpoint {
-                    spent_inputs.push((
-                        idx,
-                        outpoint.to_string(),
-                        txid.to_string(),
-                    ));
+                    spent_inputs.push((idx, outpoint.to_string(), txid.to_string()));
                     break;
                 }
             }
@@ -1022,10 +1011,7 @@ fn fetch_or_cache_tx(
 }
 
 /// Broadcast a transaction via Electrum server.
-fn broadcast_via_electrum(
-    electrum_url: &str,
-    tx: &bitcoin::Transaction,
-) -> Result<(), String> {
+fn broadcast_via_electrum(electrum_url: &str, tx: &bitcoin::Transaction) -> Result<(), String> {
     use bitcoin::consensus::encode::serialize_hex;
     use bwk_sp::bwk::bwk_electrum::electrum::{request::Request, response::Response};
     use std::collections::HashMap;
@@ -1039,11 +1025,13 @@ fn broadcast_via_electrum(
     let port = port.ok_or("Invalid electrum URL: missing port")?;
 
     let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_tcp(&host, port);
-    client.try_connect(Some(Duration::from_secs(10))).map_err(|e| {
-        let msg = format!("Connection to {electrum_url} failed:\n{e}");
-        log::error!("{msg}");
-        msg
-    })?;
+    client
+        .try_connect(Some(Duration::from_secs(10)))
+        .map_err(|e| {
+            let msg = format!("Connection to {electrum_url} failed:\n{e}");
+            log::error!("{msg}");
+            msg
+        })?;
 
     let raw_tx = serialize_hex(tx);
     let request = Request::tx_broadcast(raw_tx);
@@ -1346,7 +1334,10 @@ fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, AccountError> {
 }
 
 /// Convert an SpCoinEntry to a bwk_sp::bwk_tx::Coin for use with TxBuilder.
-fn sp_coin_entry_to_coin(outpoint: bitcoin::OutPoint, entry: &bwk_sp::SpCoinEntry) -> bwk_sp::bwk_tx::Coin {
+fn sp_coin_entry_to_coin(
+    outpoint: bitcoin::OutPoint,
+    entry: &bwk_sp::SpCoinEntry,
+) -> bwk_sp::bwk_tx::Coin {
     const TR_KEYSPEND_SATISFACTION_WEIGHT: u64 = 66;
     bwk_sp::bwk_tx::Coin {
         txout: bitcoin::TxOut {

@@ -14,15 +14,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libudev-dev
-      - name: rustfmt
-        run: cargo fmt --manifest-path silent/Cargo.toml -- --check
-      - name: clippy
-        run: cargo clippy --manifest-path silent/Cargo.toml -- -D warnings
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev cmake clang-tidy clang-tools qt6-base-dev
+      - name: Lint Rust diff (each commit)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            scripts/lint/rust_lint_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
+          else
+            scripts/lint/rust_lint_commits.sh "${{ github.event.before }}...${{ github.sha }}"
+          fi
+      - name: Lint C++ diff (each commit)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            scripts/lint/clang_tidy_diff_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
+          else
+            scripts/lint/clang_tidy_diff_commits.sh "${{ github.event.before }}...${{ github.sha }}"
+          fi
+      - name: Check locale catalogs are synced from English
+        run: python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
+      - name: Validate .lang catalogs can generate TS
+        run: |
+          python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
 
   test:
     needs: lint

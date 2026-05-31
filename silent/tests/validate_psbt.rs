@@ -31,8 +31,7 @@ fn test_validate_before_sign_clean() {
     wait_for_sync_and_index(&bbd_url, 101);
 
     // Fund and scan
-    let mut account =
-        create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
+    let mut account = create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
     account.start_scanner();
     fund_sp_wallet(bitcoind, &bbd_url, TEST_MNEMONIC, 0.1);
     assert!(
@@ -84,10 +83,7 @@ fn test_validate_before_sign_clean() {
         validation.reused_output_count, 0,
         "No reused outputs expected"
     );
-    assert_eq!(
-        validation.spent_input_count, 0,
-        "No spent inputs expected"
-    );
+    assert_eq!(validation.spent_input_count, 0, "No spent inputs expected");
 
     account.stop_scanner();
     cleanup_test_account(&account_name);
@@ -106,8 +102,7 @@ fn test_validate_before_sign_address_reuse() {
     wait_for_sync_and_index(&bbd_url, 101);
 
     // Fund and scan
-    let mut account =
-        create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
+    let mut account = create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
     account.start_scanner();
     fund_sp_wallet(bitcoind, &bbd_url, TEST_MNEMONIC, 0.1);
     assert!(
@@ -120,8 +115,7 @@ fn test_validate_before_sign_address_reuse() {
 
     // Get a bitcoind address and fund it so it has on-chain history
     let reused_addr = bitcoind.new_address().expect("new bitcoind address");
-    bwk_test::send(bitcoind, reused_addr.clone(), 0.001)
-        .expect("fund reused address");
+    bwk_test::send(bitcoind, reused_addr.clone(), 0.001).expect("fund reused address");
     bwk_test::generate_blocks(bitcoind, 1);
 
     let height = bwk_test::get_height(bitcoind);
@@ -184,8 +178,7 @@ fn test_validate_before_sign_spent_input() {
     wait_for_sync_and_index(&bbd_url, 101);
 
     // Fund and scan
-    let mut account =
-        create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
+    let mut account = create_test_account_with_electrum(&account_name, &bbd_url, &electrum_url);
     account.start_scanner();
     fund_sp_wallet(bitcoind, &bbd_url, TEST_MNEMONIC, 0.1);
     assert!(

@@ -55,9 +55,36 @@ br: build-local
 format:
     find src -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 
-# Lint C++ source files (clang-tidy)
-lint:
-    find src -name '*.cpp' | xargs -P$(nproc) -n1 clang-tidy -p build --header-filter='^.*/silent/src/.*' --quiet
+# Lint Rust binding
+lint-rust:
+    cargo fmt --manifest-path silent/Cargo.toml -- --check
+    cargo clippy --manifest-path silent/Cargo.toml -- -D warnings
+
+# Lint Rust on each commit in a range
+lint-rust-commits range="HEAD~1...HEAD":
+    scripts/lint/rust_lint_commits.sh {{range}}
+
+# Lint full C++ app codebase (clang-tidy)
+lint-cpp-full:
+    if [ ! -f lib/include/silent.h ]; then just binding; fi
+    if [ ! -f build/compile_commands.json ]; then cmake -B build .; fi
+    bash -o pipefail -c "start=\$(date +%s%3N); if command -v run-clang-tidy >/dev/null 2>&1; then run-clang-tidy -p build -j\$(nproc) -quiet -header-filter='^src/.*' -source-filter='^src/.*' 'src/.*\\.cpp$'; else find src -type f -name '*.cpp' ! -path 'src/resources/*' -print0 | xargs -0 -P\$(nproc) -n1 clang-tidy -p build --quiet --warnings-as-errors='*' --header-filter='^src/.*' --exclude-header-filter='^src/resources/.*'; fi 2>&1 | { rg -v '^[0-9]+ warnings generated\\.$' || true; }; rc=\${PIPESTATUS[0]}; end=\$(date +%s%3N); elapsed=\$((end-start)); printf 'Lint full (%s files) in %d.%03dS\n' \"\$(find src -type f -name '*.cpp' ! -path 'src/resources/*' | wc -l)\" \$((elapsed/1000)) \$((elapsed%1000)); exit \$rc"
+
+# Lint C++ only on per-commit diff
+lint-cpp:
+    if [ ! -f build/compile_commands.json ]; then cmake -B build .; fi
+    scripts/lint/clang_tidy_diff_commits.sh "HEAD~1...HEAD" --worktree
+
+# Ultra-fast local C++ lint on uncommitted changes only
+lint-cpp-fast:
+    if [ ! -f build/compile_commands.json ]; then cmake -B build .; fi
+    scripts/lint/clang_tidy_diff_commits.sh "HEAD~1...HEAD" --worktree --worktree-only
+
+# Fast lint (Rust + C++ commit diff)
+lint: lint-rust lint-cpp
+
+# Full-repo lint (Rust + full C++)
+lint-full: lint-rust lint-cpp-full
 
 # Auto-fix clang-tidy warnings
 fix:

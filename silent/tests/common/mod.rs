@@ -18,7 +18,6 @@ use bwk_utils::test::corepc_node;
 
 use silent::{Account, Config, Network};
 
-
 // ===== Constants =====
 
 /// Standard test mnemonic (BIP39 test vector).
@@ -364,7 +363,12 @@ pub fn create_test_account_with_electrum(
     blindbit_url: &str,
     electrum_url: &str,
 ) -> Account {
-    create_test_account_with_electrum_mnemonic(account_name, blindbit_url, electrum_url, TEST_MNEMONIC)
+    create_test_account_with_electrum_mnemonic(
+        account_name,
+        blindbit_url,
+        electrum_url,
+        TEST_MNEMONIC,
+    )
 }
 
 /// Create a Silent Account with electrum URL and custom mnemonic.
