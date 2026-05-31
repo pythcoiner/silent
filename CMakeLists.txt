@@ -28,6 +28,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core Svg)
 
 # qontrol framework (vendored in lib/qontrol)
 add_subdirectory(lib/qontrol)
+add_subdirectory(src/plugin/sdk)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
