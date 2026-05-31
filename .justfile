@@ -3,6 +3,7 @@ qontrol_commit := "7bc317d"
 
 nix := env("NIX", "nix")
 nix_flags := "--extra-experimental-features 'nix-command flakes'"
+lint_base_commit := "68e75c4"
 
 # Build Linux
 build:
@@ -68,7 +69,7 @@ lint-rust-commits range="HEAD~1...HEAD":
 lint-cpp-full:
     if [ ! -f lib/include/silent.h ]; then just binding; fi
     if [ ! -f build/compile_commands.json ]; then cmake -B build .; fi
-    bash -o pipefail -c "start=\$(date +%s%3N); if command -v run-clang-tidy >/dev/null 2>&1; then run-clang-tidy -p build -j\$(nproc) -quiet -header-filter='^src/.*' -source-filter='^src/.*' 'src/.*\\.cpp$'; else find src -type f -name '*.cpp' ! -path 'src/resources/*' -print0 | xargs -0 -P\$(nproc) -n1 clang-tidy -p build --quiet --warnings-as-errors='*' --header-filter='^src/.*' --exclude-header-filter='^src/resources/.*'; fi 2>&1 | { rg -v '^[0-9]+ warnings generated\\.$' || true; }; rc=\${PIPESTATUS[0]}; end=\$(date +%s%3N); elapsed=\$((end-start)); printf 'Lint full (%s files) in %d.%03dS\n' \"\$(find src -type f -name '*.cpp' ! -path 'src/resources/*' | wc -l)\" \$((elapsed/1000)) \$((elapsed%1000)); exit \$rc"
+    bash -o pipefail -c "start=\$(date +%s%3N); if command -v run-clang-tidy >/dev/null 2>&1; then run-clang-tidy -p build -j\$(nproc) -quiet -header-filter='^src/.*' -source-filter='^src/.*' 'src/.*\\.cpp$'; else find src -type f -name '*.cpp' ! -path 'src/resources/*' -print0 | xargs -0 -P\$(nproc) -n1 clang-tidy -p build --quiet --warnings-as-errors='*' --header-filter='^src/.*'; fi 2>&1 | { rg -v '^[0-9]+ warnings generated\\.$' || true; }; rc=\${PIPESTATUS[0]}; end=\$(date +%s%3N); elapsed=\$((end-start)); printf 'Lint full (%s files) in %d.%03dS\n' \"\$(find src -type f -name '*.cpp' ! -path 'src/resources/*' | wc -l)\" \$((elapsed/1000)) \$((elapsed%1000)); exit \$rc"
 
 # Lint C++ only on per-commit diff
 lint-cpp:
@@ -85,6 +86,20 @@ lint: lint-rust lint-cpp
 
 # Full-repo lint (Rust + full C++)
 lint-full: lint-rust lint-cpp-full
+
+# Simulate CI lint job locally
+ci-lint:
+    scripts/lint/rust_lint_commits.sh "{{lint_base_commit}}...HEAD"
+    if [ ! -f lib/include/silent.h ]; then bash build.sh; fi
+    cmake -B build .
+    scripts/lint/clang_tidy_diff_commits.sh "{{lint_base_commit}}...HEAD"
+    python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
+    python3 scripts/i18n/generate_ts.py --out-dir /tmp/opencode/i18n-ci-check
+
+# Simulate full CI pipeline locally (lint + tests + local build)
+ci: ci-lint
+    cargo test --manifest-path silent/Cargo.toml
+    just build-local
 
 # Auto-fix clang-tidy warnings
 fix:

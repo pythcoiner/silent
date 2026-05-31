@@ -8,54 +8,102 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LINT_BASE_COMMIT: 68e75c4
 
 jobs:
-  lint:
+  lint-rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt, clippy
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libudev-dev cmake clang-tidy clang-tools qt6-base-dev
+      - name: Install Rust lint system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      - name: Resolve lint commit range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              echo "LINT_RANGE=$LINT_BASE_COMMIT...${{ github.sha }}" >> "$GITHUB_ENV"
+            else
+              echo "LINT_RANGE=origin/${{ github.base_ref }}...${{ github.sha }}" >> "$GITHUB_ENV"
+            fi
+          else
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              echo "LINT_RANGE=$LINT_BASE_COMMIT...${{ github.sha }}" >> "$GITHUB_ENV"
+            else
+              echo "LINT_RANGE=${{ github.event.before }}...${{ github.sha }}" >> "$GITHUB_ENV"
+            fi
+          fi
       - name: Lint Rust diff (each commit)
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin "${{ github.base_ref }}"
-            scripts/lint/rust_lint_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
-          else
-            scripts/lint/rust_lint_commits.sh "${{ github.event.before }}...${{ github.sha }}"
-          fi
-      - name: Lint C++ diff (each commit)
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin "${{ github.base_ref }}"
-            scripts/lint/clang_tidy_diff_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
-          else
-            scripts/lint/clang_tidy_diff_commits.sh "${{ github.event.before }}...${{ github.sha }}"
-          fi
-      - name: Check locale catalogs are synced from English
-        run: python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
-      - name: Validate .lang catalogs can generate TS
-        run: |
-          python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
+        run: scripts/lint/rust_lint_commits.sh "$LINT_RANGE"
 
-  test:
-    needs: lint
+  lint-cpp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt, clippy
+      - name: Install C++ lint dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy cmake libudev-dev qt6-base-dev qt6-svg-dev
+      - name: Resolve lint commit range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              echo "LINT_RANGE=$LINT_BASE_COMMIT...${{ github.sha }}" >> "$GITHUB_ENV"
+            else
+              echo "LINT_RANGE=origin/${{ github.base_ref }}...${{ github.sha }}" >> "$GITHUB_ENV"
+            fi
+          else
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              echo "LINT_RANGE=$LINT_BASE_COMMIT...${{ github.sha }}" >> "$GITHUB_ENV"
+            else
+              echo "LINT_RANGE=${{ github.event.before }}...${{ github.sha }}" >> "$GITHUB_ENV"
+            fi
+          fi
+      - name: Prepare C++ lint database
+        run: |
+          if [ ! -d lib/qontrol ]; then
+            git clone https://github.com/pythcoiner/qontrol.git lib/qontrol
+            git -C lib/qontrol checkout 7bc317d
+            rm -rf lib/qontrol/.git
+          fi
+          if [ ! -f lib/include/silent.h ]; then
+            bash build.sh
+          fi
+          cmake -B build .
+      - name: Lint C++ diff (each commit)
+        run: scripts/lint/clang_tidy_diff_commits.sh "$LINT_RANGE"
+
+  lint-i18n:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check locale catalogs are synced from English
+        run: python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
+      - name: Validate .lang catalogs can generate TS
+        run: python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt, clippy
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudev-dev
       - name: tests
         run: cargo test --manifest-path silent/Cargo.toml
 
-  build:
-    needs: test
+  build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,9 +115,12 @@ jobs:
         run: python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
       - name: Check i18n pragma log
         run: python3 scripts/i18n/check_pragma_log.py --log build-i18n.log --en-ts "$RUNNER_TEMP/i18n/silent_en.ts"
+
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Build Windows
         run: nix build .#windows
-      - name: Build macOS ARM
-        run: nix build .#aarch64-apple-darwin
-      - name: Build macOS x86_64
-        run: nix build .#x86_64-apple-darwin

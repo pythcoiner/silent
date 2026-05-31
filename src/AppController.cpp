@@ -11,7 +11,7 @@ AppController::AppController() = default;
 
 auto AppController::init() -> void {
     if (Controller::isInit()) {
-        qFatal() << "Controller have already been initialized!";
+        qFatal("Controller has already been initialized!");
     }
     Controller::init(new AppController);
 }

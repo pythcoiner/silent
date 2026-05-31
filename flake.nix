@@ -442,10 +442,23 @@ CARGO_EOF
         inherit qtVersion mingwPkgs;
       };
 
-      windowsQt6 = pkgs.callPackage "${qt_static}/nix/combine.nix" {
+      windowsQt6Raw = pkgs.callPackage "${qt_static}/nix/combine.nix" {
         qtbase = windowsQt6Base;
         qtsvg = windowsQt6Svg;
       };
+
+      # Ensure all MinGW static archives have a symbol index.
+      # Some precombined Qt archives can miss this index, which fails
+      # cross-linking with: "archive has no index; run ranlib to add one".
+      windowsQt6 = pkgs.runCommand "qt6-static-combined-${qtVersion}-windows-indexed"
+        {
+          nativeBuildInputs = [ mingwPkgs.stdenv.cc.bintools ];
+        }
+        ''
+          cp -r ${windowsQt6Raw} $out
+          chmod -R u+w $out
+          find "$out" -type f -name '*.a' -print0 | xargs -0 -n1 x86_64-w64-mingw32-ranlib
+        '';
 
       windows = buildGui {
         rustLib = windowsRustLib;

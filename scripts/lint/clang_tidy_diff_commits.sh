@@ -2,6 +2,10 @@
 set -euo pipefail
 
 tidy_bin="clang-tidy"
+line_filter="cat"
+if command -v rg >/dev/null 2>&1; then
+    line_filter="rg -v '^[0-9]+ warnings generated\\.$'"
+fi
 
 now_ms() {
     date +%s%3N
@@ -19,7 +23,7 @@ run_tidy_files() {
     local seconds millis
     start=$(now_ms)
     set +e
-    printf '%s\0' "${files[@]}" | xargs -0 -P"$(nproc)" -n1 "$tidy_bin" -p build --quiet --warnings-as-errors='*' --header-filter='^src/.*' --exclude-header-filter='^src/resources/.*' 2>&1 | { rg -v '^[0-9]+ warnings generated\.$' || true; }
+    printf '%s\0' "${files[@]}" | xargs -0 -P"$(nproc)" -n1 "$tidy_bin" -p build --quiet --warnings-as-errors='*' --header-filter='^src/.*' 2>&1 | eval "$line_filter"
     rc=${PIPESTATUS[1]}
     set -e
     end=$(now_ms)
@@ -51,7 +55,7 @@ if [[ -z "$range" ]]; then
     fi
 fi
 
-mapfile -t commits < <(git rev-list --reverse "$range")
+mapfile -t commits < <(git rev-list --reverse --no-merges "$range")
 
 if [[ ${#commits[@]} -eq 0 ]]; then
     echo "No commits in range: $range"
