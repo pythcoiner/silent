@@ -1,0 +1,33 @@
+# cdm configuration file
+
+# Codex model slug to use for agent spawning.
+# Default: "gpt-5.3-codex" (~400K context window, accepted on ChatGPT-account auth).
+# Note: gpt-5.3-codex-spark is only 128K (can overflow on large phases);
+# gpt-5-codex and gpt-5.1-* variants are rejected on ChatGPT-account auth.
+# model = "gpt-5.3-codex"
+
+# Token limit at which codex auto-compacts the conversation mid-turn so long
+# turns don't blow the context window.
+# Default: 300000 (headroom under the ~400K window).
+# auto_compact_token_limit = 300000
+
+# Path to the codex CLI executable.
+# Default: "codex" (resolved from PATH).
+# codex_path = "codex"
+
+# Maximum number of fix cycles per task before deferring
+# Default: 5
+# max_cycles = 5
+
+# Working directory for build verification (relative to project root)
+# Default: "."
+# working_dir = "."
+
+# Build commands to run for verification after each phase.
+# The runner uses this SAME command set for every phase, so it must verify the
+# whole tree at all times: it compiles the Rust crate (regenerating CXX headers),
+# then configures and builds the full C++ app -- which includes the plugin SDK and
+# its always-built smoke-test target. This works from phase 1 (SDK headers compile
+# as part of the app build) through phase 27 (full host + example plugin).
+# Equivalent to `just build-local`. First run fetches git crates (needs network).
+build_commands = ["bash build.sh", "cmake -B build .", "cmake --build build -j"]

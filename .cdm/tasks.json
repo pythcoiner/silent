@@ -1,0 +1,502 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "silent-plugin-system",
+    "description": "Runtime-loadable plugin system for the Silent Bitcoin wallet (Qt6 C++ + Rust/CXX)"
+  },
+  "global_context": {
+    "plan_summary": "Implement the plugin system specified in docs/PLUGINS.md (branch docs/plugin-system). Three levels: Plugin -> Module -> Instance, with capability QObjects (IAccount/IFeed/ISigner/IThemeProvider) exposed to other modules via implemented()-gated async request/signal methods. UI is pushed to a Host singleton. Static-Qt host re-exports Qt for runtime plugins. 27 phases, one reviewable commit each, in dependency order."
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "SDK: neutral types + CMake scaffold",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-1.task-1",
+          "name": "SDK neutral types, smoke-test target, root CMake wiring",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": [],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "CMakeLists.txt"] },
+          "plan_file": ".cdm/plans/plan-1.task-1.md",
+          "roadmap_item_id": "phase-1-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "SDK: IPlugin + IModule",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-2.task-1",
+          "name": "IPlugin + IModule interfaces",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-1.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/plugin/sdk/types.h"] },
+          "plan_file": ".cdm/plans/plan-2.task-1.md",
+          "roadmap_item_id": "phase-2-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "SDK: IAccount + IFeed",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-3.task-1",
+          "name": "IAccount + IFeed capability interfaces",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-2.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/plugin/sdk/types.h"] },
+          "plan_file": ".cdm/plans/plan-3.task-1.md",
+          "roadmap_item_id": "phase-3-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "SDK: ISigner + IThemeProvider",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-4.task-1",
+          "name": "ISigner (bwk Signer projection) + IThemeProvider",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-3.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "/home/pyth/bwk/hwi/src/lib.rs"] },
+          "plan_file": ".cdm/plans/plan-4.task-1.md",
+          "roadmap_item_id": "phase-4-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "SDK: IInstance + mock smoke test",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-5.task-1",
+          "name": "IInstance composition + mock-instance smoke test",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-4.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md"] },
+          "plan_file": ".cdm/plans/plan-5.task-1.md",
+          "roadmap_item_id": "phase-5-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "SDK: Host + HostEvents interface",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-6.task-1",
+          "name": "Host singleton interface + HostEvents",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-5.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md"] },
+          "plan_file": ".cdm/plans/plan-6.task-1.md",
+          "roadmap_item_id": "phase-6-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "SDK: plugin-side TR macro",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-7.task-1",
+          "name": "Plugin-side id-prefixing TR macro",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-6.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/i18n/Tr.h"] },
+          "plan_file": ".cdm/plans/plan-7.task-1.md",
+          "roadmap_item_id": "phase-7-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Rust: plugin_id on Config",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-8.task-1",
+          "name": "Add plugin_id to Config and thread through FFI",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-7.task-1"],
+          "context": { "files_to_read": ["silent/src/config.rs", "silent/src/lib.rs", "build.sh"] },
+          "plan_file": ".cdm/plans/plan-8.task-1.md",
+          "roadmap_item_id": "phase-8-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-9",
+      "name": "Rust: app-state persistence",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-9.task-1",
+          "name": "app.json: enabled-plugin set + active theme",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-8.task-1"],
+          "context": { "files_to_read": ["silent/src/config.rs", "silent/src/lib.rs"] },
+          "plan_file": ".cdm/plans/plan-9.task-1.md",
+          "roadmap_item_id": "phase-9-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-10",
+      "name": "Host: singleton + instance registry",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-10.task-1",
+          "name": "Host singleton + registerInstance/instances()",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-9.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/AppController.h", "src/plugin/sdk/host.h"] },
+          "plan_file": ".cdm/plans/plan-10.task-1.md",
+          "roadmap_item_id": "phase-10-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-11",
+      "name": "Host: push-UI id maps",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-11.task-1",
+          "name": "Push-UI tab/section/wizard id->widget maps",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-10.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/MainWindow.h", "src/plugin/host/Host.h"] },
+          "plan_file": ".cdm/plans/plan-11.task-1.md",
+          "roadmap_item_id": "phase-11-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-12",
+      "name": "Host: PluginRegistry (compiled-in)",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-12.task-1",
+          "name": "PluginRegistry compiled-in path (Q_IMPORT_PLUGIN)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-11.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/plugin/host/Host.h"] },
+          "plan_file": ".cdm/plans/plan-12.task-1.md",
+          "roadmap_item_id": "phase-12-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-13",
+      "name": "SP: relocate into src/module/sp/",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-13.task-1",
+          "name": "Move SP code (controller, widget, screens) to src/module/sp/",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-12.task-1"],
+          "context": { "files_to_read": ["src/AccountController.h", "src/AccountWidget.h", "CMakeLists.txt"] },
+          "plan_file": ".cdm/plans/plan-13.task-1.md",
+          "roadmap_item_id": "phase-13-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-14",
+      "name": "SP: SpPlugin + SpModule",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-14.task-1",
+          "name": "SpPlugin + SpModule (list/startInstance)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-13.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "silent/src/config.rs"] },
+          "plan_file": ".cdm/plans/plan-14.task-1.md",
+          "roadmap_item_id": "phase-14-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-15",
+      "name": "SP: SpInstance + tab push",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-15.task-1",
+          "name": "SpInstance composition + tab push",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-14.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/module/sp/AccountWidget.h"] },
+          "plan_file": ".cdm/plans/plan-15.task-1.md",
+          "roadmap_item_id": "phase-15-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-16",
+      "name": "SP: SpAccount IAccount adapter",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-16.task-1",
+          "name": "SpAccount IAccount adapter over FFI",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-15.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/module/sp/AccountController.h", "silent/src/lib.rs"] },
+          "plan_file": ".cdm/plans/plan-16.task-1.md",
+          "roadmap_item_id": "phase-16-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-17",
+      "name": "Host UI: generic MainWindow tabs",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-17.task-1",
+          "name": "MainWindow generic host-driven tabs",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-16.task-1"],
+          "context": { "files_to_read": ["src/MainWindow.h", "src/MainWindow.cpp", "src/plugin/host/Host.h"] },
+          "plan_file": ".cdm/plans/plan-17.task-1.md",
+          "roadmap_item_id": "phase-17-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-18",
+      "name": "Host UI: registry-driven AppController",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-18.task-1",
+          "name": "AppController registry-driven + main.cpp bootstrap",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-17.task-1"],
+          "context": { "files_to_read": ["src/AppController.h", "src/AppController.cpp", "src/main.cpp"] },
+          "plan_file": ".cdm/plans/plan-18.task-1.md",
+          "roadmap_item_id": "phase-18-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-19",
+      "name": "Host UI: generic MenuTab launcher",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-19.task-1",
+          "name": "MenuTab launcher from each module's list()",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-18.task-1"],
+          "context": { "files_to_read": ["src/screens/MenuTab.h", "src/screens/MenuTab.cpp"] },
+          "plan_file": ".cdm/plans/plan-19.task-1.md",
+          "roadmap_item_id": "phase-19-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-20",
+      "name": "Settings: plugin manager",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-20.task-1",
+          "name": "Global Settings screen + enable/disable toggles",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-19.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/screens/MenuTab.cpp", "src/theme/Toggle.h"] },
+          "plan_file": ".cdm/plans/plan-20.task-1.md",
+          "roadmap_item_id": "phase-20-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-21",
+      "name": "Settings: sections + theme picker",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-21.task-1",
+          "name": "Aggregated setting sections + active-theme picker",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-20.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/screens/AppSettings.h", "src/theme/Theme.h"] },
+          "plan_file": ".cdm/plans/plan-21.task-1.md",
+          "roadmap_item_id": "phase-21-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-22",
+      "name": "i18n: plugin translations",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-22.task-1",
+          "name": "Per-plugin CatalogTranslator with id-prefix + reload",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-21.task-1"],
+          "context": { "files_to_read": ["src/i18n/I18nManager.h", "src/i18n/I18nManager.cpp"] },
+          "plan_file": ".cdm/plans/plan-22.task-1.md",
+          "roadmap_item_id": "phase-22-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-23",
+      "name": "Runtime: QPluginLoader discovery",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-23.task-1",
+          "name": "PluginRegistry QPluginLoader scan + enable/disable/unload",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-22.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/plugin/host/PluginRegistry.h"] },
+          "plan_file": ".cdm/plans/plan-23.task-1.md",
+          "roadmap_item_id": "phase-23-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-24",
+      "name": "Build: link config + ABI surface",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-24.task-1",
+          "name": "CMake whole-archive Qt + export-dynamic + QtAbiSurface.cpp",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-23.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "CMakeLists.txt"] },
+          "plan_file": ".cdm/plans/plan-24.task-1.md",
+          "roadmap_item_id": "phase-24-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-25",
+      "name": "Build: Nix link flags",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-25.task-1",
+          "name": "flake.nix per-platform link flags",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-24.task-1"],
+          "context": { "files_to_read": ["flake.nix", "CMakeLists.txt"] },
+          "plan_file": ".cdm/plans/plan-25.task-1.md",
+          "roadmap_item_id": "phase-25-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-26",
+      "name": "Example plugin: skeleton",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-26.task-1",
+          "name": "Example plugin skeleton + metadata + CMake",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-25.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "src/plugin/sdk/host.h"] },
+          "plan_file": ".cdm/plans/plan-26.task-1.md",
+          "roadmap_item_id": "phase-26-item-1"
+        }
+      ]
+    },
+    {
+      "id": "phase-27",
+      "name": "Example plugin: capability + i18n",
+      "plan": "",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "phase-27.task-1",
+          "name": "Example plugin capability impl + .lang (end-to-end validation)",
+          "type": "implement",
+          "status": "pending",
+          "depends_on": ["phase-26.task-1"],
+          "context": { "files_to_read": ["docs/PLUGINS.md", "contrib/example-plugin"] },
+          "plan_file": ".cdm/plans/plan-27.task-1.md",
+          "roadmap_item_id": "phase-27-item-1"
+        }
+      ]
+    }
+  ],
+  "current_phase": null,
+  "current_task": null,
+  "agent_history": [],
+  "log_records": []
+}
