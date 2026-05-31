@@ -1,27 +1,27 @@
 # Split Wizard
 
-This skill refines an existing cm project plan by splitting high-level phases into detailed sub-phases.
+This skill refines an existing cdm project plan by splitting high-level phases into detailed sub-phases.
 
 ## Prerequisites
 
 Before using this wizard, ensure:
-- A `.cm/` directory exists with `PLAN.md`
-- `PLAN.md` was created by `/cm` and contains a "## Phases" section
+- A `.cdm/` directory exists with `PLAN.md`
+- `PLAN.md` was created by `/cdm` and contains a "## Phases" section
 - `tasks.json` should NOT exist yet (this is a pre-generation step)
 
-If prerequisites are not met, inform the user and suggest running `/cm` first.
+If prerequisites are not met, inform the user and suggest running `/cdm` first.
 
 ## CRITICAL: Scope Limitations
 
 This skill ONLY updates:
-- `.cm/PLAN.md` - Refine phases into detailed sub-phases
+- `.cdm/PLAN.md` - Refine phases into detailed sub-phases
 
 This skill does NOT:
 - Generate tasks.json or roadmap.json (that comes later with `/end`)
 - Implement any code
-- Run `cm run` or execute tasks
+- Run `cdm run` or execute tasks
 
-**When to use:** After `/cm` creates PLAN.md but before running `/end` to generate JSON files.
+**When to use:** After `/cdm` creates PLAN.md but before running `/end` to generate JSON files.
 
 ---
 
@@ -29,7 +29,7 @@ This skill does NOT:
 
 **Read the current PLAN.md:**
 
-1. Read `.cm/PLAN.md` to understand existing phases
+1. Read `.cdm/PLAN.md` to understand existing phases
 2. Parse the "## Phases" section
 
 **Present summary to user:**
@@ -53,6 +53,7 @@ For each phase, evaluate:
 - Current scope and complexity
 - Number and size of tasks
 - Dependencies between tasks
+- **Estimated changeset size in LoC** (rough order-of-magnitude — used to drive split recommendations against the sizing rules below)
 - Whether it can be meaningfully split
 
 **Present analysis:**
@@ -61,6 +62,7 @@ For each phase, evaluate:
 >
 > **Phase 1: [phase-name]**
 > - Current tasks: [N]
+> - Estimated LoC: ~[X] (rough)
 > - Complexity: [low/medium/high]
 > - Recommendation: [Keep as-is / Split into N sub-phases]
 > - Suggested split: [Brief description of how to split]
@@ -120,7 +122,7 @@ Wait for user confirmation.
 
 ## Step 4: Update PLAN.md
 
-After confirmation, update `.cm/PLAN.md`:
+After confirmation, update `.cdm/PLAN.md`:
 
 ### 4.1 Replace Phases Section
 
@@ -197,7 +199,7 @@ Tell the user the next step is to run `/end` to generate JSON files.
 > ...
 >
 > **Next steps:**
-> 1. Review `.cm/PLAN.md` for the detailed structure
+> 1. Review `.cdm/PLAN.md` for the detailed structure
 > 2. Run `/end` to generate tasks.json and roadmap.json from the refined plan
 > 3. Or make further refinements to PLAN.md if needed
 
@@ -205,13 +207,24 @@ Tell the user the next step is to run `/end` to generate JSON files.
 
 ## Phase Split Guidelines
 
+### Phase sizing rules (apply when proposing or evaluating a split)
+
+- Each phase is a **minimal meaningful changeset** — one reviewable commit, not a sprint.
+- Follow the **"show me the work"** philosophy: every phase produces a visible, demoable artifact a reviewer can run or inspect.
+- **80–300 LoC** is a guideline, not a hard cap. Going over is fine when the changeset is genuinely cohesive and would lose meaning if split. Past ~300 LoC it just gets harder for a reviewer to hold in context, so prefer splitting unless splitting hurts the work.
+- Phases must be independently reviewable — do not bundle unrelated concerns into one phase to "save a round-trip".
+- **Default to one task per resulting child phase.** When you split, each new phase should contain exactly one task unless the user explicitly asks for a phase to keep multiple tasks. A phase that "needs" multiple tasks is usually a signal that the phase itself should be split further.
+
 ### When to Split a Phase
 
 Split when:
-- Phase has more than 5-7 tasks
-- Tasks span multiple components
-- Tasks have complex interdependencies
+- Estimated changeset clearly exceeds ~300 LoC of cohesive change, and a reviewer would struggle to hold it in context
+- Phase bundles unrelated concerns that could be reviewed independently
+- Tasks span multiple components or layers that could ship separately
+- Tasks have complex interdependencies that obscure what's being demonstrated
 - Phase scope is too broad to track easily
+
+Conversely, do **not** split when the work is genuinely one cohesive change — splitting an integral changeset into artificial slices makes review harder, not easier.
 
 ### How to Split
 
@@ -243,7 +256,7 @@ Choose the approach that best fits the project structure.
 
 ### No PLAN.md found
 
-> I couldn't find `.cm/PLAN.md`. Please run `/cm` first to create the initial plan.
+> I couldn't find `.cdm/PLAN.md`. Please run `/cdm` first to create the initial plan.
 
 ### tasks.json already exists
 
@@ -251,7 +264,7 @@ Choose the approach that best fits the project structure.
 >
 > Options:
 > 1. Delete tasks.json and roadmap.json, then run /split
-> 2. Use /feat to add features to the existing plan instead
+> 2. Use `/feat` to add features to the existing plan instead
 >
 > Which option do you prefer?
 
@@ -261,4 +274,4 @@ Choose the approach that best fits the project structure.
 
 ### PLAN.md has no Phases section
 
-> PLAN.md doesn't have a "## Phases" section. Please ensure /cm completed properly.
+> PLAN.md doesn't have a "## Phases" section. Please ensure /cdm completed properly.

@@ -1,14 +1,15 @@
 # Expand Plans Wizard
 
-This command expands minimal plan files in `.cm/plans/` with detailed implementation instructions, file references, and reviewer criteria.
+This command expands minimal plan files in `.cdm/plans/` with detailed implementation instructions, file references, and reviewer criteria.
 
 ## Prerequisites
 
 Requires:
-- `.cm/` directory with `tasks.json`
-- At least one plan file in `.cm/plans/`
+- `.cdm/` directory with `tasks.json`
+- At least one plan file in `.cdm/plans/`
 
 If no plan files exist, inform the user to run `/feat` or `/fix` first.
+
 
 ## CRITICAL: Interactive Approach
 
@@ -70,19 +71,19 @@ When expanding plans, **ask the user** if any steps require manual intervention.
 
 ## Step 1: Discover Plan Files
 
-List all plan files in `.cm/plans/`:
+List all plan files in `.cdm/plans/`:
 
 ```bash
-ls .cm/plans/*.md
+ls .cdm/plans/*.md
 ```
 
 If no files found:
-> No plan files found in `.cm/plans/`. Please run `/feat` or `/fix` first to create tasks with plan files.
+> No plan files found in `.cdm/plans/`. Please run `/feat` or `/fix` first to create tasks with plan files.
 
 Present the list to user:
 > Found [N] plan file(s) to expand:
-> - `.cm/plans/plan-1.md`
-> - `.cm/plans/plan-2.md`
+> - `.cdm/plans/plan-1.md`
+> - `.cdm/plans/plan-2.md`
 > ...
 >
 > I'll analyze each plan and ask questions if needed before expanding.
@@ -226,13 +227,13 @@ Add specific checks for the reviewer:
 
 ## Step 4: Write Expanded Plans
 
-After expanding all plans, write them back to `.cm/plans/`:
+After expanding all plans, write them back to `.cdm/plans/`:
 
 For each plan:
 1. Show the expanded content to the user
 2. Write to the original file (in-place update)
 
-> **Expanded `.cm/plans/plan-1.md`:**
+> **Expanded `.cdm/plans/plan-1.md`:**
 >
 > [Show expanded content]
 >
@@ -247,15 +248,15 @@ After all plans are expanded:
 > **Expansion complete!**
 >
 > **Plans expanded:**
-> - `.cm/plans/plan-1.md` - Added [N] file references, [M] code examples
-> - `.cm/plans/plan-2.md` - Added [N] file references, [M] code examples
+> - `.cdm/plans/plan-1.md` - Added [N] file references, [M] code examples
+> - `.cdm/plans/plan-2.md` - Added [N] file references, [M] code examples
 >
 > **Changes made:**
 > - Added `Files to Read` sections with line ranges
 > - Expanded implementation steps with code examples
 > - Added reviewer criteria with skip conditions
 >
-> The plans are now ready for agent execution. Run `cm` when ready.
+> The plans are now ready for agent execution. Run `cdm` when ready.
 
 ---
 
@@ -386,7 +387,7 @@ Add validation for config file values, ensuring timeout is positive, paths exist
 
 ### No Plan Files
 
-> No plan files found in `.cm/plans/`.
+> No plan files found in `.cdm/plans/`.
 >
 > Plan files are created when you use `/feat` or `/fix` to add tasks.
 > Please run one of those commands first, then return here to expand the plans.
@@ -395,7 +396,7 @@ Add validation for config file values, ensuring timeout is positive, paths exist
 
 If a plan already has all sections:
 
-> `.cm/plans/plan-1.md` already appears fully detailed:
+> `.cdm/plans/plan-1.md` already appears fully detailed:
 > - Has Files to Read section
 > - Has code examples
 > - Has reviewer criteria

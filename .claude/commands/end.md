@@ -1,19 +1,19 @@
 # End Session Wizard
 
-This command finalizes a `/feat`, `/fix`, or `/cm` conversational session by saving all gathered information to the planning files without starting implementation.
+This command finalizes a `/feat`, `/fix`, or `/cdm` conversational session by saving all gathered information to the planning files without starting implementation.
 
 ## Use Cases
 
 1. **After `/feat` or `/fix`**: Add new tasks to existing tasks.json/roadmap.json
-2. **After `/cm` (or `/cm` + `/split`)**: Generate initial tasks.json and roadmap.json from PLAN.md
+2. **After `/cdm` (or `/cdm` + `/split`)**: Generate initial tasks.json and roadmap.json from PLAN.md
 
 ## Prerequisites
 
 Before using this command, ensure:
-- You are completing a `/feat`, `/fix`, or `/cm` session
-- A `.cm/` directory exists
+- You are completing a `/feat`, `/fix`, or `/cdm` session
+- A `.cdm/` directory exists
 - For `/feat` or `/fix`: tasks.json and roadmap.json exist
-- For `/cm`: PLAN.md exists
+- For `/cdm`: PLAN.md exists
 - The user has confirmed all details
 
 If prerequisites are not met, inform the user.
@@ -21,16 +21,16 @@ If prerequisites are not met, inform the user.
 ## CRITICAL: Scope Limitations
 
 This command ONLY updates planning files:
-- `.cm/tasks.json` - Add new tasks (or generate initial file for `/cm` sessions)
-- `.cm/roadmap.json` - Add new items (or generate initial file for `/cm` sessions)
-- `.cm/PLAN.md` - Add feature documentation (for `/feat` sessions only)
+- `.cdm/tasks.json` - Add new tasks (or generate initial file for `/cdm` sessions)
+- `.cdm/roadmap.json` - Add new items (or generate initial file for `/cdm` sessions)
+- `.cdm/PLAN.md` - Add feature documentation (for `/feat` sessions only)
 
 This command does NOT:
 - Implement any code
-- Run `cm run` or execute tasks
-- Make changes outside `.cm/` directory
+- Run `cdm run` or execute tasks
+- Make changes outside `.cdm/` directory
 
-After this command completes, the user must manually run `cm run` when ready to implement.
+After this command completes, the user must manually run `cdm run` when ready to implement.
 
 ## Important: Session Context
 
@@ -41,13 +41,13 @@ This command assumes you have already:
 - Received user approval for the plan
 - Identified phase placement for new tasks
 
-**For `/cm` sessions:**
+**For `/cdm` sessions:**
 This command assumes:
-- `/cm` wizard has created PLAN.md with phases
+- `/cdm` wizard has created PLAN.md with phases
 - User has optionally refined it with `/split`
 - User is ready to generate JSON files
 
-DO NOT use this command to start a new planning session. Use `/feat`, `/fix`, or `/cm` for that.
+DO NOT use this command to start a new planning session. Use `/feat`, `/fix`, or `/cdm` for that.
 
 ---
 
@@ -55,9 +55,9 @@ DO NOT use this command to start a new planning session. Use `/feat`, `/fix`, or
 
 First, determine what type of session you're finalizing:
 
-1. **Check if `.cm/tasks.json` exists:**
+1. **Check if `.cdm/tasks.json` exists:**
    - **If YES** → This is a `/feat` or `/fix` session (go to Step 1A)
-   - **If NO** → This is a `/cm` session (go to Step 1B)
+   - **If NO** → This is a `/cdm` session (go to Step 1B)
 
 ### Step 1A: Recognize /feat or /fix Session
 
@@ -88,12 +88,12 @@ Confirm with the user:
 
 Wait for confirmation before proceeding to Step 2.
 
-### Step 1B: Recognize /cm Session
+### Step 1B: Recognize /cdm Session
 
-For `/cm` sessions, you are generating initial JSON files from PLAN.md:
+For `/cdm` sessions, you are generating initial JSON files from PLAN.md:
 
-1. Check if `.cm/PLAN.md` exists:
-   - **If NO** → Error: "Please run `/cm` first to create PLAN.md"
+1. Check if `.cdm/PLAN.md` exists:
+   - **If NO** → Error: "Please run `/cdm` first to create PLAN.md"
    - **If YES** → Continue
 
 2. Confirm with the user:
@@ -106,9 +106,9 @@ For `/cm` sessions, you are generating initial JSON files from PLAN.md:
 
 Wait for confirmation before proceeding to Step 1C.
 
-### Step 1C: Parse PLAN.md for /cm Session
+### Step 1C: Parse PLAN.md for /cdm Session
 
-Read and parse `.cm/PLAN.md` to extract:
+Read and parse `.cdm/PLAN.md` to extract:
 
 1. **Project metadata:**
    - Project name (from title line)
@@ -145,13 +145,13 @@ Wait for confirmation before proceeding to Step 2CM.
 
 ## Step 2: Update tasks.json
 
-> **Note:** See `.cm/SCHEMA.md` for the complete authoritative schema reference.
+> **Note:** See `.cdm/SCHEMA.md` for the complete authoritative schema reference.
 
-Add the new task definitions to `.cm/tasks.json`:
+Add the new task definitions to `.cdm/tasks.json`:
 
 ### 2.1 Read Current tasks.json
 
-Read the current `.cm/tasks.json` file to:
+Read the current `.cdm/tasks.json` file to:
 - Find the appropriate phase to add tasks to
 - Check for ID conflicts
 - Ensure dependencies are valid
@@ -171,7 +171,7 @@ Insert new tasks following the schema:
     "files_to_read": ["relevant/files.rs"],
     "code_style_excerpt": null
   },
-  "plan_file": ".cm/plans/plan-X.md"
+  "plan_file": ".cdm/plans/plan-X.task-1.md"
 }
 ```
 
@@ -185,7 +185,7 @@ Insert new tasks following the schema:
 - `type`: One of "implement", "review", "fix", "test"
 - `status`: Should be "pending" for new tasks
 - `context`: Must include at minimum an empty object
-- `plan_file`: Path to the plan file (e.g., ".cm/plans/plan-X.md")
+- `plan_file`: Path to the per-task plan file (e.g., ".cdm/plans/plan-X.task-Y.md") — each task must have its own plan file
 
 **Dependencies:**
 - Ensure `depends_on` references only existing task IDs
@@ -210,11 +210,11 @@ This ensures roadmap checkboxes sync with task completion.
 
 ## Step 3: Update roadmap.json
 
-Add new roadmap items to `.cm/roadmap.json`:
+Add new roadmap items to `.cdm/roadmap.json`:
 
 ### 3.1 Read Current roadmap.json
 
-Read the current `.cm/roadmap.json` file to:
+Read the current `.cdm/roadmap.json` file to:
 - Find the appropriate phase
 - Generate unique item IDs
 - Ensure consistency
@@ -251,7 +251,7 @@ Insert new roadmap items following the schema:
 
 ## Step 4: Update PLAN.md (Features Only)
 
-**ONLY for /feat sessions:** Add feature documentation to `.cm/PLAN.md`.
+**ONLY for /feat sessions:** Add feature documentation to `.cdm/PLAN.md`.
 
 **SKIP this step for /fix sessions** - bug fixes do not require PLAN.md updates.
 
@@ -293,7 +293,7 @@ Follow the existing style and formatting in PLAN.md.
 After updating the JSON files, regenerate the markdown documentation to ensure synchronization:
 
 ```bash
-cm --regenerate
+cdm --regenerate
 ```
 
 This command:
@@ -319,7 +319,7 @@ After updating all files, you MUST run validation and fix ALL issues before proc
 ### 6.1 Run sanity check
 
 ```bash
-cm --sanity-check
+cdm --sanity-check
 ```
 
 This checks:
@@ -337,7 +337,7 @@ You MUST loop until the sanity check passes:
 
 1. Read the error/warning output carefully
 2. Fix the issues in the JSON files (tasks.json and/or roadmap.json)
-3. Re-run `cm --sanity-check`
+3. Re-run `cdm --sanity-check`
 4. **Repeat from step 1 until ALL errors are resolved**
 
 **Common issues and fixes:**
@@ -354,15 +354,15 @@ Warnings (e.g., orphaned roadmap items) indicate roadmap items that no task will
 - If the roadmap item should be completed by a task you just added, add its task ID to `linked_task_ids`
 - If the roadmap item needs a NEW task, go back to Step 2 and add one
 
-**DO NOT proceed to Step 7 until `cm --sanity-check` reports zero errors AND zero warnings.**
+**DO NOT proceed to Step 7 until `cdm --sanity-check` reports zero errors AND zero warnings.**
 
 ---
 
-## Step 2CM: Generate tasks.json for /cm Session
+## Step 2CM: Generate tasks.json for /cdm Session
 
-**This step is ONLY for /cm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 2.
+**This step is ONLY for /cdm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 2.
 
-Create `.cm/tasks.json` from PLAN.md phases:
+Create `.cdm/tasks.json` from PLAN.md phases:
 
 ### 2CM.1 Generate Project Metadata
 
@@ -390,7 +390,7 @@ For each phase in PLAN.md:
    - Set type to "implement"
    - Set status to "pending"
    - Use the task description from PLAN.md as the name
-   - Set `plan_file` to reference the plan file for that phase (e.g., ".cm/plans/plan-1.md")
+   - Set `plan_file` to a per-task plan file (e.g., ".cdm/plans/plan-1.task-1.md") — each task must have its own file
    - Add relevant files to `files_to_read` if mentioned in PLAN.md
 
 Example:
@@ -412,7 +412,7 @@ Example:
           "context": {
             "files_to_read": []
           },
-          "plan_file": ".cm/plans/plan-1.md",
+          "plan_file": ".cdm/plans/plan-1.task-1.md",
           "roadmap_item_id": "phase-1-item-1"
         }
       ]
@@ -434,15 +434,15 @@ Example:
 
 ### 2CM.4 Write tasks.json
 
-Write the complete JSON structure to `.cm/tasks.json`.
+Write the complete JSON structure to `.cdm/tasks.json`.
 
 ### 2CM.5 Create Plan Files
 
-For each phase, create a plan file at `.cm/plans/plan-N.md` containing detailed instructions for that phase's tasks.
+For each phase, create a plan file at `.cdm/plans/plan-N.md` containing detailed instructions for that phase's tasks.
 
-**Reference:** See `.cm/agents/TASK_PLAN_TEMPLATE.md` for the complete template structure.
+**Reference:** See `.cdm/agents/TASK_PLAN_TEMPLATE.md` for the complete template structure.
 
-1. Create the `.cm/plans/` directory if it doesn't exist
+1. Create the `.cdm/plans/` directory if it doesn't exist
 2. For each phase, create a plan file following the template with:
    - **Objective** - What the phase/task accomplishes
    - **Files to Read** - Context files with line ranges for large files
@@ -453,7 +453,7 @@ For each phase, create a plan file at `.cm/plans/plan-N.md` containing detailed 
 
 **Tip:** After creating minimal plans, run `/expand` to enrich them with detailed file references, code examples, and reviewer criteria.
 
-Example `.cm/plans/plan-1.md`:
+Example `.cdm/plans/plan-1.md`:
 ```markdown
 # Phase 1: Foundation
 
@@ -491,11 +491,11 @@ Set up the initial project structure and dependencies.
 
 ---
 
-## Step 3CM: Generate roadmap.json for /cm Session
+## Step 3CM: Generate roadmap.json for /cdm Session
 
-**This step is ONLY for /cm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 3.
+**This step is ONLY for /cdm sessions.** If you're in a `/feat` or `/fix` session, skip to Step 3.
 
-Create `.cm/roadmap.json` from PLAN.md phases:
+Create `.cdm/roadmap.json` from PLAN.md phases:
 
 ### 3CM.1 Generate Roadmap Structure
 
@@ -540,33 +540,33 @@ For each phase in PLAN.md, create a roadmap phase with items:
 
 ### 3CM.3 Write roadmap.json
 
-Write the complete JSON structure to `.cm/roadmap.json`.
+Write the complete JSON structure to `.cdm/roadmap.json`.
 
 ---
 
-## Step 4CM: Create Plan Files for /cm Session (Optional)
+## Step 4CM: Create Plan Files for /cdm Session (Optional)
 
-**This step is ONLY for /cm sessions.**
+**This step is ONLY for /cdm sessions.**
 
-If the project structure includes individual plan files (`.cm/plans/plan-N.md`), create them:
+If the project structure includes individual plan files (`.cdm/plans/plan-N.md`), create them:
 
 For each phase:
-1. Create `.cm/plans/plan-N.md` where N is the phase number
+1. Create `.cdm/plans/plan-N.md` where N is the phase number
 2. Include phase details, task breakdown, and implementation notes
 
 **Note:** This is optional. Many projects don't use separate plan files.
 
 ---
 
-## Step 5CM: Regenerate and Validate for /cm Session
+## Step 5CM: Regenerate and Validate for /cdm Session
 
-**This step is ONLY for /cm sessions.**
+**This step is ONLY for /cdm sessions.**
 
 After generating JSON files:
 
 1. Run regeneration:
 ```bash
-cm --regenerate
+cdm --regenerate
 ```
 
 This generates:
@@ -575,13 +575,13 @@ This generates:
 
 2. Run validation:
 ```bash
-cm --sanity-check
+cdm --sanity-check
 ```
 
 **If validation fails:**
 - Review error messages
 - Fix issues in tasks.json or roadmap.json
-- Re-run `cm --sanity-check`
+- Re-run `cdm --sanity-check`
 - Repeat until all errors are resolved
 
 **DO NOT proceed until validation passes.**
@@ -590,19 +590,19 @@ After validation passes, proceed to Step 7CM.
 
 ---
 
-## Step 7CM: Completion Summary for /cm Session
+## Step 7CM: Completion Summary for /cdm Session
 
-**This step is ONLY for /cm sessions.**
+**This step is ONLY for /cdm sessions.**
 
 After all files are generated and validated, inform the user:
 
 > **Project initialized successfully!**
 >
 > **Generated files:**
-> - `.cm/tasks.json` - [N] phases, [M] tasks
-> - `.cm/roadmap.json` - [N] phases, [M] items
-> - `.cm/ROADMAP.md` - Generated from roadmap.json
-> - `.cm/TASKS.md` - Generated from tasks.json
+> - `.cdm/tasks.json` - [N] phases, [M] tasks
+> - `.cdm/roadmap.json` - [N] phases, [M] items
+> - `.cdm/ROADMAP.md` - Generated from roadmap.json
+> - `.cdm/TASKS.md` - Generated from tasks.json
 >
 > **Phases created:**
 > 1. Phase 1: [name] - [X] tasks
@@ -613,27 +613,27 @@ After all files are generated and validated, inform the user:
 >
 > **Next steps:**
 > 1. Review the generated files to ensure accuracy
-> 2. When ready to implement, run `cm` to start executing tasks
-> 3. Or run `cm --step` to execute tasks one at a time
+> 2. When ready to implement, run `cdm` to start executing tasks
+> 3. Or run `cdm --step` to execute tasks one at a time
 >
 > Your project is now ready for automated implementation!
 
-**END of /cm session flow. The steps below (Step 7) are for /feat and /fix sessions only.**
+**END of /cdm session flow. The steps below (Step 7) are for /feat and /fix sessions only.**
 
 ---
 
 ## Step 7: Completion Summary (for /feat and /fix sessions)
 
-**This step is ONLY for /feat and /fix sessions.** For /cm sessions, see Step 7CM above.
+**This step is ONLY for /feat and /fix sessions.** For /cdm sessions, see Step 7CM above.
 
 After all files are updated and validated, inform the user:
 
 > **Session finalized successfully!**
 >
 > **Changes saved:**
-> - `.cm/tasks.json` - Added [N] new task(s)
-> - `.cm/roadmap.json` - Added [M] new roadmap item(s)
-> [For /feat only:] - `.cm/PLAN.md` - Added [feature name] documentation
+> - `.cdm/tasks.json` - Added [N] new task(s)
+> - `.cdm/roadmap.json` - Added [M] new roadmap item(s)
+> [For /feat only:] - `.cdm/PLAN.md` - Added [feature name] documentation
 >
 > **New tasks added:**
 > - `[task-id-1]`: [task-name-1]
@@ -644,8 +644,8 @@ After all files are updated and validated, inform the user:
 >
 > **Next steps:**
 > 1. Review the updated files to ensure accuracy
-> 2. When ready to implement, run `cm` to start executing tasks
-> 3. Or run `cm --step` to execute tasks one at a time
+> 2. When ready to implement, run `cdm` to start executing tasks
+> 3. Or run `cdm --step` to execute tasks one at a time
 >
 > The feature/fix has been saved to your planning files and is ready for implementation whenever you choose to run it.
 
@@ -655,21 +655,21 @@ After all files are updated and validated, inform the user:
 
 If the wizard encounters issues:
 
-### Missing .cm/ Directory
+### Missing .cdm/ Directory
 
-> I couldn't find the `.cm/` directory. This command requires an initialized cm project.
+> I couldn't find the `.cdm/` directory. This command requires an initialized cdm project.
 >
-> Please run `cm init` and then `/cm` to initialize the project.
+> Please run `cdm init` and then `/cdm` to initialize the project.
 
-### Missing PLAN.md (for /cm sessions)
+### Missing PLAN.md (for /cdm sessions)
 
-> I couldn't find `.cm/PLAN.md`. This file is required to generate tasks.json and roadmap.json.
+> I couldn't find `.cdm/PLAN.md`. This file is required to generate tasks.json and roadmap.json.
 >
-> Please run `/cm` first to create the project plan, then return here to finalize with `/end`.
+> Please run `/cdm` first to create the project plan, then return here to finalize with `/end`.
 
-### tasks.json already exists (for /cm sessions)
+### tasks.json already exists (for /cdm sessions)
 
-> Warning: `tasks.json` already exists. The `/end` command after `/cm` is meant for initial project setup.
+> Warning: `tasks.json` already exists. The `/end` command after `/cdm` is meant for initial project setup.
 >
 > It looks like your project is already initialized. Use `/feat` or `/fix` to add new features or fixes instead.
 
@@ -677,7 +677,7 @@ If the wizard encounters issues:
 
 > The current `tasks.json` file appears to be invalid or corrupted.
 >
-> Please run `cm --sanity-check` to identify issues, then fix them before using `/end`.
+> Please run `cdm --sanity-check` to identify issues, then fix them before using `/end`.
 
 ### Conflicting Task IDs
 
@@ -718,11 +718,11 @@ Wait for user choice.
 
 ### Cross-Reference Validation Failures
 
-If `cm --sanity-check` reports cross-reference errors:
+If `cdm --sanity-check` reports cross-reference errors:
 
 > **Validation failed with cross-reference errors:**
 >
-> [Display error messages from cm --sanity-check]
+> [Display error messages from cdm --sanity-check]
 >
 > **Fixing issues:**
 > - [Describe fix for error 1]
@@ -736,7 +736,7 @@ Then fix the errors and re-run validation until it passes.
 
 ## Schema References
 
-**See `/cm` for full tasks.json and roadmap.json schemas.**
+**See `/cdm` for full tasks.json and roadmap.json schemas.**
 
 Quick reference for task ID naming:
 - **Feature tasks:** `phase-X.feat-[name].task-N`
@@ -753,9 +753,9 @@ Quick reference for task ID naming:
 2. **Check consistency** - Task names and descriptions should match what was discussed
 3. **Validate dependencies** - Make sure task ordering makes sense
 4. **Link roadmap items** - Use `roadmap_item_id` to keep checkboxes in sync
-5. **Test validation** - Always run `cm --sanity-check` before finishing
+5. **Test validation** - Always run `cdm --sanity-check` before finishing
 6. **Clear summary** - Provide a comprehensive summary so the user knows what was saved
-7. **Review opportunity** - Remind users to review files before running `cm run`
+7. **Review opportunity** - Remind users to review files before running `cdm run`
 
 ---
 
@@ -774,14 +774,14 @@ Proceed? (yes/no)
 User: yes
 
 Agent: [Updates tasks.json, roadmap.json, PLAN.md]
-Agent: [Runs cm --regenerate && cm --sanity-check]
+Agent: [Runs cdm --regenerate && cdm --sanity-check]
 
 **Session finalized!**
 - Added 3 tasks to tasks.json
 - Added roadmap item with linked_task_ids
 - Validation: ✓ passed
 
-Run `cm` when ready to implement.
+Run `cdm` when ready to implement.
 ```
 
 ### Example: /fix Session
@@ -797,13 +797,13 @@ Proceed? (yes/no)
 User: yes
 
 Agent: [Updates tasks.json, roadmap.json]
-Agent: [Runs cm --regenerate && cm --sanity-check]
+Agent: [Runs cdm --regenerate && cdm --sanity-check]
 
 **Session finalized!**
 - Added `phase-1.fix-memory-leak` task
 - Validation: ✓ passed
 
-Run `cm` when ready to implement.
+Run `cdm` when ready to implement.
 ```
 
 ---
@@ -818,7 +818,7 @@ The `/end` command bridges the gap between planning and execution by:
 3. Ensuring consistency with validation
 4. Providing clear summary of what was saved
 
-**For /cm sessions:**
+**For /cdm sessions:**
 1. Parsing PLAN.md to extract phases and tasks
 2. Generating initial tasks.json and roadmap.json
 3. Creating the foundation for automated implementation
@@ -829,13 +829,13 @@ This allows users to have thoughtful planning conversations, save the results, a
 ## Workflow Summary
 
 ```
-/cm           → Creates high-level PLAN.md (interactive wizard)
+/cdm           → Creates high-level PLAN.md (interactive wizard)
     ↓
 /split        → (optional) Refines PLAN.md into detailed phases
     ↓
 /end          → Finalizes session, generates tasks.json + roadmap.json
     ↓
-cm            → Executes tasks with automated agents
+cdm           → Executes tasks with automated agents
 ```
 
 Or for adding to existing projects:
@@ -845,5 +845,5 @@ Or for adding to existing projects:
     ↓
 /end          → Add tasks to existing tasks.json/roadmap.json
     ↓
-cm            → Execute new tasks
+cdm           → Execute new tasks
 ```
