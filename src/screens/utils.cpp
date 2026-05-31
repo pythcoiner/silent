@@ -1,5 +1,7 @@
 #include "utils.h"
 #include "theme/Theme.h"
+#include <QCoreApplication>
+#include <QLocale>
 #include <QPainter>
 #include <QPen>
 #include <Qontrol>
@@ -28,7 +30,7 @@ auto frame(QWidget *widget) -> QWidget * {
 
 auto toBitcoin(uint64_t sats, bool with_unit) -> QString {
     double bitcoinValue = static_cast<double>(sats) / SATS;
-    auto btcStr = QString::number(bitcoinValue, 'f', 8);
+    auto btcStr = QLocale().toString(bitcoinValue, 'f', 8);
     if (with_unit) {
         return btcStr + " BTC";
     }
@@ -46,8 +48,41 @@ auto shortenOutpoint(const QString &outpoint) -> QString {
 }
 
 auto coinsCount(uint64_t count) -> QString {
-    auto coinsStr = QString::number(count);
-    return coinsStr + " coins";
+    auto coinsStr = QLocale().toString(static_cast<qulonglong>(count));
+    return QCoreApplication::translate("screen::utils", "%1 coins").arg(coinsStr);
+}
+
+auto mapBackendErrorSummary(const QString &raw_error) -> QString {
+    auto err = raw_error.trimmed().toLower();
+    if (err.contains("already spent") || err.contains("double-spend") || err.contains("spent")) {
+        return QCoreApplication::translate("screen::utils",
+                                           "Transaction input conflict detected.");
+    }
+    if (err.contains("address reuse") || err.contains("reuse")) {
+        return QCoreApplication::translate("screen::utils", "Address reuse detected.");
+    }
+    if (err.contains("timeout") || err.contains("dns") || err.contains("socket") ||
+        err.contains("connect") || err.contains("connection") || err.contains("network")) {
+        return QCoreApplication::translate("screen::utils",
+                                           "Network connection failed. Check endpoint settings.");
+    }
+    if (err.contains("electrum")) {
+        return QCoreApplication::translate("screen::utils", "Electrum connection failed.");
+    }
+    if (err.contains("blindbit") || err.contains("backend")) {
+        return QCoreApplication::translate("screen::utils", "Backend request failed.");
+    }
+    if (err.contains("sign") || err.contains("signature")) {
+        return QCoreApplication::translate("screen::utils", "Failed to sign transaction.");
+    }
+    if (err.contains("broadcast") || err.contains("mempool")) {
+        return QCoreApplication::translate("screen::utils", "Failed to broadcast transaction.");
+    }
+    return QCoreApplication::translate("screen::utils", "Operation failed.");
+}
+
+auto formatBackendErrorDetails(const QString &raw_error) -> QString {
+    return QCoreApplication::translate("screen::utils", "Details: %1").arg(raw_error.trimmed());
 }
 
 auto Frame::paintEvent(QPaintEvent *event) -> void {

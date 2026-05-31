@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Qontrol>
+#include <qevent.h>
 #include <qtmetamacros.h>
 
 namespace theme {
@@ -44,6 +45,7 @@ public slots:
     void actionTestBackend();
     void actionTestP2p();
     void actionTestElectrum();
+    void actionApplyLanguage();
     void updateBlindbitToggleButton(bool running);
     void updateElectrumToggleButton();
     void onScanProgress(uint32_t height, uint32_t tip);
@@ -52,6 +54,8 @@ protected:
     void init() override;
     void doConnect() override;
     void view() override;
+    void changeEvent(QEvent *event) override;
+    void retranslateUi();
 
 public slots:
     void onBackendInfoReady(BackendInfo info);
@@ -76,15 +80,18 @@ private:
     theme::Input *m_p2p_node_input = nullptr;
     theme::Input *m_electrum_url_input = nullptr;
     theme::ComboBox *m_network_selector = nullptr;
+    theme::ComboBox *m_language_selector = nullptr;
     theme::Button *m_save_btn = nullptr;
     theme::Button *m_toggle_blindbit_btn = nullptr;
     theme::Button *m_toggle_electrum_btn = nullptr;
     theme::Button *m_test_btn = nullptr;
     theme::Button *m_test_p2p_btn = nullptr;
     theme::Button *m_test_electrum_btn = nullptr;
+    theme::Button *m_apply_language_btn = nullptr;
     theme::Label *m_info_network_label = nullptr;
     theme::Label *m_info_height_label = nullptr;
     theme::Label *m_capabilities = nullptr;
+    theme::Label *m_language_status_label = nullptr;
     QString m_current_url;
     QString m_current_p2p_node;
     QString m_current_electrum_url;

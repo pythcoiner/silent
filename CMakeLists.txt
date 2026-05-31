@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.22)
 set(BIN silent)
 project(${BIN} VERSION 0.1.0 LANGUAGES CXX)
 
+option(SILENT_I18N_TRACE_IDS "Emit i18n ID pragma trace markers" OFF)
+
 # Build silent Rust crate before main project
 add_custom_target(
     RunBeforeBuild ALL
@@ -46,6 +48,9 @@ set(SOURCES
     src/theme/Display.cpp
     src/AppController.h
     src/AppController.cpp
+    src/i18n/I18nManager.h
+    src/i18n/I18nManager.cpp
+    src/i18n/Tr.h
     src/MainWindow.h
     src/MainWindow.cpp
     src/AccountController.h
@@ -88,8 +93,27 @@ set(SOURCES
     src/theme/TextEdit.cpp
 )
 
+# Discover all translator-editable catalogs.
+# Any new `i18n/silent_<locale>.lang` file is embedded automatically.
+file(GLOB TRANSLATION_LANG_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/i18n/silent_*.lang)
+
 qt_add_executable(${BIN}
     ${SOURCES}
+)
+
+if(SILENT_I18N_TRACE_IDS)
+    target_compile_definitions(${BIN} PRIVATE I18N_TRACE_IDS=1)
+endif()
+
+foreach(LANG_FILE ${TRANSLATION_LANG_FILES})
+    get_filename_component(LANG_BASENAME ${LANG_FILE} NAME)
+    set_source_files_properties(${LANG_FILE} PROPERTIES QT_RESOURCE_ALIAS ${LANG_BASENAME})
+endforeach()
+
+# Embed `.lang` files directly in the executable for single-binary distribution.
+qt_add_resources(${BIN} embedded_i18n_lang
+    PREFIX "/i18n"
+    FILES ${TRANSLATION_LANG_FILES}
 )
 
 # Ensure Rust library is built before executable

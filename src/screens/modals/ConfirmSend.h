@@ -2,6 +2,7 @@
 
 #include <Qontrol>
 #include <cstdint>
+#include <qevent.h>
 #include <qstring.h>
 
 namespace theme {
@@ -34,6 +35,8 @@ protected:
     void init();
     void doConnect();
     void view();
+    void changeEvent(QEvent *event) override;
+    void retranslateUi();
 
 private:
     QStringList m_recipients;

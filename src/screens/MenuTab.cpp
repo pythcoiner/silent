@@ -1,5 +1,6 @@
 #include "MenuTab.h"
 #include "AppController.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/Icon.h"
 #include "theme/Label.h"
@@ -19,7 +20,7 @@ MenuTab::MenuTab(QWidget *parent) : QWidget(parent) {
 }
 
 void MenuTab::init() {
-    m_create_btn = new Button("+ Create New Wallet", ButtonRole::TabCreate);
+    m_create_btn = new Button(TR("menu-create-wallet"), ButtonRole::TabCreate);
 
     m_accounts_column = new qontrol::Column;
 }
@@ -52,7 +53,7 @@ void MenuTab::onTrashClicked() {
 }
 
 void MenuTab::view() {
-    auto *title = new Label("Silent - Silent Payments Wallet", LabelRole::Title);
+    auto *title = new Label(TR("main-window-title"), LabelRole::Title);
     title->setAlignment(Qt::AlignCenter);
 
     auto *titleRow = (new qontrol::Row)->pushSpacer()->push(title)->pushSpacer();
@@ -87,7 +88,7 @@ void MenuTab::onAccountList(const QList<QString> &accounts) {
 
         auto *trashBtn = new Button(ButtonRole::Icon);
         trashBtn->setIcon(icon::trash());
-        trashBtn->setToolTip("Delete wallet");
+        trashBtn->setToolTip(TR("menu-delete-wallet-tooltip"));
 
         btn->setProperty("accountName", name);
         connect(btn, &QPushButton::clicked, this, &MenuTab::onAccountClicked, qontrol::UNIQUE);

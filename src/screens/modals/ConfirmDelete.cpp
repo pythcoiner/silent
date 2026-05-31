@@ -1,4 +1,5 @@
 #include "ConfirmDelete.h"
+#include "i18n/Tr.h"
 #include "../utils.h"
 #include "theme/Button.h"
 #include "theme/Label.h"
@@ -13,7 +14,7 @@ using theme::Label;
 using theme::LabelRole;
 
 ConfirmDelete::ConfirmDelete(const QString &name, [[maybe_unused]] QWidget *parent) : m_name(name) {
-    setWindowTitle("Delete Wallet");
+    setWindowTitle(TR("delete-wallet-title"));
     resize(400, 150);
     init();
     doConnect();
@@ -21,14 +22,13 @@ ConfirmDelete::ConfirmDelete(const QString &name, [[maybe_unused]] QWidget *pare
 }
 
 void ConfirmDelete::init() {
-    m_label = new Label(QString("Are you sure you want to delete wallet '%1'?\n"
-                                "This action cannot be undone.")
-                            .arg(m_name));
+    m_label =
+        new Label(TR("delete-wallet-confirmation").arg(m_name));
     m_label->setWordWrap(true);
     m_label->setAlignment(Qt::AlignCenter);
 
-    m_cancel_btn = new Button("Cancel");
-    m_delete_btn = new Button("Delete", ButtonRole::Destructive);
+    m_cancel_btn = new Button(TR("common-cancel"));
+    m_delete_btn = new Button(TR("common-delete"), ButtonRole::Destructive);
 }
 
 void ConfirmDelete::doConnect() {
@@ -58,6 +58,20 @@ void ConfirmDelete::view() {
                     ->pushSpacer();
 
     setMainWidget(margin(col));
+}
+
+void ConfirmDelete::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+    }
+    qontrol::Modal::changeEvent(event);
+}
+
+void ConfirmDelete::retranslateUi() {
+    setWindowTitle(TR("delete-wallet-title"));
+    m_label->setText(TR("delete-wallet-confirmation").arg(m_name));
+    m_cancel_btn->setText(TR("common-cancel"));
+    m_delete_btn->setText(TR("common-delete"));
 }
 
 } // namespace modal

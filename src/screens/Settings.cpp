@@ -2,6 +2,8 @@
 #include "AccountController.h"
 #include "AppController.h"
 #include "Column.h"
+#include "i18n/I18nManager.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/ComboBox.h"
 #include "theme/Input.h"
@@ -19,7 +21,6 @@ using theme::Button;
 using theme::ButtonRole;
 using theme::ComboBox;
 using theme::Input;
-using theme::InputRole;
 using theme::Label;
 using theme::LabelRole;
 
@@ -49,26 +50,26 @@ void Settings::init() {
     // Create widgets
     m_blindbit_url_input = new Input;
     m_blindbit_url_input->setWidth(Size::XXL);
-    m_blindbit_url_input->setPlaceholderText("https://blindbit.example.com");
+    m_blindbit_url_input->setPlaceholderText(TR("settings-placeholder-blindbit"));
     m_blindbit_url_input->setText(m_current_url);
     m_blindbit_url_input->setEnabled(!m_controller->isScannerRunning());
 
-    m_test_btn = new Button("Test");
+    m_test_btn = new Button(TR("common-test"));
 
     m_p2p_node_input = new Input;
     m_p2p_node_input->setWidth(Size::XXL);
-    m_p2p_node_input->setPlaceholderText("127.0.0.1:8333");
+    m_p2p_node_input->setPlaceholderText(TR("settings-placeholder-p2p"));
     m_p2p_node_input->setText(m_current_p2p_node);
 
-    m_test_p2p_btn = new Button("Test");
+    m_test_p2p_btn = new Button(TR("common-test"));
 
     m_electrum_url_input = new Input;
     m_electrum_url_input->setWidth(Size::XXL);
-    m_electrum_url_input->setPlaceholderText("host:port (e.g. 127.0.0.1:50001)");
+    m_electrum_url_input->setPlaceholderText(TR("settings-placeholder-electrum"));
     m_electrum_url_input->setText(m_current_electrum_url);
     m_electrum_url_input->setEnabled(!m_controller->isScannerRunning());
 
-    m_test_electrum_btn = new Button("Test");
+    m_test_electrum_btn = new Button(TR("common-test"));
 
     m_network_selector = new ComboBox;
     m_network_selector->addItem("Regtest", static_cast<int>(Network::Regtest));
@@ -87,11 +88,33 @@ void Settings::init() {
     m_info_height_label = new Label("--");
     m_capabilities = new Label("--");
 
-    m_save_btn = new Button("Save Settings", ButtonRole::Primary);
+    m_language_selector = new ComboBox;
+    m_language_selector->addItem("English", "en");
+    m_language_selector->addItem("Francais", "fr");
+    m_language_selector->addItem("Italiano", "it");
+    m_language_selector->addItem("Deutsch", "de");
+    m_language_selector->addItem("Portugues", "pt");
+    m_language_selector->addItem("Espanol", "es");
+    m_language_selector->setWidth(Size::M);
+
+    int localeIndex = m_language_selector->findData(i18n::I18nManager::get()->selectedLocale());
+    if (localeIndex == -1) {
+        localeIndex = m_language_selector->findData("en");
+    }
+    if (localeIndex != -1) {
+        m_language_selector->setCurrentIndex(localeIndex);
+    }
+
+    m_apply_language_btn = new Button;
+    m_language_status_label = new Label;
+
+    m_save_btn = new Button(TR("settings-save"), ButtonRole::Primary);
     m_toggle_blindbit_btn =
         new Button(m_controller->isScannerRunning() ? "Disconnect Blindbit" : "Connect Blindbit");
     m_toggle_electrum_btn =
         new Button(m_electrum_running ? "Disconnect Electrum" : "Connect Electrum");
+
+    retranslateUi();
 }
 
 void Settings::doConnect() {
@@ -116,6 +139,8 @@ void Settings::doConnect() {
             qontrol::UNIQUE);
     connect(m_test_electrum_btn, &QPushButton::clicked, this, &Settings::actionTestElectrum,
             qontrol::UNIQUE);
+    connect(m_apply_language_btn, &QPushButton::clicked, this, &Settings::actionApplyLanguage,
+            qontrol::UNIQUE);
     connect(m_electrum_url_input, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
             qontrol::UNIQUE);
     connect(this, &Settings::backendInfoReady, this, &Settings::onBackendInfoReady,
@@ -130,7 +155,7 @@ void Settings::actionSave() {
 
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
-        auto *modal = new qontrol::Modal("Error", "No account loaded");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-no-account-loaded"));
         AppController::execModal(modal);
         return;
     }
@@ -169,7 +194,7 @@ void Settings::actionSave() {
 void Settings::actionToggleBlindbit() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
-        auto *modal = new qontrol::Modal("Error", "No account loaded");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-no-account-loaded"));
         AppController::execModal(modal);
         return;
     }
@@ -180,7 +205,7 @@ void Settings::actionToggleBlindbit() {
         clearBackendInfo();
     } else {
         if (!accountOpt.value()->start_scanner()) {
-            auto *modal = new qontrol::Modal("Error", "Failed to start scanner");
+            auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-failed-start-scanner"));
             AppController::execModal(modal);
         } else {
             fetchBackendInfo();
@@ -191,7 +216,7 @@ void Settings::actionToggleBlindbit() {
 void Settings::actionToggleElectrum() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
-        auto *modal = new qontrol::Modal("Error", "No account loaded");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-no-account-loaded"));
         AppController::execModal(modal);
         return;
     }
@@ -201,7 +226,7 @@ void Settings::actionToggleElectrum() {
         accountOpt.value()->stop_electrum();
     } else {
         if (!accountOpt.value()->start_electrum()) {
-            auto *modal = new qontrol::Modal("Error", "Failed to start electrum");
+            auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-failed-start-electrum"));
             AppController::execModal(modal);
         }
     }
@@ -210,15 +235,15 @@ void Settings::actionToggleElectrum() {
 void Settings::actionTestBackend() {
     auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty()) {
-        auto *modal = new qontrol::Modal("Error", "BlindBit URL is empty");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-blindbit-empty"));
         AppController::execModal(modal);
         return;
     }
 
     m_test_btn->setEnabled(false);
-    m_test_btn->setText("Testing...");
+    m_test_btn->setText(TR("common-testing"));
 
-    auto *thread = QThread::create([this, url = url.toStdString()]() {
+    auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
         emit backendInfoReady(info);
     });
@@ -231,7 +256,7 @@ void Settings::fetchBackendInfo() {
     if (url.isEmpty())
         return;
 
-    auto *thread = QThread::create([this, url = url.toStdString()]() {
+    auto *thread = QThread::create([this, url = url.toStdString()]() -> void {
         auto info = ::get_backend_info(rust::String(url));
         emit backendInfoReady(info);
     });
@@ -241,32 +266,31 @@ void Settings::fetchBackendInfo() {
 
 void Settings::onBackendInfoReady(BackendInfo info) {
     m_test_btn->setEnabled(true);
-    m_test_btn->setText("Test");
+    m_test_btn->setText(TR("common-test"));
 
     if (!info.is_ok) {
         m_backend_verified = false;
         clearBackendInfo();
         updateButtons();
-        AppController::execModal(
-            new qontrol::Modal("Connection Failed",
-                               QString("Failed to connect to backend:\n%1")
-                                   .arg(QString::fromStdString(std::string(info.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(info.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-connection-failed"), message));
         return;
     }
 
     QString networkStr;
     switch (info.network) {
     case Network::Regtest:
-        networkStr = "Regtest";
+        networkStr = TR("network-regtest");
         break;
     case Network::Signet:
-        networkStr = "Signet";
+        networkStr = TR("network-signet");
         break;
     case Network::Testnet:
-        networkStr = "Testnet";
+        networkStr = TR("network-testnet");
         break;
     case Network::Bitcoin:
-        networkStr = "Bitcoin";
+        networkStr = TR("network-bitcoin");
         break;
     }
 
@@ -280,18 +304,19 @@ void Settings::onBackendInfoReady(BackendInfo info) {
     m_current_height = info.height;
     m_info_height_label->setText(QString::number(info.height));
 
-    auto yn = [](bool v) -> const char * { return v ? "Yes" : "No"; };
-    m_capabilities->setText(QString("Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: "
-                                    "%3\nCut-Through + Dust Filter: %4")
-                                .arg(yn(info.tweaks_only))
-                                .arg(yn(info.tweaks_full_basic))
-                                .arg(yn(info.tweaks_full_with_dust_filter))
-                                .arg(yn(info.tweaks_cut_through_with_dust_filter)));
+    auto yesText = TR("common-yes");
+    auto noText = TR("common-no");
+    auto yn = [&yesText, &noText](bool value) -> QString { return value ? yesText : noText; };
+    m_capabilities->setText(TR("settings-capabilities-template")
+                                 .arg(yn(info.tweaks_only))
+                                 .arg(yn(info.tweaks_full_basic))
+                                 .arg(yn(info.tweaks_full_with_dust_filter))
+                                 .arg(yn(info.tweaks_cut_through_with_dust_filter)));
     m_capabilities->setAlignment(Qt::AlignTop);
 
     if (!networkMatch) {
         AppController::execModal(new qontrol::Modal(
-            "Network Mismatch", QString("Backend network is %1 but account network is %2")
+            TR("settings-network-mismatch"), TR("settings-network-mismatch-message")
                                     .arg(networkStr)
                                     .arg(m_network_selector->currentText())));
     }
@@ -306,16 +331,16 @@ void Settings::invalidateBackendTest() {
 void Settings::actionTestP2p() {
     auto addr = m_p2p_node_input->text().trimmed();
     if (addr.isEmpty()) {
-        auto *modal = new qontrol::Modal("Error", "P2P node address is empty");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-p2p-empty"));
         AppController::execModal(modal);
         return;
     }
 
     m_test_p2p_btn->setEnabled(false);
-    m_test_p2p_btn->setText("Testing...");
+    m_test_p2p_btn->setText(TR("common-testing"));
 
     auto network = m_current_network;
-    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() {
+    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() -> void {
         auto result = ::test_p2p_node(rust::String(addr), network);
         emit p2pTestReady(result);
     });
@@ -325,15 +350,14 @@ void Settings::actionTestP2p() {
 
 void Settings::onP2pTestReady(ConnectionResult result) {
     m_test_p2p_btn->setEnabled(true);
-    m_test_p2p_btn->setText("Test");
+    m_test_p2p_btn->setText(TR("common-test"));
 
     if (!result.is_ok) {
         m_p2p_verified = false;
         updateButtons();
-        AppController::execModal(new qontrol::Modal(
-            "P2P Test Failed",
-            QString("Failed to connect to P2P node:\n%1")
-                .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(result.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-p2p-test-failed"), message));
         return;
     }
 
@@ -349,15 +373,15 @@ void Settings::invalidateP2pTest() {
 void Settings::actionTestElectrum() {
     auto addr = m_electrum_url_input->text().trimmed();
     if (addr.isEmpty()) {
-        auto *modal = new qontrol::Modal("Error", "Electrum address is empty");
+        auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-electrum-empty"));
         AppController::execModal(modal);
         return;
     }
 
     m_test_electrum_btn->setEnabled(false);
-    m_test_electrum_btn->setText("Testing...");
+    m_test_electrum_btn->setText(TR("common-testing"));
 
-    auto *thread = QThread::create([this, addr = addr.toStdString()]() {
+    auto *thread = QThread::create([this, addr = addr.toStdString()]() -> void {
         auto result = ::test_electrum(rust::String(addr));
         emit electrumTestReady(result);
     });
@@ -367,15 +391,14 @@ void Settings::actionTestElectrum() {
 
 void Settings::onElectrumTestReady(ConnectionResult result) {
     m_test_electrum_btn->setEnabled(true);
-    m_test_electrum_btn->setText("Test");
+    m_test_electrum_btn->setText(TR("common-test"));
 
     if (!result.is_ok) {
         m_electrum_verified = false;
         updateButtons();
-        AppController::execModal(new qontrol::Modal(
-            "Electrum Test Failed",
-            QString("Failed to connect to Electrum server:\n%1")
-                .arg(QString::fromStdString(std::string(result.error.c_str())))));
+        auto rawError = QString::fromStdString(std::string(result.error.c_str()));
+        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
+        AppController::execModal(new qontrol::Modal(TR("settings-electrum-test-failed"), message));
         return;
     }
 
@@ -415,7 +438,8 @@ void Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) {
 
 void Settings::updateBlindbitToggleButton(bool running) {
     if (m_toggle_blindbit_btn != nullptr) {
-        m_toggle_blindbit_btn->setText(running ? "Disconnect Blindbit" : "Connect Blindbit");
+        m_toggle_blindbit_btn->setText(running ? TR("settings-disconnect-blindbit")
+                                               : TR("settings-connect-blindbit"));
     }
     updateButtons();
 }
@@ -424,14 +448,21 @@ void Settings::updateBlindbitToggleButton(bool running) {
 void Settings::updateElectrumToggleButton() {
     m_electrum_running = !m_electrum_running;
     if (m_toggle_electrum_btn != nullptr) {
-        m_toggle_electrum_btn->setText(m_electrum_running ? "Disconnect Electrum"
-                                                          : "Connect Electrum");
+        m_toggle_electrum_btn->setText(m_electrum_running ? TR("settings-disconnect-electrum")
+                                                          : TR("settings-connect-electrum"));
     }
     updateButtons();
 }
 
+void Settings::actionApplyLanguage() {
+    auto locale = m_language_selector->currentData().toString();
+    bool ok = i18n::I18nManager::get()->applyLocale(locale, true);
+    m_language_status_label->setText(ok ? TR("settings-language-applied")
+                                        : TR("settings-language-saved-restart"));
+}
+
 void Settings::view() {
-    auto *urlLabel = new Label("BlindBit URL:", LabelRole::InputLabel);
+    auto *urlLabel = new Label(TR("settings-blindbit-url"), LabelRole::InputLabel);
 
     auto *urlRow = (new qontrol::Row)
                        ->push(urlLabel)
@@ -440,7 +471,7 @@ void Settings::view() {
                        ->push(m_test_btn)
                        ->pushSpacer();
 
-    auto *p2pLabel = new Label("P2P Node:", LabelRole::InputLabel);
+    auto *p2pLabel = new Label(TR("settings-p2p-node"), LabelRole::InputLabel);
 
     auto *p2pRow = (new qontrol::Row)
                        ->push(p2pLabel)
@@ -449,7 +480,7 @@ void Settings::view() {
                        ->push(m_test_p2p_btn)
                        ->pushSpacer();
 
-    auto *electrumLabel = new Label("Electrum Server:", LabelRole::InputLabel);
+    auto *electrumLabel = new Label(TR("settings-electrum-server"), LabelRole::InputLabel);
 
     auto *electrumRow = (new qontrol::Row)
                             ->push(electrumLabel)
@@ -458,23 +489,34 @@ void Settings::view() {
                             ->push(m_test_electrum_btn)
                             ->pushSpacer();
 
-    auto *networkLabel = new Label("Network:", LabelRole::InputLabel);
+    auto *networkLabel = new Label(TR("settings-network"), LabelRole::InputLabel);
 
     auto *networkRow =
         (new qontrol::Row)->push(networkLabel)->push(m_network_selector)->pushSpacer();
 
+    auto *languageLabel = new Label(TR("settings-language"), LabelRole::InputLabel);
+    auto *languageRow = (new qontrol::Row)
+                            ->push(languageLabel)
+                            ->push(m_language_selector)
+                            ->pushSpacer(resolve(Spacing::XS))
+                            ->push(m_apply_language_btn)
+                            ->pushSpacer();
+    auto *languageStatusTitle = new Label(TR("settings-status"), LabelRole::InfoLabel);
+    auto *languageStatusRow =
+        (new qontrol::Row)->push(languageStatusTitle)->push(m_language_status_label)->pushSpacer();
+
     // Backend info section (read-only)
-    auto *infoTitle = new Label("Backend Info:", LabelRole::Section);
+    auto *infoTitle = new Label(TR("settings-backend-info"), LabelRole::Section);
     auto *infoTitleRow = (new qontrol::Row)->push(infoTitle)->pushSpacer();
 
-    auto *netLabel = new Label("Network:", LabelRole::InfoLabel);
+    auto *netLabel = new Label(TR("settings-network"), LabelRole::InfoLabel);
     auto *infoNetRow = (new qontrol::Row)->push(netLabel)->push(m_info_network_label)->pushSpacer();
 
-    auto *heightLabel = new Label("Block Height:", LabelRole::InfoLabel);
+    auto *heightLabel = new Label(TR("settings-block-height"), LabelRole::InfoLabel);
     auto *infoHeightRow =
         (new qontrol::Row)->push(heightLabel)->push(m_info_height_label)->pushSpacer();
 
-    auto *capabilities = new Label("Capabilities:", LabelRole::InfoLabel);
+    auto *capabilities = new Label(TR("settings-capabilities"), LabelRole::InfoLabel);
     capabilities->setAlignment(Qt::AlignTop);
     auto *capRow = (new qontrol::Row)->push(capabilities)->push(m_capabilities)->pushSpacer();
 
@@ -496,6 +538,10 @@ void Settings::view() {
                     ->push(electrumRow)
                     ->pushSpacer(resolve(Spacing::XS))
                     ->push(networkRow)
+                    ->pushSpacer(resolve(Spacing::XS))
+                    ->push(languageRow)
+                    ->pushSpacer(resolve(Spacing::XS))
+                    ->push(languageStatusRow)
                     ->pushSpacer(resolve(Spacing::M))
                     ->push(infoTitleRow)
                     ->pushSpacer(resolve(Spacing::XS))
@@ -512,6 +558,36 @@ void Settings::view() {
 
     m_main_widget = margin(row);
     this->setLayout(m_main_widget->layout());
+}
+
+void Settings::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+    }
+    qontrol::Screen::changeEvent(event);
+}
+
+void Settings::retranslateUi() {
+    m_blindbit_url_input->setPlaceholderText(TR("settings-placeholder-blindbit"));
+    m_p2p_node_input->setPlaceholderText(TR("settings-placeholder-p2p"));
+    m_electrum_url_input->setPlaceholderText(TR("settings-placeholder-electrum"));
+
+    m_test_btn->setText(TR("common-test"));
+    m_test_p2p_btn->setText(TR("common-test"));
+    m_test_electrum_btn->setText(TR("common-test"));
+    m_save_btn->setText(TR("settings-save"));
+    m_apply_language_btn->setText(TR("common-apply"));
+
+    m_toggle_blindbit_btn->setText(m_controller->isScannerRunning() ? TR("settings-disconnect-blindbit")
+                                                                     : TR("settings-connect-blindbit"));
+    m_toggle_electrum_btn->setText(m_electrum_running ? TR("settings-disconnect-electrum")
+                                                       : TR("settings-connect-electrum"));
+
+    m_network_selector->setItemText(0, TR("network-regtest"));
+    m_network_selector->setItemText(1, TR("network-signet"));
+    m_network_selector->setItemText(2, TR("network-testnet"));
+    m_network_selector->setItemText(3, TR("network-bitcoin"));
+
 }
 
 } // namespace screen

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QCloseEvent>
+#include <QEvent>
 #include <QList>
 #include <QPair>
 #include <QTabWidget>
@@ -26,9 +27,11 @@ public slots:
 
 protected:
     auto closeEvent(QCloseEvent *event) -> void override;
+    auto changeEvent(QEvent *event) -> void override;
 
 protected:
     auto initWindow() -> void;
+    auto retranslateUi() -> void;
 
 private:
     bool m_init = false;

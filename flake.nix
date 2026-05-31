@@ -88,7 +88,7 @@
         outputHashes = {
           "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
           "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
-          "bwk-sp-0.1.0" = "sha256-OoOUyQw5pZuWD2Ic0M5GTIE9DK3L8ZZUBvDBqRTMbG0=";
+          "bwk-sp-0.1.0" = "sha256-QlCb0qXRuI3kmlHsEE4nKqpOZkAxrhDacrYQUoWT9g4=";
           "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
           "blindbitd-0.0.1" = "sha256-XfO7P9uVLbw8mpiqLZbUoKw8XsxqM1MyeBuq6TKeZ24=";
           "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
@@ -135,9 +135,9 @@ git = "https://github.com/pythcoiner/ureq.git"
 branch = "gzip"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/pythcoiner/bwk.git?rev=4fd3ad6"]
+[source."git+https://github.com/pythcoiner/bwk.git?rev=c3f31e827bca177c4b87efb6d515a790c71eb563"]
 git = "https://github.com/pythcoiner/bwk.git"
-rev = "4fd3ad6"
+rev = "c3f31e827bca177c4b87efb6d515a790c71eb563"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
@@ -316,12 +316,16 @@ CARGO_EOF
           pname = "silent";
           version = "0.1.0";
 
+          dontWrapQtApps = true;
+
           src = self;
 
           nativeBuildInputs = with pkgs; [
             cmake
             ninja
             pkg-config
+            python3
+            qt6.qttools
           ];
 
           buildInputs = guiBuildInputs;
@@ -404,6 +408,12 @@ CARGO_EOF
       linux = buildGui {
         rustLib = linuxRustLib;
         qt6Static = linuxQt6;
+      };
+
+      linuxTrace = buildGui {
+        rustLib = linuxRustLib;
+        qt6Static = linuxQt6;
+        extraCmakeFlags = [ "-DSILENT_I18N_TRACE_IDS=ON" ];
       };
 
       # ─── Windows (MinGW cross-compilation) ───
@@ -753,6 +763,7 @@ TOOLCHAIN
     in {
       packages.${system} = {
         inherit linux windows;
+        linux-trace = linuxTrace;
         aarch64-apple-darwin = macosArm;
         x86_64-apple-darwin = macosX86;
         default = linux;

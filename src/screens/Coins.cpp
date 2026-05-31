@@ -1,5 +1,6 @@
 #include "Coins.h"
 #include "AccountController.h"
+#include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/Display.h"
 #include "theme/Icon.h"
@@ -35,21 +36,21 @@ void Coins::init() {
     // Match Display padding (6px) + border (1px) = 7px left indent
     int hPad = 7;
 
-    m_h_type = new Label("Type", LabelRole::InfoLabel);
+    m_h_type = new Label(TR("coins-type"), LabelRole::InfoLabel);
     m_h_type->setFixedWidth(TYPE_W);
     m_h_type->setContentsMargins(hPad, 0, 0, 0);
-    m_h_height = new Label("Height", LabelRole::InfoLabel);
+    m_h_height = new Label(TR("coins-height"), LabelRole::InfoLabel);
     m_h_height->setFixedWidth(HEIGHT_W);
     m_h_height->setContentsMargins(hPad, 0, 0, 0);
-    m_h_outpoint = new Label("OutPoint", LabelRole::InfoLabel);
+    m_h_outpoint = new Label(TR("coins-outpoint"), LabelRole::InfoLabel);
     m_h_outpoint->setFixedWidth(OUTPOINT_W);
     m_h_outpoint->setContentsMargins(hPad, 0, 0, 0);
-    m_h_label = new Label("Label", LabelRole::InfoLabel);
+    m_h_label = new Label(TR("coins-label"), LabelRole::InfoLabel);
     m_h_label->setFixedWidth(LABEL_W);
     m_h_label->setContentsMargins(hPad, 0, 0, 0);
     m_h_edit = new QWidget;
     m_h_edit->setFixedWidth(Theme::get()->buttonPalette().inlineIcon.width);
-    m_h_value = new Label("Value", LabelRole::InfoLabel);
+    m_h_value = new Label(TR("coins-value"), LabelRole::InfoLabel);
     m_h_value->setFixedWidth(VALUE_W);
     m_h_value->setContentsMargins(hPad, 0, 0, 0);
 }
@@ -81,12 +82,12 @@ auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count
 
 void Coins::view() {
     auto *oldCR = m_confirmed_row;
-    m_confirmed_row = balanceRow("Confirmed:", m_state.confirmed_balance, m_state.confirmed_count);
+    m_confirmed_row = balanceRow(TR("coins-confirmed"), m_state.confirmed_balance, m_state.confirmed_count);
     delete oldCR;
 
     auto *oldUR = m_unconfirmed_row;
     m_unconfirmed_row =
-        balanceRow("Unconfirmed:", m_state.unconfirmed_balance, m_state.unconfirmed_count);
+        balanceRow(TR("coins-unconfirmed"), m_state.unconfirmed_balance, m_state.unconfirmed_count);
     delete oldUR;
 
     // Get coins from controller's account
@@ -135,9 +136,9 @@ void Coins::view() {
         if (!coin.spent && coin.height > 0) {
             heightStr = QString::number(coin.height);
         } else if (coin.spent) {
-            heightStr = "Spent";
+            heightStr = TR("coins-spent");
         } else {
-            heightStr = "Unconfirmed";
+            heightStr = TR("coins-unconfirmed-no-colon");
         }
         auto *heightField = new Display(heightStr);
         heightField->setFixedWidth(HEIGHT_W);

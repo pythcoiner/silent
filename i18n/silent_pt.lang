@@ -1,0 +1,198 @@
+# Translator-friendly catalog
+# Format: id => "English" => "Translation"
+# Use \n for line breaks
+
+coins-confirmed => "Confirmed:" => "Confirmado:"
+coins-height => "Height" => "Altura"
+coins-label => "Label" => "Rotulo"
+coins-outpoint => "OutPoint" => "OutPoint"
+coins-spent => "Spent" => "Gasto"
+coins-type => "Type" => "Tipo"
+coins-unconfirmed => "Unconfirmed:" => "Nao confirmado:"
+coins-unconfirmed-no-colon => "Unconfirmed" => "Nao confirmado"
+coins-value => "Value" => "Valor"
+common-apply => "Apply" => "Aplicar"
+common-cancel => "Cancel" => "Cancelar"
+common-clear => "Clear" => "Limpar"
+common-confirm => "Confirm" => "Confirmar"
+common-copy => "Copy" => "Copiar"
+common-delete => "Delete" => "Excluir"
+common-error => "Error" => "Erro"
+common-generate => "Generate" => "Gerar"
+common-no => "No" => "Nao"
+common-ok => "OK" => "OK"
+common-proceed => "Proceed" => "Prosseguir"
+common-test => "Test" => "Testar"
+common-testing => "Testing..." => "Testando..."
+common-yes => "Yes" => "Sim"
+confirm-send-broadcasting => "Broadcasting..." => "Transmitindo..."
+confirm-send-failed => "Broadcast Failed\n\n%1" => "Falha na transmissao\n\n%1"
+confirm-send-fee => "Fee: %1" => "Taxa: %1"
+confirm-send-success
+=> "Transaction Sent\n\nTxid: %1"
+=> "Transaction Sent\n\nTxid: %1";;
+confirm-send-txid => "Txid: %1" => "Txid: %1"
+confirm-transaction-title => "Confirm Transaction" => "Confirmar transacao"
+create-account-action-create => "Create" => "Criar"
+create-account-backend-info-template
+=> "Network: %1%2\nBlock Height: %3\n\nCapabilities:\n  Tweaks Only: %4\n  Full Basic: %5\n  Full + Dust Filter: %6\n  Cut-Through + Dust Filter: %7"
+=> "Network: %1%2\nBlock Height: %3\n\nCapabilities:\n  Tweaks Only: %4\n  Full Basic: %5\n  Full + Dust Filter: %6\n  Cut-Through + Dust Filter: %7";;
+create-account-blindbit-empty
+=> "BlindBit URL cannot be empty."
+=> "BlindBit URL cannot be empty.";;
+create-account-default-blindbit => "http://localhost:8080" => "http://localhost:8080"
+create-account-electrum => "Electrum:" => "Electrum:"
+create-account-electrum-empty
+=> "Electrum address cannot be empty."
+=> "Electrum address cannot be empty.";;
+create-account-invalid-input => "Invalid Input" => "Entrada invalida"
+create-account-mnemonic => "Mnemonic:" => "Mnemonnico:"
+create-account-name => "Account Name:" => "Nome da conta:"
+create-account-network-mismatch-suffix
+=> " (mismatch: selected %1)"
+=> " (mismatch: selected %1)";;
+create-account-p2p-empty
+=> "P2P node address cannot be empty."
+=> "P2P node address cannot be empty.";;
+create-account-placeholder-blindbit
+=> "http://localhost:8080"
+=> "http://localhost:8080";;
+create-account-placeholder-mnemonic => "Mnemonic phrase" => "Frase mnemonnica"
+create-account-placeholder-name => "Enter account name" => "Digite o nome da conta"
+create-account-placeholder-p2p => "127.0.0.1:18444" => "127.0.0.1:18444"
+create-account-title => "Create Account" => "Criar conta"
+delete-wallet-confirmation
+=> "Are you sure you want to delete wallet '%1'?\nThis action cannot be undone."
+=> "Are you sure you want to delete wallet '%1'?\nThis action cannot be undone.";;
+delete-wallet-title => "Delete Wallet" => "Excluir carteira"
+history-amount => "Amount" => "Valor"
+history-confirmed => "Confirmed:" => "Confirmado:"
+history-direction => "Direction" => "Direcao"
+history-height => "Height" => "Altura"
+history-incoming => "Incoming" => "Entrada"
+history-outgoing => "Outgoing" => "Saida"
+history-txid => "TxID" => "TxID"
+history-unconfirmed => "Unconfirmed:" => "Nao confirmado:"
+history-unconfirmed-no-colon => "Unconfirmed" => "Nao confirmado"
+language-english => "English" => "English"
+language-french => "French" => "Francais"
+language-german => "German" => "Deutsch"
+language-italian => "Italian" => "Italiano"
+language-portuguese => "Portuguese" => "Portugues"
+language-spanish => "Spanish" => "Espanol"
+main-menu-tab => "+" => "+"
+main-window-title
+=> "Silent - Silent Payments Wallet"
+=> "Silent - Silent Payments Wallet";;
+menu-create-wallet => "+ Create New Wallet" => "+ Criar nova carteira"
+menu-delete-wallet-tooltip => "Delete wallet" => "Excluir carteira"
+network-bitcoin => "Bitcoin" => "Bitcoin"
+network-regtest => "Regtest" => "Regtest"
+network-signet => "Signet" => "Signet"
+network-testnet => "Testnet" => "Testnet"
+receive-segwit-address => "Segwit Address:" => "Endereco Segwit:"
+receive-silent-payment-address
+=> "Silent Payment Address:"
+=> "Silent Payment Address:";;
+receive-taproot-address => "Taproot Address:" => "Endereco Taproot:"
+send-action-send => "Send" => "Enviar"
+send-add-output => "+ Add an Output" => "+ Adicionar output"
+send-address-reuse-warning
+=> "Address Reuse Warning"
+=> "Aviso de reutilizacao de endereco";;
+send-amount-to-select => "Amount to select:" => "Valor a selecionar:"
+send-auto-coin-selection => "Auto coin selection" => "Selecao automatica de coins"
+send-fee-absolute-unit => "sats" => "sats"
+send-fee-estimate => "Fee: %1" => "Taxa: %1"
+send-fee-rate-unit => "sats/vb" => "sats/vb"
+send-inputs => "Inputs" => "Inputs"
+send-inputs-already-spent
+=> "Input(s) already spent:\n%1"
+=> "Input(s) already spent:\n%1";;
+send-inputs-selected-many
+=> "Inputs (%1 coins selected)"
+=> "Inputs (%1 coins selected)";;
+send-inputs-selected-one
+=> "Inputs (1 coin selected)"
+=> "Inputs (1 coin selecionado)";;
+send-invalid-transaction-template
+=> "Invalid transaction template."
+=> "Invalid transaction template.";;
+send-max => "MAX" => "MAX"
+send-max-suffix => "(max)" => "(max)"
+send-no-account-loaded => "No account loaded." => "Nenhuma conta carregada."
+send-placeholder-address => "Address" => "Endereco"
+send-placeholder-amount => "0.002 BTC" => "0.002 BTC"
+send-placeholder-label => "Label" => "Rotulo"
+send-prepare-failed => "Prepare Failed" => "Preparacao falhou"
+send-proceed-anyway => "Proceed anyway?" => "Prosseguir assim mesmo?"
+send-recipients => "Recipients" => "Destinatarios"
+send-select-inputs => "Select Inputs" => "Selecionar inputs"
+send-signing-failed => "Signing failed." => "Assinatura falhou."
+send-total-selected => "Total selected:" => "Total selecionado:"
+send-transaction-invalid => "Transaction is not valid" => "A transacao nao e valida"
+send-transaction-state-lost
+=> "Transaction state lost."
+=> "Estado da transacao perdido.";;
+send-validation-error => "Validation Error" => "Erro de validacao"
+settings-backend-info => "Backend Info:" => "Info do backend:"
+settings-blindbit-empty => "BlindBit URL is empty" => "URL BlindBit vazia"
+settings-blindbit-url => "BlindBit URL:" => "URL BlindBit:"
+settings-block-height => "Block Height:" => "Altura do bloco:"
+settings-capabilities => "Capabilities:" => "Capacidades:"
+settings-capabilities-template
+=> "Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: %3\nCut-Through + Dust Filter: %4"
+=> "Tweaks Only: %1\nFull Basic: %2\nFull + Dust Filter: %3\nCut-Through + Dust Filter: %4";;
+settings-connect-blindbit => "Connect Blindbit" => "Conectar Blindbit"
+settings-connect-electrum => "Connect Electrum" => "Conectar Electrum"
+settings-connection-failed => "Connection Failed" => "Falha na conexao"
+settings-disconnect-blindbit => "Disconnect Blindbit" => "Desconectar Blindbit"
+settings-disconnect-electrum => "Disconnect Electrum" => "Desconectar Electrum"
+settings-electrum-empty => "Electrum address is empty" => "Endereco Electrum vazio"
+settings-electrum-server => "Electrum Server:" => "Servidor Electrum:"
+settings-electrum-test-failed => "Electrum Test Failed" => "Teste Electrum falhou"
+settings-failed-start-electrum
+=> "Failed to start electrum"
+=> "Failed to start electrum";;
+settings-failed-start-scanner
+=> "Failed to start scanner"
+=> "Failed to start scanner";;
+settings-language => "Language:" => "Idioma:"
+settings-language-applied => "Language applied." => "Idioma aplicado."
+settings-language-saved-restart
+=> "Language saved. Restart may be required."
+=> "Language saved. Restart may be required.";;
+settings-network => "Network:" => "Rede:"
+settings-network-mismatch => "Network Mismatch" => "Rede incompatível"
+settings-network-mismatch-message
+=> "Backend network is %1 but account network is %2"
+=> "Backend network is %1 but account network is %2";;
+settings-no-account-loaded => "No account loaded" => "Nenhuma conta carregada"
+settings-p2p-empty => "P2P node address is empty" => "Endereco do no P2P vazio"
+settings-p2p-node => "P2P Node:" => "No P2P:"
+settings-p2p-test-failed => "P2P Test Failed" => "Teste P2P falhou"
+settings-placeholder-blindbit
+=> "https://blindbit.example.com"
+=> "https://blindbit.example.com";;
+settings-placeholder-electrum
+=> "host:port (e.g. 127.0.0.1:50001)"
+=> "host:port (e.g. 127.0.0.1:50001)";;
+settings-placeholder-p2p => "127.0.0.1:8333" => "127.0.0.1:8333"
+settings-save => "Save Settings" => "Salvar configuracoes"
+settings-status => "Status:" => "Status:"
+status-connected-blindbit
+=> "Connected to blindbit-oracle at %1"
+=> "Connected to blindbit-oracle at %1";;
+status-connected-electrum
+=> "Connected to electrum at %1"
+=> "Connected to electrum at %1";;
+status-connecting => "Connecting..." => "Conectando..."
+status-disconnected => "Disconnected" => "Desconectado"
+status-disconnecting => "Disconnecting..." => "Desconectando..."
+status-electrum-disconnected => "Electrum disconnected" => "Electrum desconectado"
+status-not-configured => "Not configured" => "Nao configurado"
+status-scanning => "Scanning..." => "Escaneando..."
+status-scanning-progress => "Scanning... %1 / %2" => "Escaneando... %1 / %2"
+status-synced-watching
+=> "Synced at block %1 - Watching..."
+=> "Synced at block %1 - Watching...";;

@@ -1,6 +1,7 @@
 #include "Send.h"
 #include "AccountController.h"
 #include "AppController.h"
+#include "i18n/Tr.h"
 #include "modals/ConfirmSend.h"
 #include "theme/Button.h"
 #include "theme/Checkbox.h"
@@ -87,7 +88,7 @@ auto InputW::widget() -> QWidget * {
 OutputW::OutputW(Send *screen, int id) {
     m_address_input = new Input(InputRole::Mono);
     m_address_input->setWidth(Size::XL);
-    m_address_input->setPlaceholderText("Address");
+    m_address_input->setPlaceholderText(TR("send-placeholder-address"));
 
     m_address_indicator = new Label(LabelRole::Caption);
     m_address_indicator->setFixedWidth(20);
@@ -101,7 +102,7 @@ OutputW::OutputW(Send *screen, int id) {
 
     m_amount_input = new Input(InputRole::Mono);
     m_amount_input->setWidth(Size::S);
-    m_amount_input->setPlaceholderText("0.002 BTC");
+    m_amount_input->setPlaceholderText(TR("send-placeholder-amount"));
 
     m_amount_indicator = new Label(LabelRole::Caption);
     m_amount_indicator->setFixedWidth(20);
@@ -109,12 +110,12 @@ OutputW::OutputW(Send *screen, int id) {
 
     m_label_input = new Input;
     m_label_input->setWidth(Size::XL);
-    m_label_input->setPlaceholderText("Label");
+    m_label_input->setPlaceholderText(TR("send-placeholder-label"));
 
     m_max = new Checkbox;
     QObject::connect(m_max, &Checkbox::toggled, screen, &Send::process, qontrol::UNIQUE);
 
-    m_max_label = new Label("MAX", LabelRole::CheckboxLabel);
+    m_max_label = new Label(TR("send-max"), LabelRole::CheckboxLabel);
 
     // Connect to process() which handles validation updates
     QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::process,
@@ -149,7 +150,7 @@ OutputW::OutputW(Send *screen, int id) {
                      qontrol::UNIQUE);
 
     m_max->setProperty("outputId", id);
-    QObject::connect(m_max, &Checkbox::checkStateChanged, screen, &Send::onOutputMaxToggled,
+    QObject::connect(m_max, &QCheckBox::stateChanged, screen, &Send::onOutputMaxToggled,
                      qontrol::UNIQUE);
 
     m_widget = col;
@@ -173,13 +174,13 @@ void OutputW::enableMax(bool max) {
 void OutputW::setMaxMode(bool max) {
     m_amount_input->setEnabled(!max);
     if (max) {
-        m_amount_input->setText("MAX");
+        m_amount_input->setText(TR("send-max"));
         setValidationIndicator(m_amount_indicator, "", false);
     } else {
-        if (m_amount_input->text() == "MAX") {
+        if (m_amount_input->text() == TR("send-max")) {
             m_amount_input->setText("");
         }
-        m_amount_input->setPlaceholderText("0.002 BTC");
+        m_amount_input->setPlaceholderText(TR("send-placeholder-amount"));
     }
 }
 
@@ -194,13 +195,13 @@ auto OutputW::isMax() -> bool {
 void Send::onFeeToggled() {
     qDebug() << "Send::onFeeToggled()";
     if (m_fee_toggle->isChecked()) {
-        m_fee_label->setText("sats/vb");
+        m_fee_label->setText(TR("send-fee-rate-unit"));
         // sats/vb: 3 decimal places max (milli-sats precision)
         auto *validator = new QDoubleValidator(0.001, 1000000.0, 3, m_fee_value_input);
         validator->setNotation(QDoubleValidator::StandardNotation);
         m_fee_value_input->setValidator(validator);
     } else {
-        m_fee_label->setText("sats");
+        m_fee_label->setText(TR("send-fee-absolute-unit"));
         // sats: integers only
         m_fee_value_input->setValidator(new QIntValidator(1, 100000000, m_fee_value_input));
     }
@@ -223,9 +224,9 @@ void Send::init() {
     m_outputs_column = (new qontrol::Column);
     m_inputs_column = (new qontrol::Column);
 
-    m_add_output_btn = new Button("+ Add an Output");
-    m_send_btn = new Button("Send", ButtonRole::Primary);
-    m_clear_outputs_btn = new Button("Clear");
+    m_add_output_btn = new Button(TR("send-add-output"));
+    m_send_btn = new Button(TR("send-action-send"), ButtonRole::Primary);
+    m_clear_outputs_btn = new Button(TR("common-clear"));
 
     m_fee_estimate_label = new Label();
     m_fee_estimate_label->setVisible(false);
@@ -242,8 +243,8 @@ void Send::init() {
     m_fee_indicator->setFixedWidth(20);
     m_fee_indicator->setAlignment(Qt::AlignCenter);
 
-    m_fee_label = new Label("sats/vb");
-    m_fee_label->setFixedWidth(m_fee_label->fontMetrics().horizontalAdvance("sats/vb") + 5);
+    m_fee_label = new Label(TR("send-fee-rate-unit"));
+    m_fee_label->setFixedWidth(m_fee_label->fontMetrics().horizontalAdvance(TR("send-fee-rate-unit")) + 5);
 
     m_warning_label = new Label();
     m_warning_label->setVisible(false);
@@ -251,7 +252,7 @@ void Send::init() {
     // Calculate label width to align with coin value column
     // checkbox + spacer + type + spacer + outpoint + spacer + label = total label width
     // Inputs total row
-    auto *totalLabel = new Label("Total selected:", LabelRole::InfoLabel);
+    auto *totalLabel = new Label(TR("send-total-selected"), LabelRole::InfoLabel);
     totalLabel->setAlignment(Qt::AlignRight);
     m_inputs_total_input = new Display(DisplayRole::Amount);
     m_inputs_total_input->setWidth(Size::S);
@@ -263,7 +264,7 @@ void Send::init() {
     m_inputs_total_input_row->setVisible(false);
 
     // Inputs minimum row
-    auto *minLabel = new Label("Amount to select:", LabelRole::InfoLabel);
+    auto *minLabel = new Label(TR("send-amount-to-select"), LabelRole::InfoLabel);
     minLabel->setAlignment(Qt::AlignRight);
     m_inputs_min_input = new Display(DisplayRole::Amount);
     m_inputs_min_input->setWidth(Size::S);
@@ -274,12 +275,12 @@ void Send::init() {
                                  ->pushSpacer();
     m_inputs_min_input_row->setVisible(false);
 
-    m_auto_coin_selection = new Checkbox("Auto coin selection");
+    m_auto_coin_selection = new Checkbox(TR("send-auto-coin-selection"));
     m_auto_coin_selection->setChecked(true);
 
-    m_clear_inputs_btn = new Button("Clear");
+    m_clear_inputs_btn = new Button(TR("common-clear"));
 
-    m_inputs_title_label = new Label("Select Inputs", LabelRole::Heading);
+    m_inputs_title_label = new Label(TR("send-select-inputs"), LabelRole::Heading);
     // We avoid the height of the row chnage when "Clear" button show/hidden
     auto minHeight = Theme::get()->buttonPalette().defaultBtn.height + (2 * resolve(Padding::L));
     m_inputs_title_label->setMinimumHeight(minHeight);
@@ -365,7 +366,7 @@ auto Send::outputsView() -> QWidget * {
 
     auto *warningRow = (new qontrol::Row)->push(m_warning_label)->pushSpacer();
 
-    auto *title = new Label("Recipients", LabelRole::Heading);
+    auto *title = new Label(TR("send-recipients"), LabelRole::Heading);
 
     auto *titleRow = (new qontrol::Row)->pushSpacer(resolve(Padding::M))->push(title)->pushSpacer();
 
@@ -434,7 +435,7 @@ auto Send::inputsView() -> QWidget * {
             }
         }
         checkbox->setChecked(isSelected);
-        connect(checkbox, &Checkbox::checkStateChanged, this, &Send::onCoinToggled, qontrol::UNIQUE);
+        connect(checkbox, &QCheckBox::stateChanged, this, &Send::onCoinToggled, qontrol::UNIQUE);
 
         QString typeStr = QString::fromUtf8(coin.account_type.data(), coin.account_type.size());
         auto *typeField = new Display(typeStr);
@@ -758,11 +759,11 @@ void Send::updateInputsTitle() {
     }
 
     if (count == 1) {
-        m_inputs_title_label->setText(QString("Inputs (1 coin selected)"));
+        m_inputs_title_label->setText(TR("send-inputs-selected-one"));
     } else if (count > 1) {
-        m_inputs_title_label->setText(QString("Inputs (%1 coins selected)").arg(count));
+        m_inputs_title_label->setText(TR("send-inputs-selected-many").arg(count));
     } else {
-        m_inputs_title_label->setText("Inputs");
+        m_inputs_title_label->setText(TR("send-inputs"));
     }
 }
 
@@ -912,7 +913,7 @@ void Send::process() {
             m_warning_label->setVisible(false);
 
             // Display estimated fee
-            m_fee_estimate_label->setText(QString("Fee: %1").arg(toBitcoin(simu.fee)));
+            m_fee_estimate_label->setText(TR("send-fee-estimate").arg(toBitcoin(simu.fee)));
             m_fee_estimate_label->setVisible(true);
 
             // Fill in estimated max amount for MAX outputs
@@ -948,14 +949,15 @@ void Send::process() {
         } else {
             setSpendable(false);
             m_fee_estimate_label->setVisible(false);
-            m_warning_label->setText("Transaction is not valid");
+            m_warning_label->setText(TR("send-transaction-invalid"));
             m_warning_label->setVisible(true);
         }
     } else {
         setSpendable(false);
         setBroadcastable(false);
         m_fee_estimate_label->setVisible(false);
-        m_warning_label->setText(simu.error.c_str());
+        auto rawError = QString::fromStdString(std::string(simu.error.c_str()));
+        m_warning_label->setText(mapBackendErrorSummary(rawError));
         m_warning_label->setVisible(true);
     }
 }
@@ -964,13 +966,14 @@ void Send::sendTransaction() {
     qDebug() << "Send::sendTransaction()";
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
-        AppController::execModal(new qontrol::Modal("Error", "Invalid transaction template."));
+        AppController::execModal(
+            new qontrol::Modal(TR("common-error"), TR("send-invalid-transaction-template")));
         return;
     }
 
     auto &account = m_controller->getAccount();
     if (!account.has_value()) {
-        AppController::execModal(new qontrol::Modal("Error", "No account loaded."));
+        AppController::execModal(new qontrol::Modal(TR("common-error"), TR("send-no-account-loaded")));
         return;
     }
 
@@ -978,7 +981,8 @@ void Send::sendTransaction() {
     auto psbt = account.value()->prepare_transaction(txTemp.value());
     if (!psbt->is_ok()) {
         auto error = QString::fromStdString(std::string(psbt->get_psbt_error().c_str()));
-        AppController::execModal(new qontrol::Modal("Prepare Failed", error));
+        auto text = mapBackendErrorSummary(error) + "\n\n" + formatBackendErrorDetails(error);
+        AppController::execModal(new qontrol::Modal(TR("send-prepare-failed"), text));
         return;
     }
 
@@ -1007,12 +1011,14 @@ void Send::onValidationResult(PsbtValidation result) {
     if (!result.is_ok) {
         // Connection/protocol error — warn but don't block
         auto error = QString::fromStdString(std::string(result.error.c_str()));
-        AppController::execModal(new qontrol::Modal("Validation Error", error));
+        auto text = mapBackendErrorSummary(error) + "\n\n" + formatBackendErrorDetails(error);
+        AppController::execModal(new qontrol::Modal(TR("send-validation-error"), text));
         // Fall through to show ConfirmSend anyway
     } else if (result.spent_input_count > 0) {
         // Spent inputs — block the transaction
         auto issues = QString::fromStdString(std::string(result.issues.c_str()));
-        AppController::execModal(new qontrol::Modal("Error", "Input(s) already spent:\n" + issues));
+        AppController::execModal(
+            new qontrol::Modal(TR("common-error"), TR("send-inputs-already-spent").arg(issues)));
         m_psbt_result = std::nullopt;
         m_tx_template = std::nullopt;
         return;
@@ -1020,11 +1026,11 @@ void Send::onValidationResult(PsbtValidation result) {
         // Address reuse — warn and ask user via accept/reject modal
         auto issues = QString::fromStdString(std::string(result.issues.c_str()));
         auto *modal = new qontrol::Modal();
-        modal->setWindowTitle("Address Reuse Warning");
-        auto *label = new Label(issues + "\n\nProceed anyway?");
+        modal->setWindowTitle(TR("send-address-reuse-warning"));
+        auto *label = new Label(issues + "\n\n" + TR("send-proceed-anyway"));
         label->setWordWrap(true);
-        auto *proceedBtn = new Button("Proceed");
-        auto *cancelBtn = new Button("Cancel");
+        auto *proceedBtn = new Button(TR("common-proceed"));
+        auto *cancelBtn = new Button(TR("common-cancel"));
         connect(proceedBtn, &QPushButton::clicked, modal, &QDialog::accept);
         connect(cancelBtn, &QPushButton::clicked, modal, &QDialog::reject);
         auto *btnRow = (new qontrol::Row)
@@ -1058,7 +1064,7 @@ void Send::onValidationResult(PsbtValidation result) {
     for (auto *out : m_outputs) {
         QString addr = out->address();
         if (out->isMax()) {
-            recipients.append(addr + "  (max)");
+            recipients.append(addr + "  " + TR("send-max-suffix"));
         } else {
             auto amount = out->amount();
             if (amount.has_value()) {
@@ -1089,7 +1095,7 @@ void Send::onSendConfirmed() {
     auto &account = m_controller->getAccount();
     if (!account.has_value() || !m_psbt_result.has_value()) {
         if (m_confirm_modal != nullptr) {
-            m_confirm_modal->setResult(false, "Transaction state lost.");
+            m_confirm_modal->setResult(false, TR("send-transaction-state-lost"));
         }
         return;
     }
@@ -1112,7 +1118,8 @@ void Send::onSignResult(TxResult result) {
         auto error = QString::fromStdString(std::string(result.error.c_str()));
         m_tx_template = std::nullopt;
         if (m_confirm_modal != nullptr) {
-            m_confirm_modal->setResult(false, "Signing Failed: " + error);
+            m_confirm_modal->setResult(
+                false, TR("send-signing-failed") + "\n\n" + formatBackendErrorDetails(error));
         }
         return;
     }

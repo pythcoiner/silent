@@ -61,8 +61,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Build Linux
-        run: nix build .#linux
+      - name: Build Linux (trace i18n ids)
+        run: nix build .#linux-trace 2>&1 | tee build-i18n.log
+      - name: Generate English TS for checker
+        run: python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
+      - name: Check i18n pragma log
+        run: python3 scripts/i18n/check_pragma_log.py --log build-i18n.log --en-ts "$RUNNER_TEMP/i18n/silent_en.ts"
       - name: Build Windows
         run: nix build .#windows
       - name: Build macOS ARM

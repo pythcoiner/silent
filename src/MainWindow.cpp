@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "AccountWidget.h"
 #include "AppController.h"
+#include "i18n/Tr.h"
 #include "screens/MenuTab.h"
 #include <algorithm>
 #include <common.h>
@@ -10,9 +11,9 @@
 #include <qwidget.h>
 
 MainWindow::MainWindow(QWidget *parent) : Window(parent) {
-    setWindowTitle("Silent - Silent Payments Wallet");
     resize(1024, 768);
     initWindow();
+    retranslateUi();
 }
 
 auto MainWindow::initWindow() -> void {
@@ -92,8 +93,20 @@ auto MainWindow::updateTabs() -> void {
     }
 
     // Menu tab has no close button
-    int menuIndex = m_tab->addTab(m_menu_tab, "+");
+    int menuIndex = m_tab->addTab(m_menu_tab, TR("main-menu-tab"));
     m_tab->tabBar()->setTabButton(menuIndex, QTabBar::RightSide, nullptr);
+}
+
+auto MainWindow::changeEvent(QEvent *event) -> void {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+        updateTabs();
+    }
+    Window::changeEvent(event);
+}
+
+auto MainWindow::retranslateUi() -> void {
+    setWindowTitle(TR("main-window-title"));
 }
 
 auto MainWindow::closeEvent(QCloseEvent *event) -> void {
