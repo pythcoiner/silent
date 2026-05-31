@@ -92,6 +92,7 @@ jobs:
         run: python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
 
   test:
+    needs: [lint-rust, lint-cpp, lint-i18n]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
