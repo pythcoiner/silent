@@ -8,21 +8,60 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  LINT_BASE_COMMIT: 68e75c4
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libudev-dev
-      - name: rustfmt
-        run: cargo fmt --manifest-path silent/Cargo.toml -- --check
-      - name: clippy
-        run: cargo clippy --manifest-path silent/Cargo.toml -- -D warnings
+          fetch-depth: 0
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Lint Rust diff (each commit)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              nix develop -c scripts/lint/rust_lint_commits.sh "$LINT_BASE_COMMIT...${{ github.sha }}"
+            else
+              nix develop -c scripts/lint/rust_lint_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
+            fi
+          else
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              nix develop -c scripts/lint/rust_lint_commits.sh "$LINT_BASE_COMMIT...${{ github.sha }}"
+            else
+              nix develop -c scripts/lint/rust_lint_commits.sh "${{ github.event.before }}...${{ github.sha }}"
+            fi
+          fi
+      - name: Prepare C++ lint database
+        run: |
+          if [ ! -f lib/include/silent.h ]; then
+            nix develop -c bash build.sh
+          fi
+          nix develop -c cmake -B build .
+      - name: Lint C++ diff (each commit)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              nix develop -c scripts/lint/clang_tidy_diff_commits.sh "$LINT_BASE_COMMIT...${{ github.sha }}"
+            else
+              nix develop -c scripts/lint/clang_tidy_diff_commits.sh "origin/${{ github.base_ref }}...${{ github.sha }}"
+            fi
+          else
+            if git merge-base --is-ancestor "$LINT_BASE_COMMIT" "${{ github.sha }}"; then
+              nix develop -c scripts/lint/clang_tidy_diff_commits.sh "$LINT_BASE_COMMIT...${{ github.sha }}"
+            else
+              nix develop -c scripts/lint/clang_tidy_diff_commits.sh "${{ github.event.before }}...${{ github.sha }}"
+            fi
+          fi
+      - name: Check locale catalogs are synced from English
+        run: nix develop -c python3 scripts/i18n/sync_lang.py --lang-dir i18n --check
+      - name: Validate .lang catalogs can generate TS
+        run: |
+          nix develop -c python3 scripts/i18n/generate_ts.py --out-dir "$RUNNER_TEMP/i18n"
 
   test:
     needs: lint

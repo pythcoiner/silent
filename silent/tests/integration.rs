@@ -685,7 +685,8 @@ fn test_send_to_sp_segwit_taproot() {
 /// and "Witness program hash mismatch" rejection on broadcast.
 #[test]
 fn test_mixed_input_signing() {
-    let mnemonic = "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
+    let mnemonic =
+        "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
 
     let (bbd, mut bitcoind_node, electrum_url) = setup_blindbitd_with_electrum();
     let url = bbd.url();
@@ -753,7 +754,11 @@ fn test_mixed_input_signing() {
     );
 
     let psbt = account.prepare_transaction(tx_template);
-    assert!(psbt.is_ok(), "Prepare should succeed: {}", psbt.get_psbt_error());
+    assert!(
+        psbt.is_ok(),
+        "Prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
     let signed = account.sign_transaction(&psbt);
     assert!(signed.is_ok, "Sign should succeed: {}", signed.error);
@@ -841,7 +846,11 @@ fn test_mixed_input_signing() {
     let tx2: bitcoin::Transaction =
         bitcoin::consensus::encode::deserialize_hex(&signed2.value).expect("valid tx hex");
 
-    eprintln!("Mixed-input tx: {} inputs, {} outputs", tx2.input.len(), tx2.output.len());
+    eprintln!(
+        "Mixed-input tx: {} inputs, {} outputs",
+        tx2.input.len(),
+        tx2.output.len()
+    );
     for (i, input) in tx2.input.iter().enumerate() {
         eprintln!(
             "  Input [{i}] {} witness_items={}",
@@ -875,7 +884,8 @@ fn test_mixed_input_signing() {
 /// needed for the SP output when sub-account (non-SP) inputs are involved.
 #[test]
 fn test_max_send_to_sp_with_mixed_inputs() {
-    let mnemonic = "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
+    let mnemonic =
+        "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
 
     let (bbd, mut bitcoind_node, electrum_url) = setup_blindbitd_with_electrum();
     let url = bbd.url();
@@ -942,7 +952,11 @@ fn test_max_send_to_sp_with_mixed_inputs() {
     );
 
     let psbt = account.prepare_transaction(tx_template);
-    assert!(psbt.is_ok(), "Prepare should succeed: {}", psbt.get_psbt_error());
+    assert!(
+        psbt.is_ok(),
+        "Prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
     let signed = account.sign_transaction(&psbt);
     assert!(signed.is_ok, "Sign should succeed: {}", signed.error);
@@ -1048,7 +1062,10 @@ fn test_max_send_to_sp_with_mixed_inputs() {
     let unspent_after: Vec<_> = coins_after.iter().filter(|c| !c.spent).collect();
     eprintln!("Coins after mixed-input SP send:");
     for coin in &unspent_after {
-        eprintln!("  {} value={} spent={}", coin.outpoint, coin.value, coin.spent);
+        eprintln!(
+            "  {} value={} spent={}",
+            coin.outpoint, coin.value, coin.spent
+        );
     }
     assert!(
         !unspent_after.is_empty(),
@@ -1066,7 +1083,8 @@ fn test_max_send_to_sp_with_mixed_inputs() {
 /// SP, Segwit, and Taproot.
 #[test]
 fn test_payment_history_outgoing_all_types() {
-    let mnemonic = "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
+    let mnemonic =
+        "vehicle priority voice index lunch exact whale decrease doctor column enter lobster";
 
     let (bbd, mut bitcoind_node, electrum_url) = setup_blindbitd_with_electrum();
     let url = bbd.url();
@@ -1104,9 +1122,15 @@ fn test_payment_history_outgoing_all_types() {
     let history = account.payment_history();
     eprintln!("Payment history after funding:");
     for tx in &history {
-        eprintln!("  txid={} dir={} amount={} height={}", tx.txid, tx.direction, tx.amount, tx.height);
+        eprintln!(
+            "  txid={} dir={} amount={} height={}",
+            tx.txid, tx.direction, tx.amount, tx.height
+        );
     }
-    let incoming_count = history.iter().filter(|tx| tx.direction == "incoming").count();
+    let incoming_count = history
+        .iter()
+        .filter(|tx| tx.direction == "incoming")
+        .count();
     assert!(
         incoming_count >= 1,
         "Should have at least 1 incoming payment after funding, got {incoming_count}"
@@ -1146,10 +1170,18 @@ fn test_payment_history_outgoing_all_types() {
     );
 
     let psbt = account.prepare_transaction(tx_template);
-    assert!(psbt.is_ok(), "SP spend prepare should succeed: {}", psbt.get_psbt_error());
+    assert!(
+        psbt.is_ok(),
+        "SP spend prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
     let signed = account.sign_transaction(&psbt);
-    assert!(signed.is_ok, "SP spend sign should succeed: {}", signed.error);
+    assert!(
+        signed.is_ok,
+        "SP spend sign should succeed: {}",
+        signed.error
+    );
 
     let tx: bitcoin::Transaction =
         bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
@@ -1194,9 +1226,15 @@ fn test_payment_history_outgoing_all_types() {
     let history = account.payment_history();
     eprintln!("Payment history after SP spend:");
     for tx in &history {
-        eprintln!("  txid={} dir={} amount={} height={}", tx.txid, tx.direction, tx.amount, tx.height);
+        eprintln!(
+            "  txid={} dir={} amount={} height={}",
+            tx.txid, tx.direction, tx.amount, tx.height
+        );
     }
-    let outgoing_after_sp = history.iter().filter(|tx| tx.direction == "outgoing").count();
+    let outgoing_after_sp = history
+        .iter()
+        .filter(|tx| tx.direction == "outgoing")
+        .count();
     eprintln!("Outgoing count after SP spend: {outgoing_after_sp}");
 
     // Step 3: Spend segwit coin
@@ -1205,7 +1243,10 @@ fn test_payment_history_outgoing_all_types() {
         .find(|c| c.account_type == "Segwit" && !c.spent)
         .expect("Should have a Segwit coin");
     let segwit_outpoint = segwit_coin.outpoint.clone();
-    eprintln!("Spending Segwit coin: {} value={}", segwit_outpoint, segwit_coin.value);
+    eprintln!(
+        "Spending Segwit coin: {} value={}",
+        segwit_outpoint, segwit_coin.value
+    );
 
     let dest_addr = account.new_segwit_addr();
     let tx_template_segwit = TransactionTemplate {
@@ -1221,13 +1262,25 @@ fn test_payment_history_outgoing_all_types() {
     };
 
     let sim = account.simulate_transaction(tx_template_segwit.clone());
-    assert!(sim.is_valid, "Segwit spend simulation should succeed: {}", sim.error);
+    assert!(
+        sim.is_valid,
+        "Segwit spend simulation should succeed: {}",
+        sim.error
+    );
 
     let psbt = account.prepare_transaction(tx_template_segwit);
-    assert!(psbt.is_ok(), "Segwit spend prepare should succeed: {}", psbt.get_psbt_error());
+    assert!(
+        psbt.is_ok(),
+        "Segwit spend prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
     let signed = account.sign_transaction(&psbt);
-    assert!(signed.is_ok, "Segwit spend sign should succeed: {}", signed.error);
+    assert!(
+        signed.is_ok,
+        "Segwit spend sign should succeed: {}",
+        signed.error
+    );
 
     let tx: bitcoin::Transaction =
         bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
@@ -1247,9 +1300,15 @@ fn test_payment_history_outgoing_all_types() {
     let history = account.payment_history();
     eprintln!("Payment history after Segwit spend:");
     for tx in &history {
-        eprintln!("  txid={} dir={} amount={} height={}", tx.txid, tx.direction, tx.amount, tx.height);
+        eprintln!(
+            "  txid={} dir={} amount={} height={}",
+            tx.txid, tx.direction, tx.amount, tx.height
+        );
     }
-    let outgoing_after_segwit = history.iter().filter(|tx| tx.direction == "outgoing").count();
+    let outgoing_after_segwit = history
+        .iter()
+        .filter(|tx| tx.direction == "outgoing")
+        .count();
     eprintln!("Outgoing count after Segwit spend: {outgoing_after_segwit}");
 
     // Step 4: Spend taproot coin
@@ -1259,7 +1318,10 @@ fn test_payment_history_outgoing_all_types() {
         .find(|c| c.account_type == "Taproot" && !c.spent)
         .expect("Should have a Taproot coin");
     let taproot_outpoint = taproot_coin.outpoint.clone();
-    eprintln!("Spending Taproot coin: {} value={}", taproot_outpoint, taproot_coin.value);
+    eprintln!(
+        "Spending Taproot coin: {} value={}",
+        taproot_outpoint, taproot_coin.value
+    );
 
     let dest_addr = account.new_segwit_addr();
     let tx_template_taproot = TransactionTemplate {
@@ -1275,13 +1337,25 @@ fn test_payment_history_outgoing_all_types() {
     };
 
     let sim = account.simulate_transaction(tx_template_taproot.clone());
-    assert!(sim.is_valid, "Taproot spend simulation should succeed: {}", sim.error);
+    assert!(
+        sim.is_valid,
+        "Taproot spend simulation should succeed: {}",
+        sim.error
+    );
 
     let psbt = account.prepare_transaction(tx_template_taproot);
-    assert!(psbt.is_ok(), "Taproot spend prepare should succeed: {}", psbt.get_psbt_error());
+    assert!(
+        psbt.is_ok(),
+        "Taproot spend prepare should succeed: {}",
+        psbt.get_psbt_error()
+    );
 
     let signed = account.sign_transaction(&psbt);
-    assert!(signed.is_ok, "Taproot spend sign should succeed: {}", signed.error);
+    assert!(
+        signed.is_ok,
+        "Taproot spend sign should succeed: {}",
+        signed.error
+    );
 
     let tx: bitcoin::Transaction =
         bitcoin::consensus::encode::deserialize_hex(&signed.value).expect("valid tx hex");
@@ -1301,10 +1375,19 @@ fn test_payment_history_outgoing_all_types() {
     let history = account.payment_history();
     eprintln!("=== Final payment history ===");
     for tx in &history {
-        eprintln!("  txid={} dir={} amount={} height={}", tx.txid, tx.direction, tx.amount, tx.height);
+        eprintln!(
+            "  txid={} dir={} amount={} height={}",
+            tx.txid, tx.direction, tx.amount, tx.height
+        );
     }
-    let total_outgoing = history.iter().filter(|tx| tx.direction == "outgoing").count();
-    let total_incoming = history.iter().filter(|tx| tx.direction == "incoming").count();
+    let total_outgoing = history
+        .iter()
+        .filter(|tx| tx.direction == "outgoing")
+        .count();
+    let total_incoming = history
+        .iter()
+        .filter(|tx| tx.direction == "incoming")
+        .count();
     eprintln!("Total incoming: {total_incoming}, Total outgoing: {total_outgoing}");
 
     assert!(

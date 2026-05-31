@@ -435,10 +435,7 @@ mod ffi {
         /// Validate a prepared transaction via Electrum before signing.
         /// Checks for output address reuse and already-spent inputs.
         /// Blocking call - must be called from a background thread.
-        fn validate_before_sign(
-            self: &Account,
-            psbt_result: &PsbtResult,
-        ) -> PsbtValidation;
+        fn validate_before_sign(self: &Account, psbt_result: &PsbtResult) -> PsbtValidation;
     }
 
     // ===== Poll Methods =====
@@ -739,8 +736,8 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
 // Re-export main types
 pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
-pub use sync_estimator::{new_sync_estimator, SyncEstimator};
 pub use ffi::{
     BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, PsbtValidation,
     RegtestDefaults, TransactionSimulation, TransactionTemplate,
 };
+pub use sync_estimator::{new_sync_estimator, SyncEstimator};

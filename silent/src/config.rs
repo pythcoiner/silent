@@ -8,8 +8,8 @@ use std::sync::OnceLock;
 
 use bitcoin::Network as BtcNetwork;
 use bwk_sp::bwk_sign::hot_signer::HotSigner;
-use bwk_sp::SubAccountConfig;
 use bwk_sp::Config as SpConfig;
+use bwk_sp::SubAccountConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::ffi::Network;
@@ -185,8 +185,7 @@ impl Config {
             let (electrum_host, electrum_port) = parse_electrum_url(&self.electrum_url);
 
             // wpkh (BIP84 segwit) sub-account — index 0
-            if let Ok(wpkh_signer) =
-                HotSigner::new_wpkh_from_mnemonics(btc_network, &self.mnemonic)
+            if let Ok(wpkh_signer) = HotSigner::new_wpkh_from_mnemonics(btc_network, &self.mnemonic)
             {
                 if let Some(descriptor) = wpkh_signer.descriptors().into_iter().next() {
                     config.descriptors.push(SubAccountConfig {
