@@ -7,7 +7,15 @@
       "number": "1",
       "name": "SDK: neutral types + CMake scaffold",
       "items": [
-        { "id": "phase-1-item-1", "name": "SDK neutral types, smoke-test target, root CMake wiring", "completed": false, "linked_task_ids": ["phase-1.task-1"] }
+        {
+          "id": "phase-1-item-1",
+          "name": "SDK neutral types, smoke-test target, root CMake wiring",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-1.task-1"
+          ]
+        }
       ]
     },
     {
@@ -15,7 +23,15 @@
       "number": "2",
       "name": "SDK: IPlugin + IModule",
       "items": [
-        { "id": "phase-2-item-1", "name": "IPlugin + IModule interfaces", "completed": false, "linked_task_ids": ["phase-2.task-1"] }
+        {
+          "id": "phase-2-item-1",
+          "name": "IPlugin + IModule interfaces",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-2.task-1"
+          ]
+        }
       ]
     },
     {
@@ -23,7 +39,15 @@
       "number": "3",
       "name": "SDK: IAccount + IFeed",
       "items": [
-        { "id": "phase-3-item-1", "name": "IAccount + IFeed capability interfaces", "completed": false, "linked_task_ids": ["phase-3.task-1"] }
+        {
+          "id": "phase-3-item-1",
+          "name": "IAccount + IFeed capability interfaces",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-3.task-1"
+          ]
+        }
       ]
     },
     {
@@ -31,7 +55,15 @@
       "number": "4",
       "name": "SDK: ISigner + IThemeProvider",
       "items": [
-        { "id": "phase-4-item-1", "name": "ISigner (bwk Signer projection) + IThemeProvider", "completed": false, "linked_task_ids": ["phase-4.task-1"] }
+        {
+          "id": "phase-4-item-1",
+          "name": "ISigner (bwk Signer projection) + IThemeProvider",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-4.task-1"
+          ]
+        }
       ]
     },
     {
@@ -39,7 +71,15 @@
       "number": "5",
       "name": "SDK: IInstance + mock smoke test",
       "items": [
-        { "id": "phase-5-item-1", "name": "IInstance composition + mock-instance smoke test", "completed": false, "linked_task_ids": ["phase-5.task-1"] }
+        {
+          "id": "phase-5-item-1",
+          "name": "IInstance composition + mock-instance smoke test",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-5.task-1"
+          ]
+        }
       ]
     },
     {
@@ -47,7 +87,15 @@
       "number": "6",
       "name": "SDK: Host + HostEvents interface",
       "items": [
-        { "id": "phase-6-item-1", "name": "Host singleton interface + HostEvents", "completed": false, "linked_task_ids": ["phase-6.task-1"] }
+        {
+          "id": "phase-6-item-1",
+          "name": "Host singleton interface + HostEvents",
+          "completed": true,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-6.task-1"
+          ]
+        }
       ]
     },
     {
@@ -55,7 +103,15 @@
       "number": "7",
       "name": "SDK: plugin-side TR macro",
       "items": [
-        { "id": "phase-7-item-1", "name": "Plugin-side id-prefixing TR macro", "completed": false, "linked_task_ids": ["phase-7.task-1"] }
+        {
+          "id": "phase-7-item-1",
+          "name": "Plugin-side id-prefixing TR macro",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-7.task-1"
+          ]
+        }
       ]
     },
     {
@@ -63,7 +119,15 @@
       "number": "8",
       "name": "Rust: plugin_id on Config",
       "items": [
-        { "id": "phase-8-item-1", "name": "Add plugin_id to Config and thread through FFI", "completed": false, "linked_task_ids": ["phase-8.task-1"] }
+        {
+          "id": "phase-8-item-1",
+          "name": "Add plugin_id to Config and thread through FFI",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-8.task-1"
+          ]
+        }
       ]
     },
     {
@@ -71,7 +135,15 @@
       "number": "9",
       "name": "Rust: app-state persistence",
       "items": [
-        { "id": "phase-9-item-1", "name": "app.json: enabled-plugin set + active theme", "completed": false, "linked_task_ids": ["phase-9.task-1"] }
+        {
+          "id": "phase-9-item-1",
+          "name": "app.json: enabled-plugin set + active theme",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-9.task-1"
+          ]
+        }
       ]
     },
     {
@@ -79,7 +151,15 @@
       "number": "10",
       "name": "Host: singleton + instance registry",
       "items": [
-        { "id": "phase-10-item-1", "name": "Host singleton + registerInstance/instances()", "completed": false, "linked_task_ids": ["phase-10.task-1"] }
+        {
+          "id": "phase-10-item-1",
+          "name": "Host singleton + registerInstance/instances()",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-10.task-1"
+          ]
+        }
       ]
     },
     {
@@ -87,7 +167,15 @@
       "number": "11",
       "name": "Host: push-UI id maps",
       "items": [
-        { "id": "phase-11-item-1", "name": "Push-UI tab/section/wizard id->widget maps", "completed": false, "linked_task_ids": ["phase-11.task-1"] }
+        {
+          "id": "phase-11-item-1",
+          "name": "Push-UI tab/section/wizard id->widget maps",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-11.task-1"
+          ]
+        }
       ]
     },
     {
@@ -95,7 +183,15 @@
       "number": "12",
       "name": "Host: PluginRegistry (compiled-in)",
       "items": [
-        { "id": "phase-12-item-1", "name": "PluginRegistry compiled-in path (Q_IMPORT_PLUGIN)", "completed": false, "linked_task_ids": ["phase-12.task-1"] }
+        {
+          "id": "phase-12-item-1",
+          "name": "PluginRegistry compiled-in path (Q_IMPORT_PLUGIN)",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-12.task-1"
+          ]
+        }
       ]
     },
     {
@@ -103,7 +199,15 @@
       "number": "13",
       "name": "SP: relocate into src/module/sp/",
       "items": [
-        { "id": "phase-13-item-1", "name": "Move SP code to src/module/sp/ (behavior unchanged)", "completed": false, "linked_task_ids": ["phase-13.task-1"] }
+        {
+          "id": "phase-13-item-1",
+          "name": "Move SP code to src/module/sp/ (behavior unchanged)",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-13.task-1"
+          ]
+        }
       ]
     },
     {
@@ -111,7 +215,15 @@
       "number": "14",
       "name": "SP: SpPlugin + SpModule",
       "items": [
-        { "id": "phase-14-item-1", "name": "SpPlugin + SpModule (list/startInstance)", "completed": false, "linked_task_ids": ["phase-14.task-1"] }
+        {
+          "id": "phase-14-item-1",
+          "name": "SpPlugin + SpModule (list/startInstance)",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-14.task-1"
+          ]
+        }
       ]
     },
     {
@@ -119,7 +231,15 @@
       "number": "15",
       "name": "SP: SpInstance + tab push",
       "items": [
-        { "id": "phase-15-item-1", "name": "SpInstance composition + tab push", "completed": false, "linked_task_ids": ["phase-15.task-1"] }
+        {
+          "id": "phase-15-item-1",
+          "name": "SpInstance composition + tab push",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-15.task-1"
+          ]
+        }
       ]
     },
     {
@@ -127,7 +247,15 @@
       "number": "16",
       "name": "SP: SpAccount IAccount adapter",
       "items": [
-        { "id": "phase-16-item-1", "name": "SpAccount IAccount adapter over FFI", "completed": false, "linked_task_ids": ["phase-16.task-1"] }
+        {
+          "id": "phase-16-item-1",
+          "name": "SpAccount IAccount adapter over FFI",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-16.task-1"
+          ]
+        }
       ]
     },
     {
@@ -135,7 +263,15 @@
       "number": "17",
       "name": "Host UI: generic MainWindow tabs",
       "items": [
-        { "id": "phase-17-item-1", "name": "MainWindow generic host-driven tabs", "completed": false, "linked_task_ids": ["phase-17.task-1"] }
+        {
+          "id": "phase-17-item-1",
+          "name": "MainWindow generic host-driven tabs",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-17.task-1"
+          ]
+        }
       ]
     },
     {
@@ -143,7 +279,15 @@
       "number": "18",
       "name": "Host UI: registry-driven AppController",
       "items": [
-        { "id": "phase-18-item-1", "name": "AppController registry-driven + main.cpp bootstrap", "completed": false, "linked_task_ids": ["phase-18.task-1"] }
+        {
+          "id": "phase-18-item-1",
+          "name": "AppController registry-driven + main.cpp bootstrap",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-18.task-1"
+          ]
+        }
       ]
     },
     {
@@ -151,7 +295,15 @@
       "number": "19",
       "name": "Host UI: generic MenuTab launcher",
       "items": [
-        { "id": "phase-19-item-1", "name": "MenuTab launcher from each module's list()", "completed": false, "linked_task_ids": ["phase-19.task-1"] }
+        {
+          "id": "phase-19-item-1",
+          "name": "MenuTab launcher from each module's list()",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-19.task-1"
+          ]
+        }
       ]
     },
     {
@@ -159,7 +311,15 @@
       "number": "20",
       "name": "Settings: plugin manager",
       "items": [
-        { "id": "phase-20-item-1", "name": "Global Settings screen + enable/disable toggles", "completed": false, "linked_task_ids": ["phase-20.task-1"] }
+        {
+          "id": "phase-20-item-1",
+          "name": "Global Settings screen + enable/disable toggles",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-20.task-1"
+          ]
+        }
       ]
     },
     {
@@ -167,7 +327,15 @@
       "number": "21",
       "name": "Settings: sections + theme picker",
       "items": [
-        { "id": "phase-21-item-1", "name": "Aggregated setting sections + active-theme picker", "completed": false, "linked_task_ids": ["phase-21.task-1"] }
+        {
+          "id": "phase-21-item-1",
+          "name": "Aggregated setting sections + active-theme picker",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-21.task-1"
+          ]
+        }
       ]
     },
     {
@@ -175,7 +343,15 @@
       "number": "22",
       "name": "i18n: plugin translations",
       "items": [
-        { "id": "phase-22-item-1", "name": "Per-plugin CatalogTranslator with id-prefix + reload", "completed": false, "linked_task_ids": ["phase-22.task-1"] }
+        {
+          "id": "phase-22-item-1",
+          "name": "Per-plugin CatalogTranslator with id-prefix + reload",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-22.task-1"
+          ]
+        }
       ]
     },
     {
@@ -183,7 +359,15 @@
       "number": "23",
       "name": "Runtime: QPluginLoader discovery",
       "items": [
-        { "id": "phase-23-item-1", "name": "PluginRegistry QPluginLoader scan + enable/disable/unload", "completed": false, "linked_task_ids": ["phase-23.task-1"] }
+        {
+          "id": "phase-23-item-1",
+          "name": "PluginRegistry QPluginLoader scan + enable/disable/unload",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-23.task-1"
+          ]
+        }
       ]
     },
     {
@@ -191,7 +375,15 @@
       "number": "24",
       "name": "Build: link config + ABI surface",
       "items": [
-        { "id": "phase-24-item-1", "name": "CMake whole-archive Qt + export-dynamic + QtAbiSurface.cpp", "completed": false, "linked_task_ids": ["phase-24.task-1"] }
+        {
+          "id": "phase-24-item-1",
+          "name": "CMake whole-archive Qt + export-dynamic + QtAbiSurface.cpp",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-24.task-1"
+          ]
+        }
       ]
     },
     {
@@ -199,7 +391,15 @@
       "number": "25",
       "name": "Build: Nix link flags",
       "items": [
-        { "id": "phase-25-item-1", "name": "flake.nix per-platform link flags", "completed": false, "linked_task_ids": ["phase-25.task-1"] }
+        {
+          "id": "phase-25-item-1",
+          "name": "flake.nix per-platform link flags",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-25.task-1"
+          ]
+        }
       ]
     },
     {
@@ -207,7 +407,15 @@
       "number": "26",
       "name": "Example plugin: skeleton",
       "items": [
-        { "id": "phase-26-item-1", "name": "Example plugin skeleton + metadata + CMake", "completed": false, "linked_task_ids": ["phase-26.task-1"] }
+        {
+          "id": "phase-26-item-1",
+          "name": "Example plugin skeleton + metadata + CMake",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-26.task-1"
+          ]
+        }
       ]
     },
     {
@@ -215,7 +423,15 @@
       "number": "27",
       "name": "Example plugin: capability + i18n",
       "items": [
-        { "id": "phase-27-item-1", "name": "Example plugin capability impl + .lang (end-to-end validation)", "completed": false, "linked_task_ids": ["phase-27.task-1"] }
+        {
+          "id": "phase-27-item-1",
+          "name": "Example plugin capability impl + .lang (end-to-end validation)",
+          "completed": false,
+          "sub_items": [],
+          "linked_task_ids": [
+            "phase-27.task-1"
+          ]
+        }
       ]
     }
   ]

@@ -3,18 +3,18 @@ add_library(silent_plugin_sdk INTERFACE)
 target_include_directories(silent_plugin_sdk
     INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
-)
-
-target_link_libraries(silent_plugin_sdk
-    INTERFACE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
-    qontrol
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
 )
 
 add_executable(silent_plugin_sdk_smoke
-    smoke/main.cpp
+    interfaces/module.h
+    interfaces/account.h
+    interfaces/feed.h
+    interfaces/signer.h
+    interfaces/theme.h
+    interfaces/instance.h
+    host.h
+    smoke/mock.cpp
 )
 
 set_target_properties(silent_plugin_sdk_smoke PROPERTIES

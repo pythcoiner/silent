@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "i18n/I18nManager.h"
 #include "metatypes.h"
+#include "plugin/sdk/types.h"
 #include "resources/font/noto_sans.h"
 #include "theme/Theme.h"
 #include <QApplication>
@@ -23,6 +24,7 @@ auto main(int argc, char *argv[]) -> int {
     qRegisterMetaType<ConnectionResult>();
     qRegisterMetaType<TxResult>();
     qRegisterMetaType<Notification>();
+    qRegisterMetaType<std::optional<ReqId>>();
 
     // Initialize Rust logging (Debug level for verbose output)
     init_logging(LogLevel::Error);

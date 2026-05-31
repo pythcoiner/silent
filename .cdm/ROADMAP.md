@@ -4,49 +4,49 @@ This document tracks implementation progress. Check off items as they are comple
 
 ## Phase 1: SDK: neutral types + CMake scaffold
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] SDK neutral types, smoke-test target, root CMake wiring
+- [x] SDK neutral types, smoke-test target, root CMake wiring
 
 ---
 
 ## Phase 2: SDK: IPlugin + IModule
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] IPlugin + IModule interfaces
+- [x] IPlugin + IModule interfaces
 
 ---
 
 ## Phase 3: SDK: IAccount + IFeed
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] IAccount + IFeed capability interfaces
+- [x] IAccount + IFeed capability interfaces
 
 ---
 
 ## Phase 4: SDK: ISigner + IThemeProvider
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] ISigner (bwk Signer projection) + IThemeProvider
+- [x] ISigner (bwk Signer projection) + IThemeProvider
 
 ---
 
 ## Phase 5: SDK: IInstance + mock smoke test
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] IInstance composition + mock-instance smoke test
+- [x] IInstance composition + mock-instance smoke test
 
 ---
 
 ## Phase 6: SDK: Host + HostEvents interface
 
-Status: **Not Started** (0/1)
+Status: **Complete** (1/1)
 
-- [ ] Host singleton interface + HostEvents
+- [x] Host singleton interface + HostEvents
 
 ---
 
@@ -222,12 +222,12 @@ Status: **Not Started** (0/1)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: SDK: neutral types + CMake scaffold | Not Started | 0/1 |
-| Phase 2: SDK: IPlugin + IModule | Not Started | 0/1 |
-| Phase 3: SDK: IAccount + IFeed | Not Started | 0/1 |
-| Phase 4: SDK: ISigner + IThemeProvider | Not Started | 0/1 |
-| Phase 5: SDK: IInstance + mock smoke test | Not Started | 0/1 |
-| Phase 6: SDK: Host + HostEvents interface | Not Started | 0/1 |
+| Phase 1: SDK: neutral types + CMake scaffold | Complete | 1/1 |
+| Phase 2: SDK: IPlugin + IModule | Complete | 1/1 |
+| Phase 3: SDK: IAccount + IFeed | Complete | 1/1 |
+| Phase 4: SDK: ISigner + IThemeProvider | Complete | 1/1 |
+| Phase 5: SDK: IInstance + mock smoke test | Complete | 1/1 |
+| Phase 6: SDK: Host + HostEvents interface | Complete | 1/1 |
 | Phase 7: SDK: plugin-side TR macro | Not Started | 0/1 |
 | Phase 8: Rust: plugin_id on Config | Not Started | 0/1 |
 | Phase 9: Rust: app-state persistence | Not Started | 0/1 |
@@ -249,4 +249,4 @@ Status: **Not Started** (0/1)
 | Phase 25: Build: Nix link flags | Not Started | 0/1 |
 | Phase 26: Example plugin: skeleton | Not Started | 0/1 |
 | Phase 27: Example plugin: capability + i18n | Not Started | 0/1 |
-| **Total** | | **0/27** |
+| **Total** | | **6/27** |

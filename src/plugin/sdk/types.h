@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QList>
+#include <QMetaType>
 #include <QString>
 #include <QtGlobal>
+#include <optional>
 
 using ReqId = quint64;
 
@@ -23,3 +25,8 @@ struct Balance {
 };
 
 } // namespace plugin
+
+Q_DECLARE_METATYPE(plugin::Coin)
+Q_DECLARE_METATYPE(plugin::Balance)
+Q_DECLARE_METATYPE(QList<plugin::Coin>)
+Q_DECLARE_METATYPE(std::optional<ReqId>)

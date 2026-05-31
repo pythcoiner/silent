@@ -190,6 +190,10 @@ struct Palette {
     static auto dark() -> Palette;
 };
 
+namespace theme {
+using Palette = ::Palette;
+} // namespace theme
+
 // ===== Typography =====
 
 struct Font {

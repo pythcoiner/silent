@@ -1,6 +1,9 @@
 .cm/logs/
 build/
-lib/
+build-local/
+lib/*
+!lib/include/
+!lib/include/*.h
 silent/target/
 result
 .cache/
