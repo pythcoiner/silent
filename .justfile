@@ -3,7 +3,7 @@ qontrol_commit := "7bc317d"
 
 nix := env("NIX", "nix")
 nix_flags := "--extra-experimental-features 'nix-command flakes'"
-lint_base_commit := "68e75c4"
+lint_base_commit := "401356d"
 
 # Build Linux
 build:
