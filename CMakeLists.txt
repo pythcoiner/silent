@@ -174,6 +174,14 @@ set(SILENT_APP_SOURCES
     src/catalog/feedback/Tooltip.cpp
     src/catalog/feedback/ModalStatus.h
     src/catalog/feedback/ModalStatus.cpp
+    src/catalog/Table.h
+    src/catalog/Table.cpp
+    src/catalog/SelectRow.h
+    src/catalog/SelectRow.cpp
+    src/catalog/StatusBarItem.h
+    src/catalog/StatusBarItem.cpp
+    src/catalog/BalanceHeader.h
+    src/catalog/BalanceHeader.cpp
 )
 
 set(SOURCES
