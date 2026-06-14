@@ -299,7 +299,9 @@ QList<PluginRegistry::CreatorLauncher> PluginRegistry::externalCreatorLaunchers(
         }
         for (const auto &instance : launcherInstancesForModule(module)) {
             if (isCreatorInstanceId(instance.first)) {
-                creators.append({module, instance.first.trimmed(), instance.second.trimmed()});
+                creators.append({.module = module,
+                                 .id = instance.first.trimmed(),
+                                 .name = instance.second.trimmed()});
             }
         }
     }
