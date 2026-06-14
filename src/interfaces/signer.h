@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QString>
 
-#include <sdk/types.h>
+#include <interfaces/types.h>
 
 class ISigner : public QObject {
     Q_OBJECT

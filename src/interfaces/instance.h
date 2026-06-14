@@ -2,10 +2,10 @@
 
 #include <QString>
 
-#include <sdk/interfaces/account.h>
-#include <sdk/interfaces/feed.h>
-#include <sdk/interfaces/signer.h>
-#include <sdk/interfaces/theme.h>
+#include <interfaces/account.h>
+#include <interfaces/feed.h>
+#include <interfaces/signer.h>
+#include <interfaces/theme.h>
 
 class IInstance {
 public:

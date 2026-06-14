@@ -152,9 +152,19 @@ not alphabetically.
 `m_*_column` (qontrol::Column), `m_*_row` (qontrol::Row), `m_*_table`
 (QTableWidget), `m_*_timer` (QTimer), `m_*_frame` (framed widgets).
 
+**Signal/slot naming convention:**
+- **Signals:** `camelCase`, no `on` prefix. Prefer event/state names (`coinsUpdated`,
+  `feeRate`, `enabledPluginsChanged`).
+- **Slots used as signal handlers:** prefix with `on` + source/event (`onThemeNames`,
+  `onModuleInstances`, `onHostInstanceChanged`).
+- **Slots that are user/actions (not signal handlers):** imperative verb
+  (`refreshLauncherItems`, `sendTransaction`, `openAccount`).
+
 **Local const usage policy:**
-- Avoid `const` for routine local temporaries and scalar locals (`bool`, `int`, `QString`, etc.) in normal flow.
-- `const` is still preferred for references/iterators in read-only traversal and APIs where immutability is part of the contract (for example: `for (const auto &item : items)`).
+- **Do not declare routine local variables as `const`.**
+- This includes scalar and value locals in function bodies (`bool`, `int`, `QString`, containers, ids, etc.).
+- Keep function-local variables mutable and use `camelBack` naming.
+- `const` is allowed only where required by API shape/read-only traversal semantics (for example: `for (const auto &item : items)`).
 - Use named constants (`c_*` or shared constants) only when the value is truly a stable, intentional constant, not just a one-off local.
 
 ## C++: Clangd Lint Rules
@@ -177,6 +187,14 @@ new code must satisfy these:
 ```cpp
 [[nodiscard]] auto isAccountOpen(const QString &name) const -> bool;
 ```
+
+**QObject interface destructors:** For classes deriving from `QObject`, declare the
+destructor as `~Type() override = default;` (not `virtual ~Type()`), so override intent
+is explicit and clang-tidy-clean.
+
+**Parameter naming in declarations/signatures:** Parameters must be `lower_case`,
+including signal/slot signatures and interface declarations (`req_id`, `plugin_id`,
+`instance_id`), not camelCase (`reqId`, `pluginId`, `instanceId`).
 
 **Trailing return types:** Use trailing return type syntax for all functions with
 non-void return types (enforced by `modernize-use-trailing-return-type`):
@@ -264,6 +282,10 @@ remain non-static member functions. Suppress with `// NOLINTNEXTLINE`:
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void sendTransaction() { ... }
 ```
+
+**Qt container + ranges checks:** Prefer ranges algorithms when they compile cleanly.
+If clang-tidy requests ranges but Qt container/value category mismatches make it invalid,
+keep the explicit loop and add a targeted `// NOLINTNEXTLINE(readability-use-anyofallof)`.
 
 ## C++: Qontrol Framework Usage
 

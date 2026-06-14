@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QString>
 
-#include <sdk/types.h>
+#include <interfaces/types.h>
 
 class IAccount : public QObject {
     Q_OBJECT

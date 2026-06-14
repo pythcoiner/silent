@@ -9,7 +9,7 @@
 #include <QString>
 #include <QStringList>
 
-#include <sdk/types.h>
+#include <interfaces/types.h>
 
 class IModule;
 

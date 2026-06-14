@@ -16,6 +16,10 @@ Qt6 GUI (C++)  --CXX FFI-->  Rust Backend (bwk-sp)
 - **Rust** — Wallet logic via [bwk-sp](https://github.com/pythcoiner/bwk) (Bitcoin Wallet Kit - Silent Payments)
 - **CXX** — FFI bridge between the two languages
 
+The Silent Payments wallet now lives under `src/modules/sp/`, and the app loads
+functionality as plugins (built-in and external) rather than as a flat `src/`
+layout. See [docs/MODULES.md](docs/MODULES.md) for the plugin system.
+
 ## Prerequisites
 
 - [Nix](https://nixos.org/) with flakes enabled (for release builds)
@@ -26,6 +30,11 @@ Qt6 GUI (C++)  --CXX FFI-->  Rust Backend (bwk-sp)
 - Use the project's `just` recipes for build, run, test, lint, and release flows.
 - Local development uses system Qt; release builds use Nix flakes.
 - Release binaries are produced in `./result/bin/`.
+
+## External Plugin Example
+
+- Standalone external plugin repository (pin to a tag/commit when stabilized):
+  - https://github.com/pythcoiner/silent-plugin
 
 ## i18n Quick Rules
 
