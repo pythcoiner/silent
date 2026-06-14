@@ -1,8 +1,11 @@
 #include "MainWindow.h"
-#include "AccountWidget.h"
 #include "AppController.h"
+#include "host/Host.h"
+#include "interfaces/instance.h"
 #include "i18n/Tr.h"
 #include "screens/MenuTab.h"
+#include "theme/Button.h"
+#include "theme/Icon.h"
 #include <algorithm>
 #include <common.h>
 #include <qlogging.h>
@@ -26,6 +29,13 @@ auto MainWindow::initWindow() -> void {
     m_tab->setTabsClosable(true);
     m_tab->setMovable(true);
 
+    m_settings_btn = new theme::Button(theme::ButtonRole::InlineIcon);
+    m_settings_btn->setIcon(icon::settings());
+    m_settings_btn->setToolTip(TR("settings-title"));
+    m_tab->setCornerWidget(m_settings_btn, Qt::TopRightCorner);
+    connect(m_settings_btn, &QPushButton::clicked, AppController::get(),
+            &AppController::openAppSettings, qontrol::UNIQUE);
+
     updateTabs();
 
     setCentralWidget(m_tab);
@@ -34,49 +44,6 @@ auto MainWindow::initWindow() -> void {
             qontrol::UNIQUE);
 
     m_init = true;
-}
-
-auto MainWindow::accountExists(const QString &name) -> bool {
-    if (m_tabs.isEmpty())
-        return false;
-    return std::ranges::any_of(m_tabs,
-                               [&name](const auto &tab) -> auto { return tab.first == name; });
-}
-
-auto MainWindow::insertAccount(AccountWidget *account, const QString &name) -> void {
-    if (!accountExists(name)) {
-        m_tabs.append(QPair<QString, AccountWidget *>(name, account));
-        updateTabs();
-    } else {
-        qCritical() << "Tab for account" << name << "already exists!";
-    }
-}
-
-auto MainWindow::removeAccount(const QString &name) -> void {
-    // Find the account in m_tabs by name
-    int listIndex = -1;
-    AccountWidget *widget = nullptr;
-    for (int i = 0; i < m_tabs.size(); ++i) {
-        if (m_tabs.at(i).first == name) {
-            listIndex = i;
-            widget = m_tabs.at(i).second;
-            break;
-        }
-    }
-
-    if (listIndex < 0 || widget == nullptr) {
-        return;
-    }
-
-    // Find the visual tab index by widget
-    int tabIndex = m_tab->indexOf(widget);
-    if (tabIndex >= 0) {
-        m_tab->removeTab(tabIndex);
-    }
-
-    // Remove from list and delete widget
-    m_tabs.removeAt(listIndex);
-    widget->deleteLater();
 }
 
 auto MainWindow::updateTabs() -> void {
@@ -97,6 +64,53 @@ auto MainWindow::updateTabs() -> void {
     m_tab->tabBar()->setTabButton(menuIndex, QTabBar::RightSide, nullptr);
 }
 
+auto MainWindow::tabExists(QWidget *content) const -> bool {
+    return std::ranges::any_of(m_tabs, [content](const auto &tab) { return tab.second == content; });
+}
+
+auto MainWindow::addTab(QWidget *content, const QString &title) -> int {
+    if (content == nullptr || tabExists(content)) {
+        return -1;
+    }
+    m_tabs.append(QPair<QString, QWidget *>(title, content));
+    updateTabs();
+    return m_tab->indexOf(content);
+}
+
+auto MainWindow::removeTab(QWidget *content) -> void {
+    if (content == nullptr) {
+        return;
+    }
+
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        if (m_tabs.at(i).second == content) {
+            int tabIndex = m_tab->indexOf(content);
+            if (tabIndex >= 0) {
+                m_tab->removeTab(tabIndex);
+            }
+            m_tabs.removeAt(i);
+            content->deleteLater();
+            return;
+        }
+    }
+}
+
+auto MainWindow::setTabTitle(QWidget *content, const QString &title) -> void {
+    if (content == nullptr) {
+        return;
+    }
+    for (auto &tab : m_tabs) {
+        if (tab.second == content) {
+            tab.first = title;
+            int tabIndex = m_tab->indexOf(content);
+            if (tabIndex >= 0) {
+                m_tab->setTabText(tabIndex, title);
+            }
+            return;
+        }
+    }
+}
+
 auto MainWindow::changeEvent(QEvent *event) -> void {
     if (event->type() == QEvent::LanguageChange) {
         retranslateUi();
@@ -107,29 +121,29 @@ auto MainWindow::changeEvent(QEvent *event) -> void {
 
 auto MainWindow::retranslateUi() -> void {
     setWindowTitle(TR("main-window-title"));
+    if (m_settings_btn != nullptr) {
+        m_settings_btn->setToolTip(TR("settings-title"));
+    }
 }
 
 auto MainWindow::closeEvent(QCloseEvent *event) -> void {
-    // Stop all account controllers
-    for (const auto &tab : m_tabs) {
-        tab.second->controller()->stop();
+    auto *host = Host::get();
+    if (host != nullptr) {
+        auto activeInstances = host->instances();
+        for (auto *instance : activeInstances) {
+            if (instance != nullptr) {
+                instance->stop();
+            }
+        }
     }
     event->accept();
     Window::closeEvent(event);
 }
 
 auto MainWindow::onTabCloseRequested(int index) -> void {
-    auto *widget = qobject_cast<AccountWidget *>(m_tab->widget(index));
-    if (widget == nullptr) {
-        return; // Menu tab or invalid
-    }
-
-    // Find account name by widget
-    for (const auto &tab : m_tabs) {
-        if (tab.second == widget) {
-            AppController::get()->removeAccount(tab.first);
-            return;
-        }
+    auto *hosted = m_tab->widget(index);
+    if (hosted != nullptr && hosted != m_menu_tab) {
+        emit hostedTabCloseRequested(hosted);
     }
 }
 
