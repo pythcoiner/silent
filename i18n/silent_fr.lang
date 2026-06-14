@@ -7,11 +7,13 @@ coins-height => "Height" => "Hauteur"
 coins-label => "Label" => "Libelle"
 coins-outpoint => "OutPoint" => "OutPoint"
 coins-spent => "Spent" => "Depense"
+coins-title => "Coins" => "Pieces"
 coins-type => "Type" => "Type"
 coins-unconfirmed => "Unconfirmed:" => "Non confirme:"
 coins-unconfirmed-no-colon => "Unconfirmed" => "Non confirme"
 coins-value => "Value" => "Valeur"
 common-apply => "Apply" => "Appliquer"
+common-broadcast => "Broadcast" => "Diffuser"
 common-cancel => "Cancel" => "Annuler"
 common-clear => "Clear" => "Effacer"
 common-close => "Close" => "Fermer"
@@ -24,11 +26,19 @@ common-no => "No" => "Non"
 common-ok => "OK" => "OK"
 common-proceed => "Proceed" => "Continuer"
 common-test => "Test" => "Tester"
-common-testing => "Testing..." => "Test en cours..."
+common-testing => "Testing…" => "Test en cours..."
 common-yes => "Yes" => "Oui"
-confirm-send-broadcasting => "Broadcasting..." => "Diffusion..."
+confirm-send-broadcasting => "Broadcasting…" => "Diffusion..."
+confirm-send-device-step
+=> "Confirm the transaction on %1."
+=> "Confirmez la transaction sur %1.";;
 confirm-send-failed => "Broadcast Failed\n\n%1" => "Echec de diffusion\n\n%1"
 confirm-send-fee => "Fee: %1" => "Frais: %1"
+confirm-send-sd-step
+=> "Select a file destination for the signed transaction."
+=> "Selectionnez une destination de fichier pour la transaction signee.";;
+confirm-send-signed => "Signed. Ready to broadcast." => "Signee. Prete a diffuser."
+confirm-send-signing => "Signing..." => "Signature..."
 confirm-send-success
 => "Transaction Sent\n\nTxid: %1"
 => "Transaction envoyee\n\nTxid: %1";;
@@ -63,8 +73,8 @@ create-account-placeholder-name => "Enter account name" => "Entrez le nom du com
 create-account-placeholder-p2p => "127.0.0.1:18444" => "127.0.0.1:18444"
 create-account-title => "Create Account" => "Creer un compte"
 delete-wallet-confirmation
-=> "Are you sure you want to delete wallet '%1'?\nThis action cannot be undone."
-=> "Voulez-vous vraiment supprimer le wallet '%1'?\nCette action est irreversible.";;
+=> "Delete wallet '%1'? This cannot be undone."
+=> "Supprimer le wallet '%1' ? Action irreversible.";;
 delete-wallet-title => "Delete Wallet" => "Supprimer le wallet"
 history-amount => "Amount" => "Montant"
 history-confirmed => "Confirmed:" => "Confirme:"
@@ -72,6 +82,7 @@ history-direction => "Direction" => "Direction"
 history-height => "Height" => "Hauteur"
 history-incoming => "Incoming" => "Entrant"
 history-outgoing => "Outgoing" => "Sortant"
+history-title => "History" => "Historique"
 history-txid => "TxID" => "TxID"
 history-unconfirmed => "Unconfirmed:" => "Non confirme:"
 history-unconfirmed-no-colon => "Unconfirmed" => "Non confirme"
@@ -85,51 +96,81 @@ main-menu-tab => "+" => "+"
 main-window-title
 => "Silent - Silent Payments Wallet"
 => "Silent - Wallet Silent Payments";;
+menu-create-wallet => "+ Create New Wallet" => "+ Creer un nouveau wallet"
 menu-custom => "Custom" => "Personnalise"
 menu-delete-wallet-tooltip => "Delete wallet" => "Supprimer le wallet"
 network-bitcoin => "Bitcoin" => "Bitcoin"
 network-regtest => "Regtest" => "Regtest"
 network-signet => "Signet" => "Signet"
 network-testnet => "Testnet" => "Testnet"
+receive-add-label => "Add a label" => "Ajouter un libelle"
+receive-awaiting-payment
+=> "Addr. awaiting payment (%1)"
+=> "En attente de paiement (%1)";;
+receive-awaiting-segwit
+=> "Segwit Addresses Awaiting Payment"
+=> "Adresses Segwit en attente de paiement";;
+receive-awaiting-taproot
+=> "Taproot Addresses Awaiting Payment"
+=> "Adresses Taproot en attente de paiement";;
+receive-label-placeholder => "Address label" => "Libelle de l'adresse"
+receive-no-previous-addresses
+=> "No previous addresses."
+=> "Aucune adresse precedente.";;
 receive-segwit-address => "Segwit Address:" => "Adresse Segwit:"
 receive-silent-payment-address
 => "Silent Payment Address:"
 => "Adresse Silent Payment:";;
 receive-taproot-address => "Taproot Address:" => "Adresse Taproot:"
+receive-title => "Receive" => "Recevoir"
+receive-verify-message
+=> "Confirm the address on %1."
+=> "Confirmez l'adresse sur %1.";;
+receive-verify-title => "Verify" => "Verifier"
+receive-verify-unavailable
+=> "No signing device is available for address verification in this build."
+=> "Aucun appareil de signature n'est disponible pour verifier l'adresse dans cette build.";;
 send-action-send => "Send" => "Envoyer"
-send-add-output => "+ Add an Output" => "+ Ajouter une sortie"
+send-action-sign => "Sign" => "Signer"
+send-add-output => "+ Add Payment" => "+ Ajouter une sortie"
+send-address => "Address:" => "Adresse:"
 send-address-reuse-warning
 => "Address Reuse Warning"
 => "Avertissement de reutilisation d'adresse";;
-send-amount-to-select => "Amount to select:" => "Montant a selectionner:"
+send-amount => "Amount:" => "Montant:"
+send-amount-to-select => "Remaining to select:" => "Restant a selectionner:"
 send-auto-coin-selection => "Auto coin selection" => "Selection auto des coins"
 send-fee-absolute-unit => "sats" => "sats"
 send-fee-estimate => "Fee: %1" => "Frais: %1"
+send-fee-rate-label => "Fee Rate:" => "Taux de frais:"
 send-fee-rate-unit => "sats/vb" => "sats/vb"
-send-inputs => "Inputs" => "Entrees"
+send-inputs => "Coins Selection" => "Entrees"
 send-inputs-already-spent
 => "Input(s) already spent:\n%1"
 => "Entree(s) deja depensee(s):\n%1";;
-send-inputs-selected-many
-=> "Inputs (%1 coins selected)"
-=> "Entrees (%1 coins selectionnes)";;
-send-inputs-selected-one
-=> "Inputs (1 coin selected)"
-=> "Entrees (1 coin selectionne)";;
+send-inputs-selected-many => "Coins (%1 selected)" => "Pieces (%1 selectionnees)"
+send-inputs-selected-one => "Coins (1 selected)" => "Pieces (1 selectionnee)"
 send-invalid-transaction-template
 => "Invalid transaction template."
 => "Modele de transaction invalide.";;
+send-label => "Description:" => "Libelle:"
 send-max => "MAX" => "MAX"
 send-max-suffix => "(max)" => "(max)"
 send-no-account-loaded => "No account loaded." => "Aucun compte charge."
 send-placeholder-address => "Address" => "Adresse"
-send-placeholder-amount => "0.002 BTC" => "0.002 BTC"
+send-placeholder-amount => "0.002" => "0.002"
 send-placeholder-label => "Label" => "Libelle"
 send-prepare-failed => "Prepare Failed" => "Preparation echouee"
 send-proceed-anyway => "Proceed anyway?" => "Continuer quand meme?"
-send-recipients => "Recipients" => "Destinataires"
-send-select-inputs => "Select Inputs" => "Selectionner les entrees"
+send-recipients => "Payments" => "Destinataires"
+send-select-inputs => "Coins Selection" => "Selectionner les entrees"
+send-select-signer => "Select a Signer" => "Selectionner un signer"
 send-signing-failed => "Signing failed." => "Echec de signature."
+send-summary-change => "Change" => "Monnaie"
+send-summary-fee => "Network Fee" => "Frais reseau"
+send-summary-sending => "Sending" => "Envoi"
+send-summary-total => "Total send" => "Total envoyé"
+send-summary-usd-placeholder => "0.00" => "0.00"
 send-total-selected => "Total selected:" => "Total selectionne:"
 send-transaction-invalid
 => "Transaction is not valid"
@@ -137,6 +178,7 @@ send-transaction-invalid
 send-transaction-state-lost
 => "Transaction state lost."
 => "Etat de transaction perdu.";;
+send-transaction-title => "Transaction" => "Transaction"
 send-validation-error => "Validation Error" => "Erreur de validation"
 settings-backend-info => "Backend Info:" => "Infos backend:"
 settings-blindbit-empty => "BlindBit URL is empty" => "L'URL BlindBit est vide"
@@ -148,6 +190,7 @@ settings-capabilities-template
 => "Tweaks seulement: %1\nFull Basic: %2\nFull + filtre poussiere: %3\nCut-Through + filtre poussiere: %4";;
 settings-connect-blindbit => "Connect Blindbit" => "Connecter Blindbit"
 settings-connect-electrum => "Connect Electrum" => "Connecter Electrum"
+settings-connection => "Connection" => "Connexion"
 settings-connection-failed => "Connection Failed" => "Connexion echouee"
 settings-disconnect-blindbit => "Disconnect Blindbit" => "Deconnecter Blindbit"
 settings-disconnect-electrum => "Disconnect Electrum" => "Deconnecter Electrum"
@@ -175,9 +218,6 @@ settings-network-mismatch-message
 => "Backend network is %1 but account network is %2"
 => "Le reseau backend est %1 mais le reseau du compte est %2";;
 settings-no-account-loaded => "No account loaded" => "Aucun compte charge"
-settings-p2p-empty
-=> "P2P node address is empty"
-=> "L'adresse du noeud P2P est vide";;
 settings-p2p-node => "P2P Node:" => "Noeud P2P:"
 settings-p2p-test-failed => "P2P Test Failed" => "Test P2P echoue"
 settings-placeholder-blindbit
@@ -186,7 +226,6 @@ settings-placeholder-blindbit
 settings-placeholder-electrum
 => "host:port (e.g. 127.0.0.1:50001)"
 => "hote:port (ex. 127.0.0.1:50001)";;
-settings-placeholder-p2p => "127.0.0.1:8333" => "127.0.0.1:8333"
 settings-plugin-manager => "Plugin Manager" => "Gestionnaire de plugins"
 settings-registry-unavailable
 => "Plugin registry unavailable"
@@ -217,3 +256,19 @@ status-scanning-progress => "Scanning... %1 / %2" => "Scan... %1 / %2"
 status-synced-watching
 => "Synced at block %1 - Watching..."
 => "Synchronise au bloc %1 - Surveillance...";;
+txflow-change => "CHANGE" => "MONNAIE"
+txflow-change-addr
+=> "(returned to your wallet)"
+=> "(renvoye vers votre portefeuille)";;
+txflow-change-title => "Change" => "Monnaie"
+txflow-empty
+=> "Enter a payment amount to preview the transaction shape."
+=> "Saisissez un montant pour previsualiser la forme de la transaction.";;
+txflow-fee => "FEE" => "FRAIS"
+txflow-fee-addr => "(paid to miners)" => "(payes aux mineurs)"
+txflow-fee-title => "Network fee" => "Frais reseau"
+txflow-input-n => "Input #%1" => "Entree #%1"
+txflow-inputs-count => "%1 inputs" => "%1 entrees"
+txflow-output-n => "Output #%1" => "Sortie #%1"
+txflow-outputs-count => "%1 outputs" => "%1 sorties"
+txflow-recipient => "RECIPIENT" => "DESTINATAIRE"
