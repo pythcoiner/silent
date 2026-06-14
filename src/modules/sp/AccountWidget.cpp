@@ -1,7 +1,10 @@
 #include "AccountWidget.h"
 #include "AccountController.h"
+#ifdef SILENT_MOCK_UI
+#include "MockAccountController.h"
+#endif
 #include "StatusBar.h"
-#include "theme/Button.h"
+#include "catalog/Button.h"
 #include "theme/Icon.h"
 #include "theme/Palette.h"
 #include "theme/Theme.h"
@@ -10,11 +13,16 @@
 #include <common.h>
 #include <qsizepolicy.h>
 
-using theme::Button;
-using theme::ButtonRole;
+using catalog::Button;
+using catalog::ButtonRole;
 
-AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(parent) {
+AccountWidget::AccountWidget([[maybe_unused]] const QString &account, QWidget *parent)
+    : QWidget(parent) {
+#ifdef SILENT_MOCK_UI
+    m_controller = new MockAccountController(this);
+#else
     m_controller = new AccountController(account, this);
+#endif
     initUI();
     m_controller->loadPanels();
     m_controller->loadPanel("history");
@@ -23,7 +31,7 @@ AccountWidget::AccountWidget(const QString &account, QWidget *parent) : QWidget(
 void AccountWidget::initUI() {
     // Create side menu
     m_menu = new qontrol::Column(this);
-    m_menu->setFixedWidth(200);
+    m_menu->setFixedWidth(metric::SIDEBAR_WIDTH);
     m_menu->setAutoFillBackground(true);
     auto menuPal = m_menu->palette();
     menuPal.setColor(QPalette::Window, Theme::get()->palette().bgSecondary);

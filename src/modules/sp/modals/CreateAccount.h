@@ -1,18 +1,18 @@
 #pragma once
 
-namespace theme {
+namespace catalog {
 class Button;
 }
 
-namespace theme {
+namespace catalog {
 class Input;
 }
 
-namespace theme {
+namespace catalog {
 class TextEdit;
 }
 
-namespace theme {
+namespace catalog {
 class ComboBox;
 }
 
@@ -58,18 +58,18 @@ protected:
     auto generateMnemonic() -> QString;
 
 private:
-    theme::Input *m_name_input = nullptr;
-    theme::TextEdit *m_mnemonic_input = nullptr;
-    theme::Button *m_generate_btn = nullptr;
-    theme::ComboBox *m_network_combo = nullptr;
-    theme::Input *m_blindbit_input = nullptr;
-    theme::Input *m_p2p_input = nullptr;
-    theme::Button *m_test_btn = nullptr;
-    theme::Button *m_test_p2p_btn = nullptr;
-    theme::Input *m_electrum_input = nullptr;
-    theme::Button *m_test_electrum_btn = nullptr;
-    theme::Button *m_create_btn = nullptr;
-    theme::Button *m_cancel_btn = nullptr;
+    catalog::Input *m_name_input = nullptr;
+    catalog::TextEdit *m_mnemonic_input = nullptr;
+    catalog::Button *m_generate_btn = nullptr;
+    catalog::ComboBox *m_network_combo = nullptr;
+    catalog::Input *m_blindbit_input = nullptr;
+    catalog::Input *m_p2p_input = nullptr;
+    catalog::Button *m_test_btn = nullptr;
+    catalog::Button *m_test_p2p_btn = nullptr;
+    catalog::Input *m_electrum_input = nullptr;
+    catalog::Button *m_test_electrum_btn = nullptr;
+    catalog::Button *m_create_btn = nullptr;
+    catalog::Button *m_cancel_btn = nullptr;
     bool m_backend_verified = false;
     bool m_p2p_verified = false;
     bool m_electrum_verified = false;

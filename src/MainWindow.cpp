@@ -3,9 +3,10 @@
 #include "host/Host.h"
 #include "interfaces/instance.h"
 #include "i18n/Tr.h"
-#include "screens/MenuTab.h"
-#include "theme/Button.h"
+#include "views/MenuTab.h"
+#include "catalog/Button.h"
 #include "theme/Icon.h"
+#include "catalog/containers/Tabs.h"
 #include <algorithm>
 #include <common.h>
 #include <qlogging.h>
@@ -23,13 +24,13 @@ auto MainWindow::initWindow() -> void {
     if (m_init)
         return;
 
-    m_tab = new QTabWidget(this);
+    m_tab = new catalog::Tabs(this);
     m_menu_tab = new MenuTab(this);
 
     m_tab->setTabsClosable(true);
     m_tab->setMovable(true);
 
-    m_settings_btn = new theme::Button(theme::ButtonRole::InlineIcon);
+    m_settings_btn = new catalog::Button(catalog::ButtonRole::InlineIcon);
     m_settings_btn->setIcon(icon::settings());
     m_settings_btn->setToolTip(TR("settings-title"));
     m_tab->setCornerWidget(m_settings_btn, Qt::TopRightCorner);

@@ -5,6 +5,7 @@ project(${BIN} VERSION 0.1.0 LANGUAGES CXX)
 
 option(SILENT_I18N_TRACE_IDS "Emit i18n ID pragma trace markers" OFF)
 option(SILENT_BUILD_HOST_SMOKE "Build the plugin host smoke test" OFF)
+option(SILENT_MOCK_UI "Run the UI on mock account data instead of the real FFI controller" OFF)
 
 # Build silent Rust crate before main project
 add_custom_target(
@@ -64,14 +65,18 @@ set(SILENT_APP_SOURCES
     src/theme/Theme.cpp
     src/theme/Palette.h
     src/theme/Palette.cpp
-    src/theme/Button.h
-    src/theme/Button.cpp
-    src/theme/Label.h
-    src/theme/Label.cpp
-    src/theme/Input.h
-    src/theme/Input.cpp
-    src/theme/Display.h
-    src/theme/Display.cpp
+    src/catalog/format.h
+    src/catalog/format.cpp
+    src/catalog/Button.h
+    src/catalog/Button.cpp
+    src/catalog/CopyButton.h
+    src/catalog/CopyButton.cpp
+    src/catalog/display/Label.h
+    src/catalog/display/Label.cpp
+    src/catalog/inputs/Input.h
+    src/catalog/inputs/Input.cpp
+    src/catalog/display/Display.h
+    src/catalog/display/Display.cpp
     src/AppController.h
     src/AppController.cpp
     src/i18n/I18nManager.h
@@ -93,51 +98,37 @@ set(SILENT_APP_SOURCES
     src/modules/sp/SpAccount.cpp
     src/modules/sp/StatusBar.h
     src/modules/sp/StatusBar.cpp
-    src/screens/MenuTab.h
-    src/screens/MenuTab.cpp
-    src/screens/modals/AppSettings.h
-    src/screens/modals/AppSettings.cpp
+    src/views/MenuTab.h
+    src/views/MenuTab.cpp
+    src/views/modals/AppSettings.h
+    src/views/modals/AppSettings.cpp
     src/modules/sp/modals/CreateAccount.h
     src/modules/sp/modals/CreateAccount.cpp
-    src/screens/utils.h
-    src/screens/utils.cpp
-    src/modules/sp/screens/History.h
-    src/modules/sp/screens/History.cpp
-    src/modules/sp/screens/Coins.h
-    src/modules/sp/screens/Coins.cpp
-    src/modules/sp/screens/Receive.h
-    src/modules/sp/screens/Receive.cpp
-    src/modules/sp/screens/Send.h
-    src/modules/sp/screens/Send.cpp
-    src/modules/sp/screens/Settings.h
-    src/modules/sp/screens/Settings.cpp
-    src/screens/modals/ConfirmDelete.h
-    src/screens/modals/ConfirmDelete.cpp
-    src/screens/modals/CustomLaunchers.cpp
-    src/screens/modals/ConfirmSend.h
-    src/screens/modals/ConfirmSend.cpp
+    src/views/utils.h
+    src/views/utils.cpp
+    src/views/DashboardLayout.h
+    src/views/DashboardLayout.cpp
+    src/modules/sp/views/History.h
+    src/modules/sp/views/History.cpp
+    src/modules/sp/views/Coins.h
+    src/modules/sp/views/Coins.cpp
+    src/modules/sp/views/Receive.h
+    src/modules/sp/views/Receive.cpp
+    src/modules/sp/views/Send.h
+    src/modules/sp/views/Send.cpp
+    src/modules/sp/views/Settings.h
+    src/modules/sp/views/Settings.cpp
+    src/views/modals/ConfirmDelete.h
+    src/views/modals/ConfirmDelete.cpp
+    src/views/modals/CustomLaunchers.cpp
+    src/views/modals/SelectSigner.h
+    src/views/modals/SelectSigner.cpp
+    src/views/modals/ConfirmSend.h
+    src/views/modals/ConfirmSend.cpp
     src/theme/Icon.h
     src/theme/Icon.cpp
-    src/theme/Tab.h
-    src/theme/Tab.cpp
-    src/theme/Checkbox.h
-    src/theme/Checkbox.cpp
-    src/theme/Toggle.h
-    src/theme/Toggle.cpp
-    src/theme/ComboBox.h
-    src/theme/ComboBox.cpp
-    src/theme/TextEdit.h
-    src/theme/TextEdit.cpp
-    src/catalog/Button.h
-    src/catalog/Button.cpp
-    src/catalog/CopyButton.h
-    src/catalog/CopyButton.cpp
-    src/catalog/display/Label.h
-    src/catalog/display/Label.cpp
-    src/catalog/display/Display.h
-    src/catalog/display/Display.cpp
-    src/catalog/inputs/Input.h
-    src/catalog/inputs/Input.cpp
+    src/catalog/containers/Tab.h
+    src/catalog/containers/Tab.cpp
     src/catalog/inputs/Checkbox.h
     src/catalog/inputs/Checkbox.cpp
     src/catalog/inputs/Toggle.h
@@ -146,55 +137,66 @@ set(SILENT_APP_SOURCES
     src/catalog/inputs/ComboBox.cpp
     src/catalog/inputs/TextEdit.h
     src/catalog/inputs/TextEdit.cpp
-    src/catalog/containers/Tab.h
-    src/catalog/containers/Tab.cpp
-    src/catalog/containers/Card.h
-    src/catalog/containers/Card.cpp
     src/catalog/containers/Separator.h
     src/catalog/containers/Separator.cpp
     src/catalog/containers/ScrollArea.h
     src/catalog/containers/ScrollArea.cpp
-    src/catalog/containers/FoldSection.h
-    src/catalog/containers/FoldSection.cpp
-    src/catalog/containers/Tabs.h
-    src/catalog/containers/Tabs.cpp
+    src/catalog/containers/Card.h
+    src/catalog/containers/Card.cpp
     src/catalog/display/Badge.h
     src/catalog/display/Badge.cpp
-    src/catalog/inputs/Stepper.h
-    src/catalog/inputs/Stepper.cpp
     src/catalog/form/ValidationMark.h
     src/catalog/form/ValidationMark.cpp
     src/catalog/form/ValidatedInput.h
     src/catalog/form/ValidatedInput.cpp
     src/catalog/form/LabelledInput.h
     src/catalog/form/LabelledInput.cpp
-    src/catalog/form/FormRow.h
-    src/catalog/form/FormRow.cpp
-    src/catalog/feedback/Tooltip.h
-    src/catalog/feedback/Tooltip.cpp
-    src/catalog/feedback/ModalStatus.h
-    src/catalog/feedback/ModalStatus.cpp
     src/catalog/Table.h
     src/catalog/Table.cpp
-    src/catalog/SelectRow.h
-    src/catalog/SelectRow.cpp
-    src/catalog/StatusBarItem.h
-    src/catalog/StatusBarItem.cpp
+    src/catalog/containers/FoldSection.h
+    src/catalog/containers/FoldSection.cpp
+    src/catalog/containers/Tabs.h
+    src/catalog/containers/Tabs.cpp
+    src/catalog/form/FormRow.h
+    src/catalog/form/FormRow.cpp
     src/catalog/BalanceHeader.h
     src/catalog/BalanceHeader.cpp
-    src/catalog/panels/receive/ChunkedAddress.h
-    src/catalog/panels/receive/ChunkedAddress.cpp
-    src/catalog/panels/receive/LabelRow.h
-    src/catalog/panels/receive/LabelRow.cpp
-    src/catalog/panels/receive/IndexPill.h
-    src/catalog/panels/receive/IndexPill.cpp
-    src/catalog/panels/receive/QrCode.h
-    src/catalog/panels/receive/QrCode.cpp
     src/catalog/panels/receive/AddressRow.h
     src/catalog/panels/receive/AddressRow.cpp
+    src/catalog/panels/receive/LabelRow.h
+    src/catalog/panels/receive/LabelRow.cpp
+    src/catalog/panels/receive/ChunkedAddress.h
+    src/catalog/panels/receive/ChunkedAddress.cpp
+    src/catalog/panels/receive/IndexPill.h
+    src/catalog/panels/receive/IndexPill.cpp
+    src/views/modals/AddressHistoryModal.h
+    src/views/modals/AddressHistoryModal.cpp
+    src/catalog/panels/receive/QrCode.h
+    src/catalog/panels/receive/QrCode.cpp
+    src/catalog/SelectRow.h
+    src/catalog/SelectRow.cpp
+    src/catalog/inputs/Stepper.h
+    src/catalog/inputs/Stepper.cpp
+    src/catalog/feedback/ModalStatus.h
+    src/catalog/feedback/ModalStatus.cpp
+    src/catalog/StatusBarItem.h
+    src/catalog/StatusBarItem.cpp
+    src/catalog/feedback/Tooltip.h
+    src/catalog/feedback/Tooltip.cpp
     src/catalog/panels/send/TxFlow.h
     src/catalog/panels/send/TxFlow.cpp
+    src/catalog/panels/home/HistoryTable.h
+    src/catalog/panels/home/HistoryTable.cpp
 )
+
+# The mock controller is dev-only UI scaffolding. It is excluded from the build
+# unless SILENT_MOCK_UI is set, which also flips AccountWidget to instantiate it.
+if(SILENT_MOCK_UI)
+    list(APPEND SILENT_APP_SOURCES
+        src/modules/sp/MockAccountController.h
+        src/modules/sp/MockAccountController.cpp
+    )
+endif()
 
 set(SOURCES
     src/main.cpp
@@ -211,6 +213,10 @@ qt_add_executable(${BIN}
 
 if(SILENT_I18N_TRACE_IDS)
     target_compile_definitions(${BIN} PRIVATE I18N_TRACE_IDS=1)
+endif()
+
+if(SILENT_MOCK_UI)
+    target_compile_definitions(${BIN} PRIVATE SILENT_MOCK_UI=1)
 endif()
 
 foreach(LANG_FILE ${TRANSLATION_LANG_FILES})

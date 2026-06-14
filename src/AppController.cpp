@@ -4,8 +4,8 @@
 #include "interfaces/instance.h"
 #include "interfaces/module.h"
 #include "interfaces/theme.h"
-#include "screens/modals/AppSettings.h"
-#include "screens/modals/ConfirmDelete.h"
+#include "views/modals/AppSettings.h"
+#include "views/modals/ConfirmDelete.h"
 #include "theme/Theme.h"
 #include <algorithm>
 #include <common.h>

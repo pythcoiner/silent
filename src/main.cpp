@@ -6,6 +6,7 @@
 #include "interfaces/types.h"
 #include "interfaces/host.h"
 #include "resources/font/noto_sans.h"
+#include "resources/font/noto_sans_mono.h"
 #include "theme/Theme.h"
 #include <common.h>
 #include <QApplication>
@@ -27,6 +28,8 @@ auto main(int argc, char *argv[]) -> int {
     // Embed default font
     QFontDatabase::addApplicationFontFromData(QByteArray(
         reinterpret_cast<const char *>(embedded_font::NOTO_SANS), embedded_font::NOTO_SANS_SIZE));
+    QFontDatabase::addApplicationFontFromData(QByteArray(
+        reinterpret_cast<const char *>(embedded_font::NOTO_SANS_MONO), embedded_font::NOTO_SANS_MONO_SIZE));
 
     // Register CXX types for cross-thread signal-slot connections
     qRegisterMetaType<BackendInfo>();

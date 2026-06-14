@@ -4,12 +4,12 @@
 #include <QEvent>
 #include <QList>
 #include <QPair>
-#include <QTabWidget>
 #include <QWidget>
 #include <Qontrol>
 
-namespace theme {
+namespace catalog {
 class Button;
+class Tabs;
 }
 
 class MainWindow : public qontrol::Window {
@@ -41,8 +41,8 @@ protected:
 
 private:
     bool m_init = false;
-    QTabWidget *m_tab = nullptr;
-    theme::Button *m_settings_btn = nullptr;
+    catalog::Tabs *m_tab = nullptr;
+    catalog::Button *m_settings_btn = nullptr;
     QList<QPair<QString, QWidget *>> m_tabs;
     QWidget *m_menu_tab = nullptr;
 };

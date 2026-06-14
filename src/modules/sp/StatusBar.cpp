@@ -1,17 +1,12 @@
 #include "StatusBar.h"
 #include "AccountController.h"
 #include "i18n/Tr.h"
-#include "screens/utils.h"
-#include "theme/Label.h"
-#include "theme/Toggle.h"
+#include "views/utils.h"
+#include "catalog/containers/Separator.h"
+#include "catalog/StatusBarItem.h"
 #include <QBrush>
 #include <QDebug>
-#include <QFrame>
 #include <common.h>
-
-using theme::Label;
-using theme::LabelRole;
-using theme::Toggle;
 
 static auto formatEta(uint64_t secs) -> QString {
     auto hours = secs / 3600;
@@ -39,54 +34,43 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
 
     // Set initial electrum state (sub-accounts auto-start on construction)
     if (!m_electrum_url.isEmpty()) {
-        m_electrum_status_label->setText(TR("status-connecting"));
+        m_electrum_item->setLabel(TR("status-connecting"));
     } else {
-        m_electrum_status_label->setText(TR("status-not-configured"));
+        m_electrum_item->setLabel(TR("status-not-configured"));
     }
 
     // Connect toggle signals
-    connect(m_toggle, &Toggle::clicked, this, &StatusBar::onToggled, qontrol::UNIQUE);
-    connect(m_electrum_toggle, &Toggle::clicked, this, &StatusBar::onElectrumToggled,
+    connect(m_blindbit_item, &catalog::StatusBarItem::toggled, this, &StatusBar::onToggled,
+            qontrol::UNIQUE);
+    connect(m_electrum_item, &catalog::StatusBarItem::toggled, this, &StatusBar::onElectrumToggled,
             qontrol::UNIQUE);
 }
 
 void StatusBar::initUI() {
-    setFixedHeight(resolve(Spacing::L));
+    setFixedHeight(metric::STATUS_BAR_HEIGHT);
 
     // Top separator line
-    auto *separator = new QFrame(this);
-    separator->setFrameShape(QFrame::HLine);
-    separator->setFrameShadow(QFrame::Sunken);
+    auto *separator = new catalog::Separator(catalog::Separator::Role::Horizontal, this);
 
     // Blindbit toggle + status
-    m_toggle = new Toggle(theme::ToggleRole::Status, this);
-
-    m_status_label = new Label(LabelRole::Status, this);
+    m_blindbit_item = new catalog::StatusBarItem(this);
 
     // Vertical line separator
-    auto *vline = new QFrame(this);
-    vline->setFrameShape(QFrame::VLine);
-    vline->setFrameShadow(QFrame::Sunken);
+    auto *vline = new catalog::Separator(catalog::Separator::Role::Vertical, this);
 
     // Electrum toggle + status
-    m_electrum_toggle = new Toggle(theme::ToggleRole::Status, this);
-
-    m_electrum_status_label = new Label(LabelRole::Status, this);
+    m_electrum_item = new catalog::StatusBarItem(this);
 
     // Left half: blindbit
     auto *leftRow = (new qontrol::Row)
-                        ->push(m_toggle)
-                        ->pushSpacer(resolve(Spacing::S))
-                        ->push(m_status_label)
+                        ->push(m_blindbit_item)
                         ->pushSpacer();
 
     // Right half: electrum
     auto *rightRow = (new qontrol::Row)
-                         ->pushSpacer(resolve(Spacing::S))
-                         ->push(m_electrum_toggle)
-                         ->pushSpacer(resolve(Spacing::S))
-                         ->push(m_electrum_status_label)
-                         ->pushSpacer();
+                          ->pushSpacer(resolve(Spacing::S))
+                          ->push(m_electrum_item)
+                          ->pushSpacer();
 
     // Combine with equal proportions
     auto *contentRow = (new qontrol::Row)->push(leftRow)->push(vline)->push(rightRow);
@@ -135,12 +119,12 @@ void StatusBar::loadElectrumUrl() {
 void StatusBar::onUpdateConnectionState(bool connected) {
     m_connected = connected;
 
-    m_toggle->setChecked(connected);
+    m_blindbit_item->setOn(connected);
 
     if (connected) {
-        m_status_label->setText(TR("status-scanning"));
+        m_blindbit_item->setLabel(TR("status-scanning"));
     } else {
-        m_status_label->setText(TR("status-disconnected"));
+        m_blindbit_item->setLabel(TR("status-disconnected"));
     }
 }
 
@@ -151,37 +135,37 @@ void StatusBar::onUpdateScanProgress(uint32_t height, uint32_t tip) {
         if (eta > 0) {
             text += QString(" \u2022 %1").arg(formatEta(eta));
         }
-        m_status_label->setText(text);
+        m_blindbit_item->setLabel(text);
     } else {
         // Synced
-        m_status_label->setText(TR("status-connected-blindbit").arg(m_blindbit_url));
+        m_blindbit_item->setLabel(TR("status-connected-blindbit").arg(m_blindbit_url));
     }
 }
 
 void StatusBar::onUpdateWaitingForBlocks(uint32_t tip_height) {
-    m_status_label->setText(TR("status-synced-watching").arg(tip_height));
+    m_blindbit_item->setLabel(TR("status-synced-watching").arg(tip_height));
 }
 
 void StatusBar::onUpdateScanError(rust::String error) {
     QString errorStr = QString::fromStdString(std::string(error.c_str()));
-    m_status_label->setText(mapBackendErrorSummary(errorStr));
+    m_blindbit_item->setLabel(mapBackendErrorSummary(errorStr));
 }
 
 void StatusBar::onElectrumConnected(const QString &address) {
     m_electrum_connected = true;
 
-    m_electrum_toggle->setChecked(true);
+    m_electrum_item->setOn(true);
 
-    m_electrum_status_label->setText(TR("status-connected-electrum").arg(address));
+    m_electrum_item->setLabel(TR("status-connected-electrum").arg(address));
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void StatusBar::onElectrumDisconnected() {
     m_electrum_connected = false;
 
-    m_electrum_toggle->setChecked(false);
+    m_electrum_item->setOn(false);
 
-    m_electrum_status_label->setText(TR("status-electrum-disconnected"));
+    m_electrum_item->setLabel(TR("status-electrum-disconnected"));
 }
 
 void StatusBar::onReloadUrl() {
@@ -196,10 +180,10 @@ void StatusBar::onToggled(bool checked) {
     }
 
     if (checked) {
-        m_status_label->setText(TR("status-connecting"));
+        m_blindbit_item->setLabel(TR("status-connecting"));
         accountOpt.value()->start_scanner();
     } else {
-        m_status_label->setText(TR("status-disconnecting"));
+        m_blindbit_item->setLabel(TR("status-disconnecting"));
         accountOpt.value()->stop_scanner();
     }
 }
@@ -211,10 +195,10 @@ void StatusBar::onElectrumToggled(bool checked) {
     }
 
     if (checked) {
-        m_electrum_status_label->setText(TR("status-connecting"));
+        m_electrum_item->setLabel(TR("status-connecting"));
         accountOpt.value()->start_electrum();
     } else {
-        m_electrum_status_label->setText(TR("status-disconnecting"));
+        m_electrum_item->setLabel(TR("status-disconnecting"));
         accountOpt.value()->stop_electrum();
     }
 }

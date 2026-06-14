@@ -18,10 +18,13 @@ public:
     AccountController(const QString &account, AccountWidget *widget);
     auto init(const QString &account) -> void;
     auto screen(const QString &screen) -> std::optional<qontrol::Screen *>;
-    auto loadPanels() -> void;
-    auto getCoins() -> rust::Vec<RustCoin>;
-    auto getPaymentHistory() -> rust::Vec<RustTx>;
-    auto getSpAddress() -> rust::String;
+    virtual auto loadPanels() -> void;
+    virtual auto getCoins() -> rust::Vec<RustCoin>;
+    virtual auto getPaymentHistory() -> rust::Vec<RustTx>;
+    virtual auto getSpAddress() -> rust::String;
+    virtual auto newSegwitAddr() -> rust::String;
+    virtual auto newTaprootAddr() -> rust::String;
+    virtual auto hasSubAccounts() -> bool;
     auto coins() -> qontrol::Screen *;
     auto getAccount() -> std::optional<rust::Box<Account>> &;
 
@@ -42,7 +45,7 @@ public slots:
     auto insertPanel(qontrol::Panel *panel) -> void;
     auto pollCoins() -> void;
     auto handleNotification(Notification notif) -> void;
-    auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
+    virtual auto simulateTx(TransactionTemplate tx) -> TransactionSimulation;
     auto updateCoinLabel(const QString &outpoint, const QString &label) -> void;
     auto startScanner() -> void;
     auto stop() -> void;
@@ -59,6 +62,10 @@ public slots:
     }
 
     [[nodiscard]] auto etaSecs() const -> uint64_t;
+
+protected:
+    // Construct without FFI init, for a mock subclass (dummy data, no account).
+    explicit AccountController(AccountWidget *widget);
 
 private:
     QPointer<qontrol::Panel> m_current_panel;

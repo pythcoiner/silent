@@ -1,0 +1,294 @@
+#include "Receive.h"
+#include "AccountController.h"
+#include "AppController.h"
+#include "catalog/Button.h"
+#include "catalog/CopyButton.h"
+#include "catalog/containers/FoldSection.h"
+#include "catalog/containers/Separator.h"
+#include "catalog/display/Label.h"
+#include "catalog/feedback/ModalStatus.h"
+#include "catalog/inputs/Input.h"
+#include "catalog/panels/receive/AddressRow.h"
+#include "catalog/panels/receive/LabelRow.h"
+#include "views/modals/AddressHistoryModal.h"
+#include "i18n/Tr.h"
+#include "theme/Palette.h"
+#include "views/modals/SelectSigner.h"
+#include "views/utils.h"
+#include <Qontrol>
+#include <common.h>
+
+namespace view {
+
+Receive::Receive(AccountController *ctrl) : m_controller(ctrl), m_sp_address("") {
+    if (m_controller == nullptr) {
+        return;
+    }
+    this->init();
+    this->doConnect();
+    this->view();
+}
+
+void Receive::init() {
+    m_sp_address = m_controller->getSpAddress();
+    m_has_sub_accounts = m_controller->hasSubAccounts();
+    m_sp_section = new catalog::FoldSection(TR("receive-silent-payment-address"));
+    m_sp_row = new catalog::AddressRow;
+    m_sp_row->setGenerateVisible(false);
+    m_sp_row->setVerifyVisible(true);
+    m_sp_row->setTwoLineAddress(true); // long SP address wraps to two lines
+    m_sp_row->setAddress(QString(m_sp_address.c_str()));
+    m_sp_section->setContent(m_sp_row);
+
+    if (m_has_sub_accounts) {
+        m_segwit_section = new catalog::FoldSection(TR("receive-segwit-address"));
+        m_segwit_row = new catalog::AddressRow;
+        m_segwit_row->setLabelVisible(true);
+        m_segwit_row->setPlaceholderText(TR("receive-not-generated"));
+        m_segwit_row->setVerifyVisible(true);
+        m_segwit_section->setExpanded(false);
+        m_segwit_section->setContent(m_segwit_row);
+        m_taproot_section = new catalog::FoldSection(TR("receive-taproot-address"));
+        m_taproot_row = new catalog::AddressRow;
+        m_taproot_row->setLabelVisible(true);
+        m_taproot_row->setPlaceholderText(TR("receive-not-generated"));
+        m_taproot_row->setVerifyVisible(true);
+        m_taproot_section->setExpanded(false);
+        m_taproot_section->setContent(m_taproot_row);
+    }
+
+    retranslateUi();
+}
+
+void Receive::doConnect() {
+    connect(m_sp_row, &catalog::AddressRow::verifyRequested, this, &Receive::onVerifyAddress,
+            qontrol::UNIQUE);
+    connect(m_sp_section, &catalog::FoldSection::toggled, this, &Receive::onSpSectionToggled,
+            qontrol::UNIQUE);
+    if (m_has_sub_accounts) {
+        connect(m_segwit_row, &catalog::AddressRow::generateRequested, this,
+                &Receive::onNewSegwitAddr, qontrol::UNIQUE);
+        connect(m_taproot_row, &catalog::AddressRow::generateRequested, this,
+                &Receive::onNewTaprootAddr, qontrol::UNIQUE);
+        connect(m_segwit_row, &catalog::AddressRow::historyRequested, this,
+                &Receive::onShowSegwitHistory, qontrol::UNIQUE);
+        connect(m_taproot_row, &catalog::AddressRow::historyRequested, this,
+                &Receive::onShowTaprootHistory, qontrol::UNIQUE);
+        connect(m_segwit_row, &catalog::AddressRow::verifyRequested, this,
+                &Receive::onVerifyAddress, qontrol::UNIQUE);
+        connect(m_taproot_row, &catalog::AddressRow::verifyRequested, this,
+                &Receive::onVerifyAddress, qontrol::UNIQUE);
+        connect(m_segwit_section, &catalog::FoldSection::toggled, this,
+                &Receive::onSegwitSectionToggled, qontrol::UNIQUE);
+        connect(m_taproot_section, &catalog::FoldSection::toggled, this,
+                &Receive::onTaprootSectionToggled, qontrol::UNIQUE);
+    }
+}
+
+void Receive::onNewSegwitAddr() {
+    if (m_controller == nullptr) {
+        return;
+    }
+    auto addr = QString::fromStdString(std::string(m_controller->newSegwitAddr().c_str()));
+    if (addr.isEmpty()) {
+        return;
+    }
+    auto current = m_segwit_row->address();
+    if (!current.isEmpty()) {
+        m_segwit_history.prepend(qMakePair(current, m_segwit_row->labelText()));
+    }
+    m_segwit_row->setAddress(addr);
+    m_segwit_row->setLabelText(QString()); // the new address starts unlabeled
+    m_segwit_row->setHistoryVisible(!m_segwit_history.isEmpty());
+    m_segwit_row->setHistoryText(TR("receive-awaiting-payment").arg(m_segwit_history.size()));
+}
+
+void Receive::onNewTaprootAddr() {
+    if (m_controller == nullptr) {
+        return;
+    }
+    auto addr = QString::fromStdString(std::string(m_controller->newTaprootAddr().c_str()));
+    if (addr.isEmpty()) {
+        return;
+    }
+    auto current = m_taproot_row->address();
+    if (!current.isEmpty()) {
+        m_taproot_history.prepend(qMakePair(current, m_taproot_row->labelText()));
+    }
+    m_taproot_row->setAddress(addr);
+    m_taproot_row->setLabelText(QString()); // the new address starts unlabeled
+    m_taproot_row->setHistoryVisible(!m_taproot_history.isEmpty());
+    m_taproot_row->setHistoryText(TR("receive-awaiting-payment").arg(m_taproot_history.size()));
+}
+
+void Receive::onShowSegwitHistory() {
+    showAddressHistory(TR("receive-awaiting-segwit"), m_segwit_history);
+}
+
+void Receive::onShowTaprootHistory() {
+    showAddressHistory(TR("receive-awaiting-taproot"), m_taproot_history);
+}
+
+void Receive::onVerifyAddress() {
+    auto *row = qobject_cast<catalog::AddressRow *>(sender());
+    showVerifyModal(row != nullptr ? row->address() : QString());
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+void Receive::showVerifyModal(const QString &address) {
+    auto *picker = new modal::SelectSigner(TR("receive-verify-title"), false);
+    int result = picker->exec();
+    auto signer = picker->selectedName();
+    auto kind = picker->selectedKind();
+    delete picker;
+    if (result != QDialog::Accepted || kind == "sd") {
+        return;
+    }
+    auto *status = new catalog::ModalStatus;
+    status->setState(catalog::ModalStatus::State::Signing);
+    status->setSubtitle(TR("receive-verify-message").arg(signer));
+    auto *addressLabel = new catalog::Label(address, catalog::LabelRole::Mono);
+    addressLabel->setWordWrap(true);
+    addressLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    auto *container = new qontrol::Modal;
+    container->setWindowTitle(TR("receive-verify-title"));
+    container->setMainWidget(margin((new qontrol::Column)
+                                        ->push(status)
+                                        ->pushSpacer(resolve(Spacing::M))
+                                        ->push(addressLabel)
+                                        ->pushSpacer(resolve(Spacing::M))));
+    AppController::execModal(container);
+}
+
+void Receive::onSpSectionToggled(bool expanded) {
+    if (!expanded || !m_has_sub_accounts) {
+        return;
+    }
+    m_segwit_section->setExpanded(false);
+    m_taproot_section->setExpanded(false);
+}
+
+void Receive::onSegwitSectionToggled(bool expanded) {
+    if (!expanded) {
+        return;
+    }
+    m_sp_section->setExpanded(false);
+    if (m_taproot_section != nullptr) {
+        m_taproot_section->setExpanded(false);
+    }
+}
+
+void Receive::onTaprootSectionToggled(bool expanded) {
+    if (!expanded) {
+        return;
+    }
+    m_sp_section->setExpanded(false);
+    if (m_segwit_section != nullptr) {
+        m_segwit_section->setExpanded(false);
+    }
+}
+
+
+void Receive::onVerifyHistoryAddress(const QString &address) {
+    showVerifyModal(address);
+}
+
+void Receive::onHistoryLabelEdited(const QString &address, const QString &label) {
+    if (m_active_history_section == "segwit") {
+        if (m_segwit_row != nullptr && m_segwit_row->address() == address) {
+            m_segwit_row->setLabelText(label);
+        }
+        for (auto &item : m_segwit_history) {
+            if (item.first == address) {
+                item.second = label;
+            }
+        }
+    }
+    if (m_active_history_section == "taproot") {
+        if (m_taproot_row != nullptr && m_taproot_row->address() == address) {
+            m_taproot_row->setLabelText(label);
+        }
+        for (auto &item : m_taproot_history) {
+            if (item.first == address) {
+                item.second = label;
+            }
+        }
+    }
+}
+
+void Receive::showAddressHistory(const QString &title,
+                                 const QList<QPair<QString, QString>> &addresses) {
+    // Prepend the current (newest) address so the modal lists it alongside the
+    // ones already awaiting payment.
+    QList<QPair<QString, QString>> fullList = addresses;
+    m_active_history_section = title == TR("receive-awaiting-segwit") ? "segwit" : "taproot";
+    if (m_active_history_section == "segwit" && m_segwit_row != nullptr &&
+        !m_segwit_row->address().isEmpty()) {
+        fullList.prepend(qMakePair(m_segwit_row->address(), m_segwit_row->labelText()));
+    }
+    if (m_active_history_section == "taproot" && m_taproot_row != nullptr &&
+        !m_taproot_row->address().isEmpty()) {
+        fullList.prepend(qMakePair(m_taproot_row->address(), m_taproot_row->labelText()));
+    }
+
+    auto *historyModal = new modal::AddressHistoryModal(title, fullList);
+    connect(historyModal, &modal::AddressHistoryModal::verifyRequested, this,
+            &Receive::onVerifyHistoryAddress, qontrol::UNIQUE);
+    connect(historyModal, &modal::AddressHistoryModal::labelEdited, this,
+            &Receive::onHistoryLabelEdited, qontrol::UNIQUE);
+    AppController::execModal(historyModal);
+}
+
+void Receive::view() {
+    auto *col = (new qontrol::Column)->pushSpacer(resolve(Spacing::XXL))->push(m_sp_section);
+
+    if (m_has_sub_accounts) {
+        auto vSpace = Spacing::S;
+        col->pushSpacer(resolve(vSpace))
+            ->push(new catalog::Separator)
+            ->pushSpacer(resolve(vSpace))
+            ->push(m_segwit_section)
+            ->pushSpacer(resolve(vSpace))
+            ->push(new catalog::Separator)
+            ->pushSpacer(resolve(vSpace))
+            ->push(m_taproot_section);
+    }
+
+    col->pushSpacer();
+
+    setScreenContent(this, m_main_widget, dashboard(TR("receive-title"), col));
+}
+
+void Receive::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::LanguageChange) {
+        retranslateUi();
+        view();
+    }
+    qontrol::Screen::changeEvent(event);
+}
+
+void Receive::retranslateUi() {
+    m_sp_section->setTitle(TR("receive-silent-payment-address"));
+    m_sp_row->setCopyText(TR("common-copy"));
+    m_sp_row->setVerifyText(TR("receive-verify-title"));
+    if (m_segwit_section != nullptr) {
+        m_segwit_section->setTitle(TR("receive-segwit-address"));
+    }
+    if (m_segwit_row != nullptr) {
+        m_segwit_row->setCopyText(TR("common-copy"));
+        m_segwit_row->setGenerateText(TR("common-generate"));
+        m_segwit_row->setVerifyText(TR("receive-verify-title"));
+        m_segwit_row->setHistoryText(TR("receive-awaiting-payment").arg(m_segwit_history.size()));
+    }
+    if (m_taproot_section != nullptr) {
+        m_taproot_section->setTitle(TR("receive-taproot-address"));
+    }
+    if (m_taproot_row != nullptr) {
+        m_taproot_row->setCopyText(TR("common-copy"));
+        m_taproot_row->setGenerateText(TR("common-generate"));
+        m_taproot_row->setVerifyText(TR("receive-verify-title"));
+        m_taproot_row->setHistoryText(TR("receive-awaiting-payment").arg(m_taproot_history.size()));
+    }
+}
+
+} // namespace view

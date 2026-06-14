@@ -1,11 +1,11 @@
 #include "AccountController.h"
 #include "AccountWidget.h"
 #include "AppController.h"
-#include "screens/Coins.h"
-#include "screens/History.h"
-#include "screens/Receive.h"
-#include "screens/Send.h"
-#include "screens/Settings.h"
+#include "views/Coins.h"
+#include "views/History.h"
+#include "views/Receive.h"
+#include "views/Send.h"
+#include "views/Settings.h"
 #include <Qontrol>
 #include <common.h>
 #include <qlogging.h>
@@ -15,6 +15,10 @@
 AccountController::AccountController(const QString &account, AccountWidget *widget) {
     m_widget = widget;
     init(account);
+}
+
+AccountController::AccountController(AccountWidget *widget) {
+    m_widget = widget;
 }
 
 auto AccountController::init(const QString &account) -> void {
@@ -177,27 +181,27 @@ auto AccountController::handleNotification(Notification notif) -> void {
 
 auto AccountController::loadPanels() -> void {
     // Create History screen panel
-    auto *historyScreen = new screen::History(this);
+    auto *historyScreen = new view::History(this);
     auto *historyPanel = new qontrol::Panel(historyScreen, "history");
     this->insertPanel(historyPanel);
 
     // Create Coins screen panel
-    auto *coinsScreen = new screen::Coins(this);
+    auto *coinsScreen = new view::Coins(this);
     auto *coinsPanel = new qontrol::Panel(coinsScreen, "coins");
     this->insertPanel(coinsPanel);
 
     // Create Receive screen panel
-    auto *receiveScreen = new screen::Receive(this);
+    auto *receiveScreen = new view::Receive(this);
     auto *receivePanel = new qontrol::Panel(receiveScreen, "receive");
     this->insertPanel(receivePanel);
 
     // Create Send screen panel
-    auto *sendScreen = new screen::Send(this);
+    auto *sendScreen = new view::Send(this);
     auto *sendPanel = new qontrol::Panel(sendScreen, "send");
     this->insertPanel(sendPanel);
 
     // Create Settings screen panel
-    auto *settingsScreen = new screen::Settings(this);
+    auto *settingsScreen = new view::Settings(this);
     auto *settingsPanel = new qontrol::Panel(settingsScreen, "settings");
     this->insertPanel(settingsPanel);
 }
@@ -281,6 +285,25 @@ auto AccountController::getSpAddress() -> rust::String {
         return m_account.value()->sp_address();
     }
     return rust::String("");
+}
+
+auto AccountController::newSegwitAddr() -> rust::String {
+    if (m_account.has_value()) {
+        return m_account.value()->new_segwit_addr();
+    }
+    return rust::String("");
+}
+
+auto AccountController::newTaprootAddr() -> rust::String {
+    if (m_account.has_value()) {
+        return m_account.value()->new_taproot_addr();
+    }
+    return rust::String("");
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+auto AccountController::hasSubAccounts() -> bool {
+    return m_account.has_value() && m_account.value()->has_sub_accounts();
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -49,7 +49,13 @@ build-local: binding
         rm -rf build; \
       fi; \
     fi
-    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DSILENT_MOCK_UI=OFF
+    cmake --build build -j$(nproc)
+    cp -f build/compile_commands.json ./compile_commands.json
+
+# Build locally on mock account data (UI preview, no backend/FFI)
+build-mock: binding
+    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DSILENT_MOCK_UI=ON
     cmake --build build -j$(nproc)
     cp -f build/compile_commands.json ./compile_commands.json
 

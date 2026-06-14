@@ -6,12 +6,8 @@
 
 class AccountController;
 
-namespace theme {
-class Label;
-}
-
-namespace theme {
-class Toggle;
+namespace catalog {
+class StatusBarItem;
 }
 
 class StatusBar : public QWidget {
@@ -38,13 +34,11 @@ protected:
 
 private:
     AccountController *m_controller = nullptr;
-    theme::Toggle *m_toggle = nullptr;
-    theme::Label *m_status_label = nullptr;
+    catalog::StatusBarItem *m_blindbit_item = nullptr;
     QString m_blindbit_url;
     bool m_connected = false;
 
-    theme::Toggle *m_electrum_toggle = nullptr;
-    theme::Label *m_electrum_status_label = nullptr;
+    catalog::StatusBarItem *m_electrum_item = nullptr;
     QString m_electrum_url;
     bool m_electrum_connected = false;
 };

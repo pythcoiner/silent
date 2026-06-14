@@ -1,25 +1,25 @@
 #include "CreateAccount.h"
-#include "screens/utils.h"
+#include "views/utils.h"
 #include "AppController.h"
 #include "common.h"
 #include "i18n/Tr.h"
-#include "theme/Button.h"
-#include "theme/ComboBox.h"
-#include "theme/Input.h"
-#include "theme/Label.h"
-#include "theme/TextEdit.h"
+#include "catalog/Button.h"
+#include "catalog/inputs/ComboBox.h"
+#include "catalog/inputs/Input.h"
+#include "catalog/display/Label.h"
+#include "catalog/inputs/TextEdit.h"
 #include <qthread.h>
 
 namespace modal {
 
-using theme::Button;
-using theme::ButtonRole;
-using theme::ComboBox;
-using theme::Input;
-using theme::InputRole;
-using theme::Label;
-using theme::LabelRole;
-using theme::TextEdit;
+using catalog::Button;
+using catalog::ButtonRole;
+using catalog::ComboBox;
+using catalog::Input;
+using catalog::InputRole;
+using catalog::Label;
+using catalog::LabelRole;
+using catalog::TextEdit;
 
 CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     setWindowTitle(TR("create-account-title"));
