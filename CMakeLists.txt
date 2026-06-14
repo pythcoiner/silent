@@ -162,6 +162,18 @@ set(SILENT_APP_SOURCES
     src/catalog/display/Badge.cpp
     src/catalog/inputs/Stepper.h
     src/catalog/inputs/Stepper.cpp
+    src/catalog/form/ValidationMark.h
+    src/catalog/form/ValidationMark.cpp
+    src/catalog/form/ValidatedInput.h
+    src/catalog/form/ValidatedInput.cpp
+    src/catalog/form/LabelledInput.h
+    src/catalog/form/LabelledInput.cpp
+    src/catalog/form/FormRow.h
+    src/catalog/form/FormRow.cpp
+    src/catalog/feedback/Tooltip.h
+    src/catalog/feedback/Tooltip.cpp
+    src/catalog/feedback/ModalStatus.h
+    src/catalog/feedback/ModalStatus.cpp
 )
 
 set(SOURCES
