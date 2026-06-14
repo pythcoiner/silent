@@ -1,5 +1,6 @@
 #include "I18nManager.h"
 #include <QApplication>
+#include <QDir>
 #include <QFile>
 #include <QLocale>
 #include <QLoggingCategory>
@@ -69,7 +70,7 @@ auto parseQuotedValues(const QString &line) -> QStringList {
 
 class CatalogTranslator final : public QTranslator {
 public:
-    auto loadLangResource(const QString &resource_path) -> bool {
+    auto loadLangResource(const QString &resource_path, const QString &id_prefix = QString()) -> bool {
         m_messages.clear();
 
         QFile file(resource_path);
@@ -98,7 +99,7 @@ public:
                         if (!blockValues.isEmpty()) {
                             QString picked = blockValues.last();
                             if (picked != "NONE") {
-                                m_messages.insert(currentId, picked);
+                                m_messages.insert(id_prefix + currentId, picked);
                             }
                         }
                         currentId.clear();
@@ -119,7 +120,7 @@ public:
                 }
                 QString picked = values.last();
                 if (picked != "NONE") {
-                    m_messages.insert(msgId, picked);
+                    m_messages.insert(id_prefix + msgId, picked);
                 }
                 continue;
             }
@@ -249,12 +250,75 @@ auto I18nManager::applyLocale(const QString &locale, bool persist) -> bool {
         }
     }
 
+    for (auto it = m_plugin_translators.begin(); it != m_plugin_translators.end(); ++it) {
+        auto &entry = it.value();
+        auto *pluginTranslator = static_cast<CatalogTranslator *>(entry.translator);
+        if (pluginTranslator == nullptr) {
+            continue;
+        }
+
+        if (entry.installed) {
+            QApplication::removeTranslator(entry.translator);
+            entry.installed = false;
+        }
+
+        bool pluginLoaded = false;
+        const QString prefix = entry.plugin_id + '.';
+        for (const auto &candidate : candidates) {
+            auto filePath = QDir(entry.dir).filePath(QString("silent_%1.lang").arg(candidate));
+            if (pluginTranslator->loadLangResource(filePath, prefix)) {
+                pluginLoaded = true;
+                break;
+            }
+        }
+
+        if (pluginLoaded) {
+            entry.installed = QApplication::installTranslator(entry.translator);
+        }
+    }
+
     (void)persist;  // for now we dont persist yet
 
     emit languageChanged(m_current_locale, success);
     qInfo() << "Applied locale request=" << locale << " active=" << m_current_locale
             << " success=" << success;
     return success;
+}
+
+auto I18nManager::registerPluginTranslations(const QString &plugin_id, const QString &dir) -> bool {
+    if (m_app == nullptr) {
+        qWarning() << "registerPluginTranslations called before init";
+        return false;
+    }
+
+    QString normalizedId = plugin_id.trimmed();
+    QString normalizedDir = dir.trimmed();
+    if (normalizedId.isEmpty() || normalizedDir.isEmpty()) {
+        return false;
+    }
+
+    unregisterPluginTranslations(normalizedId);
+
+    PluginTranslatorEntry entry;
+    entry.translator = new CatalogTranslator();
+    entry.plugin_id = normalizedId;
+    entry.dir = normalizedDir;
+
+    m_plugin_translators.insert(normalizedId, entry);
+    return applyLocale(m_current_locale.isEmpty() ? QStringLiteral("en") : m_current_locale, false);
+}
+
+void I18nManager::unregisterPluginTranslations(const QString &plugin_id) {
+    QString normalizedId = plugin_id.trimmed();
+    if (normalizedId.isEmpty() || !m_plugin_translators.contains(normalizedId)) {
+        return;
+    }
+
+    auto entry = m_plugin_translators.take(normalizedId);
+    if (entry.installed && entry.translator != nullptr) {
+        QApplication::removeTranslator(entry.translator);
+    }
+    delete entry.translator;
 }
 
 } // namespace i18n
