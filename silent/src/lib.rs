@@ -3,6 +3,7 @@
 //! This library provides C++ bindings for the bwk-sp Silent Payment implementation.
 
 pub mod account;
+pub mod app_state;
 pub mod config;
 pub mod sync_estimator;
 
@@ -270,6 +271,18 @@ mod ffi {
         /// Fetch default regtest infrastructure addresses from minta API.
         /// Blocking HTTP call - should be called from a background thread.
         fn get_regtest_defaults() -> RegtestDefaults;
+
+        /// List enabled app-level plugin IDs.
+        fn app_enabled_plugins() -> Vec<String>;
+
+        /// Enable or disable a plugin ID at app level.
+        fn app_set_plugin_enabled(id: String, enabled: bool);
+
+        /// Get the active app theme name.
+        fn app_active_theme() -> String;
+
+        /// Set the active app theme name.
+        fn app_set_active_theme(name: String);
     }
 
     // ===== Config Methods =====
@@ -743,6 +756,9 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
 
 // Re-export main types
 pub use account::{new_account, Account, NotificationReceiver, Poll, PsbtResult};
+pub use app_state::{
+    app_active_theme, app_enabled_plugins, app_set_active_theme, app_set_plugin_enabled,
+};
 pub use config::{config_from_file, delete_config, list_configs, new_config, set_datadir, Config};
 pub use ffi::{
     BackendInfo, LogLevel, Network, Notification, NotificationFlag, Output, PsbtValidation,
