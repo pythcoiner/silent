@@ -1,14 +1,27 @@
 #include "Theme.h"
-#include "Button.h"
-#include "Checkbox.h"
-#include "ComboBox.h"
-#include "Display.h"
+#include "catalog/Button.h"
+#include "catalog/display/Badge.h"
+#include "catalog/BalanceHeader.h"
+#include "catalog/containers/Card.h"
+#include "catalog/inputs/Checkbox.h"
+#include "catalog/inputs/ComboBox.h"
+#include "catalog/display/Display.h"
 #include "Icon.h"
-#include "Input.h"
-#include "Label.h"
-#include "Tab.h"
-#include "TextEdit.h"
-#include "Toggle.h"
+#include "catalog/inputs/Input.h"
+#include "catalog/display/Label.h"
+#include "catalog/containers/ScrollArea.h"
+#include "catalog/containers/Separator.h"
+#include "catalog/SelectRow.h"
+#include "catalog/containers/Tab.h"
+#include "catalog/Table.h"
+#include "catalog/inputs/TextEdit.h"
+#include "catalog/feedback/Tooltip.h"
+#include "catalog/inputs/Toggle.h"
+#include "catalog/containers/FoldSection.h"
+#include "catalog/form/LabelledInput.h"
+#include "catalog/panels/receive/IndexPill.h"
+#include "catalog/form/ValidatedInput.h"
+#include "catalog/form/ValidationMark.h"
 #include <QApplication>
 #include <QPainter>
 #include <QPalette>
@@ -125,7 +138,7 @@ void Theme::apply() {
     pal.setColor(QPalette::BrightText, p.error);
     pal.setColor(QPalette::Link, p.accent);
     pal.setColor(QPalette::Highlight, p.accent);
-    pal.setColor(QPalette::HighlightedText, color::WHITE);
+    pal.setColor(QPalette::HighlightedText, p.onAccent);
     pal.setColor(QPalette::PlaceholderText, p.textMuted);
     pal.setColor(QPalette::Light, p.surfaceHover);
     pal.setColor(QPalette::Midlight, p.borderLight);
@@ -142,29 +155,39 @@ void Theme::apply() {
 
     // Supplementary QSS for elements QPalette doesn't fully cover
     auto qss = QString(
-                   // --- Table ---
-                   "QHeaderView::section { background: %1; color: %2; padding: 4px 8px; "
-                   "  border: 1px solid %3; }"
-                   "QTableWidget { gridline-color: %4; }"
+                   // --- Table (flat: header bottom-rule only, no gridlines) ---
+                   "QHeaderView::section { background: transparent; color: %1; padding: 4px 8px; "
+                   "  border: none; border-bottom: 1px solid %2; }"
+                   "QTableWidget { gridline-color: transparent; }"
                    // --- ScrollArea ---
                    "QScrollArea { border: none; }"
-                   // --- Tooltip ---
-                   "QToolTip { background: %5; color: %6; border: 1px solid %3; padding: 4px; }")
-                   .arg(p.bgSecondary.name())   // %1
-                   .arg(p.textSecondary.name()) // %2
-                   .arg(p.border.name())        // %3
-                   .arg(p.borderLight.name())   // %4
-                   .arg(p.surface.name())       // %5
-                   .arg(p.text.name());         // %6
+                   // --- Tooltip (dark bubble per design) ---
+                   "QToolTip { background: %3; color: %4; border: none; padding: 5px 9px; }")
+                   .arg(p.textSecondary.name()) // %1
+                   .arg(p.border.name())        // %2
+                   .arg(p.text.name())          // %3 tooltip bg
+                   .arg(p.bg.name());           // %4 tooltip fg
 
-    qss += theme::Tab::qss(p);
-    qss += theme::Button::qss(p);
-    qss += theme::Label::qss(p);
-    qss += theme::Input::qss(p);
-    qss += theme::Display::qss(p);
-    qss += theme::Checkbox::qss(p);
-    qss += theme::ComboBox::qss(p);
-    qss += theme::TextEdit::qss(p);
+    qss += catalog::Tab::qss(p);
+    qss += catalog::Button::qss(p);
+    qss += catalog::Label::qss(p);
+    qss += catalog::Input::qss(p);
+    qss += catalog::Display::qss(p);
+    qss += catalog::Checkbox::qss(p);
+    qss += catalog::ComboBox::qss(p);
+    qss += catalog::TextEdit::qss(p);
+    qss += catalog::Separator::qss(p);
+    qss += catalog::ScrollArea::qss(p);
+    qss += catalog::Card::qss(p);
+    qss += catalog::Badge::qss(p);
+    qss += catalog::ValidationMark::qss(p);
+    qss += catalog::Table::qss(p);
+    qss += catalog::SelectRow::qss(p);
+    qss += catalog::Tooltip::qss(p);
+    qss += catalog::BalanceHeader::qss(p);
+    qss += catalog::LabelledInput::qss(p);
+    qss += catalog::FoldSection::qss(p);
+    qss += catalog::IndexPill::qss(p);
 
     qApp->setStyleSheet(qss);
 }
