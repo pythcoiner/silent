@@ -2,12 +2,21 @@
 #include "MainWindow.h"
 #include "i18n/I18nManager.h"
 #include "metatypes.h"
-#include "plugin/sdk/types.h"
+#include "modules/sp/SpPlugin.h"
+#include "interfaces/types.h"
+#include "interfaces/host.h"
 #include "resources/font/noto_sans.h"
 #include "theme/Theme.h"
+#include <common.h>
 #include <QApplication>
 #include <QFontDatabase>
 #include <QStyleFactory>
+#include <QtPlugin>
+#include <memory>
+
+#ifdef SILENT_STATIC_PLUGINS
+Q_IMPORT_PLUGIN(SpPlugin)
+#endif
 
 auto main(int argc, char *argv[]) -> int {
     QApplication app(argc, argv);
@@ -29,9 +38,8 @@ auto main(int argc, char *argv[]) -> int {
     // Initialize Rust logging (Debug level for verbose output)
     init_logging(LogLevel::Error);
 
-    // Initialize and apply theme
+    // Initialize and apply default theme; persisted provider themes are applied by AppController.
     Theme::init();
-    Theme::get()->setMode(ThemeMode::Light);
     Theme::get()->apply();
 
     // Initialize i18n before creating UI widgets
@@ -40,6 +48,10 @@ auto main(int argc, char *argv[]) -> int {
     // Initialize application controller
     AppController::init();
     auto *controller = AppController::get();
+
+    // Initialize host singleton and register built-in plugins before controller state setup.
+    Host::get();
+    controller->registerBuiltinPlugin(std::make_unique<SpPlugin>());
 
     // Create and show main window
     auto *window = new MainWindow();

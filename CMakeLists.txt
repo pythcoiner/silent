@@ -4,6 +4,7 @@ set(BIN silent)
 project(${BIN} VERSION 0.1.0 LANGUAGES CXX)
 
 option(SILENT_I18N_TRACE_IDS "Emit i18n ID pragma trace markers" OFF)
+option(SILENT_BUILD_HOST_SMOKE "Build the plugin host smoke test" OFF)
 
 # Build silent Rust crate before main project
 add_custom_target(
@@ -44,8 +45,9 @@ add_subdirectory(src/interfaces)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
-set(SOURCES
-    src/main.cpp
+# Shared application sources (everything except the executable entry point).
+# Reused by the optional host smoke target so it links the real Host/PluginRegistry.
+set(SILENT_APP_SOURCES
     src/QtAbiSurface.cpp
     src/host/Host.h
     src/host/Host.cpp
@@ -126,6 +128,11 @@ set(SOURCES
     src/theme/ComboBox.cpp
     src/theme/TextEdit.h
     src/theme/TextEdit.cpp
+)
+
+set(SOURCES
+    src/main.cpp
+    ${SILENT_APP_SOURCES}
 )
 
 # Discover all translator-editable catalogs.
@@ -272,3 +279,71 @@ set_target_properties(${BIN} PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
+
+# Opt-in plugin host/registry smoke test. OFF by default so it never affects the
+# normal build. When ON it reuses the shared application sources so it links the
+# real Host and PluginRegistry, and drives them headless with mock plugins.
+if(SILENT_BUILD_HOST_SMOKE)
+    set(SMOKE host_smoke)
+
+    qt_add_executable(${SMOKE}
+        tests/host/host_smoke.cpp
+        tests/host/MockPlugin.h
+        ${SILENT_APP_SOURCES}
+    )
+
+    add_dependencies(${SMOKE} RunBeforeBuild qontrol)
+
+    target_include_directories(${SMOKE}
+      PRIVATE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/modules/sp>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/lib/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/tests/host>
+    )
+
+    target_link_libraries(${SMOKE}
+        PRIVATE
+        silent_rust
+        ssl
+        crypto
+        pthread
+        dl
+        udev
+    )
+
+    if(UNIX AND NOT APPLE AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+        target_link_options(${SMOKE} PRIVATE
+            "-Wl,--export-dynamic"
+        )
+
+        set(SMOKE_QT_AND_QONTROL_LIBS
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::Svg
+            qontrol
+        )
+
+        set(SMOKE_ELF_LINK_LIBS)
+        foreach(SMOKE_LIB ${SMOKE_QT_AND_QONTROL_LIBS})
+            get_target_property(SMOKE_LIB_TYPE ${SMOKE_LIB} TYPE)
+            if(SMOKE_LIB_TYPE STREQUAL "STATIC_LIBRARY")
+                list(APPEND SMOKE_ELF_LINK_LIBS "$<LINK_LIBRARY:WHOLE_ARCHIVE,${SMOKE_LIB}>")
+            else()
+                list(APPEND SMOKE_ELF_LINK_LIBS "${SMOKE_LIB}")
+            endif()
+        endforeach()
+
+        target_link_libraries(${SMOKE} PRIVATE ${SMOKE_ELF_LINK_LIBS})
+    else()
+        target_link_libraries(${SMOKE}
+            PRIVATE
+            Qt6::Core
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::Svg
+            qontrol
+        )
+    endif()
+endif()
