@@ -14,6 +14,7 @@ coins-value => "Value" => "Valor"
 common-apply => "Apply" => "Aplicar"
 common-cancel => "Cancel" => "Cancelar"
 common-clear => "Clear" => "Limpar"
+common-close => "Close" => "Fechar"
 common-confirm => "Confirm" => "Confirmar"
 common-copy => "Copy" => "Copiar"
 common-delete => "Delete" => "Excluir"
@@ -84,7 +85,7 @@ main-menu-tab => "+" => "+"
 main-window-title
 => "Silent - Silent Payments Wallet"
 => "Silent - Silent Payments Wallet";;
-menu-create-wallet => "+ Create New Wallet" => "+ Criar nova carteira"
+menu-custom => "Custom" => "Personalizado"
 menu-delete-wallet-tooltip => "Delete wallet" => "Excluir carteira"
 network-bitcoin => "Bitcoin" => "Bitcoin"
 network-regtest => "Regtest" => "Regtest"
@@ -151,12 +152,14 @@ settings-disconnect-electrum => "Disconnect Electrum" => "Desconectar Electrum"
 settings-electrum-empty => "Electrum address is empty" => "Endereco Electrum vazio"
 settings-electrum-server => "Electrum Server:" => "Servidor Electrum:"
 settings-electrum-test-failed => "Electrum Test Failed" => "Teste Electrum falhou"
+settings-extension-settings => "Extension Settings" => "Configuracoes de extensoes"
 settings-failed-start-electrum
 => "Failed to start electrum"
 => "Failed to start electrum";;
 settings-failed-start-scanner
 => "Failed to start scanner"
 => "Failed to start scanner";;
+settings-general => "General" => "Geral"
 settings-language => "Language:" => "Idioma:"
 settings-language-applied => "Language applied." => "Idioma aplicado."
 settings-language-saved-restart
@@ -178,8 +181,22 @@ settings-placeholder-electrum
 => "host:port (e.g. 127.0.0.1:50001)"
 => "host:port (e.g. 127.0.0.1:50001)";;
 settings-placeholder-p2p => "127.0.0.1:8333" => "127.0.0.1:8333"
+settings-plugin-manager => "Plugin Manager" => "Gerenciador de plugins"
+settings-registry-unavailable
+=> "Plugin registry unavailable"
+=> "Registro de plugins indisponivel";;
 settings-save => "Save Settings" => "Salvar configuracoes"
+settings-scan-plugins => "Scan for plugins" => "Procurar plugins"
+settings-section-fallback => "Section %1" => "Secao %1"
 settings-status => "Status:" => "Status:"
+settings-theme => "Theme:" => "Tema:"
+settings-theme-dark => "Dark" => "Escuro"
+settings-theme-light => "Light" => "Claro"
+settings-title => "Settings" => "Configuracoes"
+sp-create-account => "Create New Account" => "Criar nova conta"
+sp-instance-not-found
+=> "SP instance not found: %1"
+=> "Instancia SP nao encontrada: %1";;
 status-connected-blindbit
 => "Connected to blindbit-oracle at %1"
 => "Connected to blindbit-oracle at %1";;

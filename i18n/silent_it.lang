@@ -14,6 +14,7 @@ coins-value => "Value" => "Valore"
 common-apply => "Apply" => "Applica"
 common-cancel => "Cancel" => "Annulla"
 common-clear => "Clear" => "Pulisci"
+common-close => "Close" => "Chiudi"
 common-confirm => "Confirm" => "Conferma"
 common-copy => "Copy" => "Copia"
 common-delete => "Delete" => "Elimina"
@@ -84,7 +85,7 @@ main-menu-tab => "+" => "+"
 main-window-title
 => "Silent - Silent Payments Wallet"
 => "Silent - Wallet Silent Payments";;
-menu-create-wallet => "+ Create New Wallet" => "+ Crea nuovo wallet"
+menu-custom => "Custom" => "Personalizzato"
 menu-delete-wallet-tooltip => "Delete wallet" => "Elimina wallet"
 network-bitcoin => "Bitcoin" => "Bitcoin"
 network-regtest => "Regtest" => "Regtest"
@@ -151,10 +152,12 @@ settings-disconnect-electrum => "Disconnect Electrum" => "Disconnetti Electrum"
 settings-electrum-empty => "Electrum address is empty" => "Indirizzo Electrum vuoto"
 settings-electrum-server => "Electrum Server:" => "Server Electrum:"
 settings-electrum-test-failed => "Electrum Test Failed" => "Test Electrum fallito"
+settings-extension-settings => "Extension Settings" => "Impostazioni estensioni"
 settings-failed-start-electrum
 => "Failed to start electrum"
 => "Avvio Electrum fallito";;
 settings-failed-start-scanner => "Failed to start scanner" => "Avvio scanner fallito"
+settings-general => "General" => "Generale"
 settings-language => "Language:" => "Lingua:"
 settings-language-applied => "Language applied." => "Lingua applicata."
 settings-language-saved-restart
@@ -176,8 +179,20 @@ settings-placeholder-electrum
 => "host:port (e.g. 127.0.0.1:50001)"
 => "host:port (es. 127.0.0.1:50001)";;
 settings-placeholder-p2p => "127.0.0.1:8333" => "127.0.0.1:8333"
+settings-plugin-manager => "Plugin Manager" => "Gestione plugin"
+settings-registry-unavailable
+=> "Plugin registry unavailable"
+=> "Registro plugin non disponibile";;
 settings-save => "Save Settings" => "Salva impostazioni"
+settings-scan-plugins => "Scan for plugins" => "Cerca plugin"
+settings-section-fallback => "Section %1" => "Sezione %1"
 settings-status => "Status:" => "Stato:"
+settings-theme => "Theme:" => "Tema:"
+settings-theme-dark => "Dark" => "Scuro"
+settings-theme-light => "Light" => "Chiaro"
+settings-title => "Settings" => "Impostazioni"
+sp-create-account => "Create New Account" => "Crea nuovo account"
+sp-instance-not-found => "SP instance not found: %1" => "Istanza SP non trovata: %1"
 status-connected-blindbit
 => "Connected to blindbit-oracle at %1"
 => "Connesso a blindbit-oracle su %1";;

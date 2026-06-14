@@ -14,6 +14,7 @@ coins-value => "Value" => "Valeur"
 common-apply => "Apply" => "Appliquer"
 common-cancel => "Cancel" => "Annuler"
 common-clear => "Clear" => "Effacer"
+common-close => "Close" => "Fermer"
 common-confirm => "Confirm" => "Confirmer"
 common-copy => "Copy" => "Copier"
 common-delete => "Delete" => "Supprimer"
@@ -84,7 +85,7 @@ main-menu-tab => "+" => "+"
 main-window-title
 => "Silent - Silent Payments Wallet"
 => "Silent - Wallet Silent Payments";;
-menu-create-wallet => "+ Create New Wallet" => "+ Creer un nouveau wallet"
+menu-custom => "Custom" => "Personnalise"
 menu-delete-wallet-tooltip => "Delete wallet" => "Supprimer le wallet"
 network-bitcoin => "Bitcoin" => "Bitcoin"
 network-regtest => "Regtest" => "Regtest"
@@ -155,12 +156,14 @@ settings-electrum-empty
 => "L'adresse Electrum est vide";;
 settings-electrum-server => "Electrum Server:" => "Serveur Electrum:"
 settings-electrum-test-failed => "Electrum Test Failed" => "Test Electrum echoue"
+settings-extension-settings => "Extension Settings" => "Parametres des extensions"
 settings-failed-start-electrum
 => "Failed to start electrum"
 => "Echec du demarrage Electrum";;
 settings-failed-start-scanner
 => "Failed to start scanner"
 => "Echec du demarrage du scanner";;
+settings-general => "General" => "General"
 settings-language => "Language:" => "Langue:"
 settings-language-applied => "Language applied." => "Langue appliquee."
 settings-language-saved-restart
@@ -184,8 +187,20 @@ settings-placeholder-electrum
 => "host:port (e.g. 127.0.0.1:50001)"
 => "hote:port (ex. 127.0.0.1:50001)";;
 settings-placeholder-p2p => "127.0.0.1:8333" => "127.0.0.1:8333"
+settings-plugin-manager => "Plugin Manager" => "Gestionnaire de plugins"
+settings-registry-unavailable
+=> "Plugin registry unavailable"
+=> "Registre de plugins indisponible";;
 settings-save => "Save Settings" => "Enregistrer les parametres"
+settings-scan-plugins => "Scan for plugins" => "Rechercher des plugins"
+settings-section-fallback => "Section %1" => "Section %1"
 settings-status => "Status:" => "Statut:"
+settings-theme => "Theme:" => "Theme:"
+settings-theme-dark => "Dark" => "Sombre"
+settings-theme-light => "Light" => "Clair"
+settings-title => "Settings" => "Parametres"
+sp-create-account => "Create New Account" => "Creer un nouveau compte"
+sp-instance-not-found => "SP instance not found: %1" => "Instance SP introuvable: %1"
 status-connected-blindbit
 => "Connected to blindbit-oracle at %1"
 => "Connecte a blindbit-oracle sur %1";;
