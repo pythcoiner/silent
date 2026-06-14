@@ -106,6 +106,39 @@ Every external plugin ships as **two files**:
       silent_fr.lang
 ```
 
+### Out-of-tree Plugin Repo Pattern
+
+Plugin projects are expected to live in their own repositories and consume Silent as
+a git submodule.
+
+Recommended layout:
+
+```text
+my-plugin-repo/
+  CMakeLists.txt
+  plugins/
+    myplugin/
+      CMakeLists.txt
+      MyPlugin.cpp
+      myplugin.json
+      i18n/
+        silent_en.lang
+  third_party/
+    silent/                 # git submodule
+```
+
+The plugin build includes headers from:
+
+```text
+third_party/silent/src
+```
+
+Reference implementation:
+
+```text
+https://github.com/pythcoiner/silent-plugin
+```
+
 The host **reads the sidecar metadata before the library is ever loaded.** This
 read-before-load ordering is the load-time boundary: a disabled plugin is
 *discovered* (its metadata is listed in Settings) but its library is **never
@@ -150,7 +183,15 @@ keeps no instance state. The module exposes:
   modules).
 - `startInstance(id)`: bring an instance up. The module constructs the `IInstance`
   (on its own thread), calls `host->registerInstance(id, instance)`, and the instance
-  then pushes any UI it wants and exposes its `implemented()` capabilities.
+  then pushes any UI it wants and exposes its `implemented()` capabilities. The host
+  starts launcher/auto-start instances through the registry so each is **attributed to
+  its owning plugin**; that ownership is what lets the host tear them down cleanly on
+  disable.
+- `deleteInstance(id)`: drop an instance's **persisted state**. The host removes the
+  live instance and its pushed UI itself, then calls this so the module deletes its
+  own on-disk state (the module owns persistence). Default is a no-op for modules that
+  persist nothing. The launcher offers a delete (trash) affordance for a module's
+  startable instances; confirming it routes here.
 
 (`meta()` is the module's only synchronous method: a hardcoded `const`, like a
 capability's `implemented()`. Everything else is a request, `ReqId` + signal.)
@@ -233,6 +274,9 @@ state from another thread would be a data race).
   **signal** carrying that same `ReqId`. Because *every* such method is a request,
   method names carry **no `request` prefix**: `coins()`, `signWithDescriptor(...)`,
   `list()` are all requests by definition.
+- Plugins should emit request results asynchronously (for example, `QTimer::singleShot(0, ...)`)
+  so callers can register pending `ReqId` state first. The host is defensive and also
+  tolerates accidental synchronous emissions.
 
 ```cpp
 using ReqId = quint64;   // correlates a request with its result signal
@@ -289,6 +333,7 @@ public:
     virtual ReqId list()      = 0;          // -> instances(req, [(id, name)])
     virtual ReqId autoStart() = 0;          // -> autoStart(req, [id]) to start on load
     virtual void  startInstance(const QString &id) = 0;  // construct + register it
+    virtual void  deleteInstance(const QString &id) {}   // drop persisted state (default no-op)
 signals:
     void instances(ReqId, QList<QPair<QString,QString>>);  // (id, name) it can start
     void autoStart(ReqId, QStringList);                    // ids to start immediately

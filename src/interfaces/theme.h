@@ -9,7 +9,7 @@
 
 #include <theme/Palette.h>
 
-#include <sdk/types.h>
+#include <interfaces/types.h>
 
 class IThemeProvider : public QObject {
     Q_OBJECT

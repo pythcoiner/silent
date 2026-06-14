@@ -382,6 +382,14 @@ CARGO_EOF
               find . -name "silent*" -type f || true
               exit 1
             fi
+
+            # Windows host import library: plugin DLLs link against this to resolve
+            # the host ABI (interfaces + qontrol + the Qt surface the host uses).
+            implib="$(find . -name libsilent_host_exports.a -print -quit || true)"
+            echo "host import library: ''${implib:-<not found>}"
+            if [ -n "$implib" ]; then
+              install -D "$implib" $out/lib/libsilent_host_exports.a
+            fi
           '';
         };
 
@@ -408,6 +416,8 @@ CARGO_EOF
       linux = buildGui {
         rustLib = linuxRustLib;
         qt6Static = linuxQt6;
+        # Keep host ABI surface visible for runtime-loaded plugins.
+        extraCmakeFlags = [ "-DCMAKE_EXE_LINKER_FLAGS=-Wl,--export-dynamic" ];
       };
 
       linuxTrace = buildGui {
@@ -465,6 +475,12 @@ CARGO_EOF
         qt6Static = windowsQt6;
         stdenvOverride = mingwPkgs.stdenv;
         guiBuildInputs = windowsGuiBuildInputs;
+        # Windows host-symbol export for plugin DLLs is wired in CMakeLists.txt:
+        # a curated export table (host ABI + qontrol + the full QtCore/Gui/Widgets/
+        # Svg ABI) is generated from the libraries and produces
+        # libsilent_host_exports.a. This stays under the PE 64K export-ordinal cap
+        # that plain --export-all-symbols overflows (all Qt modules total >72K).
+        extraCmakeFlags = [ ];
         # Replace Linux-specific link libraries with Windows equivalents
         postUnpackExtra = ''
           sed -i '/^\s*ssl$/d' CMakeLists.txt
@@ -472,8 +488,11 @@ CARGO_EOF
           sed -i '/^\s*pthread$/d' CMakeLists.txt
           sed -i '/^\s*dl$/d' CMakeLists.txt
           sed -i '/^\s*udev$/d' CMakeLists.txt
-          # Add Windows system libraries after the silent_rust line in target_link_libraries
-          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32/; }' CMakeLists.txt
+          # Add Windows system libraries after the silent_rust line in target_link_libraries.
+          # setupapi/cfgmgr32 back the rust serialport crate (SetupDi*/CM_Get*); they were
+          # previously pulled in transitively by Qt, but whole-archiving Qt for the plugin
+          # export drops that propagation, so link them explicitly.
+          sed -i '/target_link_libraries/,/)/{ s/^\(\s*\)silent_rust$/\1silent_rust\n\1ws2_32\n\1bcrypt\n\1userenv\n\1ntdll\n\1crypt32\n\1setupapi\n\1cfgmgr32/; }' CMakeLists.txt
         '';
       };
 
@@ -712,6 +731,8 @@ TOOLCHAIN
           cmakeFlags="$cmakeFlags -DCMAKE_TOOLCHAIN_FILE=$TMPDIR/macos-gui-cross/toolchain.cmake -DCMAKE_FIND_ROOT_PATH=${macosArmQt6};${sdkRoot}"
         '';
         postUnpackExtra = ''
+          # macOS plugin linking uses -bundle_loader + -undefined dynamic_lookup.
+          # That applies when building plugin bundles, not the silent host binary.
           ${macosGuiPostUnpack "aarch64"}
           sed -i '/^\s*ssl$/d' CMakeLists.txt
           sed -i '/^\s*crypto$/d' CMakeLists.txt
@@ -763,6 +784,8 @@ TOOLCHAIN
           cmakeFlags="$cmakeFlags -DCMAKE_TOOLCHAIN_FILE=$TMPDIR/macos-gui-cross/toolchain.cmake -DCMAKE_FIND_ROOT_PATH=${macosX86Qt6};${sdkRoot}"
         '';
         postUnpackExtra = ''
+          # macOS plugin linking uses -bundle_loader + -undefined dynamic_lookup.
+          # That applies when building plugin bundles, not the silent host binary.
           ${macosGuiPostUnpack "x86_64"}
           sed -i '/^\s*ssl$/d' CMakeLists.txt
           sed -i '/^\s*crypto$/d' CMakeLists.txt
