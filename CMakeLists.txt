@@ -128,6 +128,26 @@ set(SILENT_APP_SOURCES
     src/theme/ComboBox.cpp
     src/theme/TextEdit.h
     src/theme/TextEdit.cpp
+    src/catalog/Button.h
+    src/catalog/Button.cpp
+    src/catalog/CopyButton.h
+    src/catalog/CopyButton.cpp
+    src/catalog/display/Label.h
+    src/catalog/display/Label.cpp
+    src/catalog/display/Display.h
+    src/catalog/display/Display.cpp
+    src/catalog/inputs/Input.h
+    src/catalog/inputs/Input.cpp
+    src/catalog/inputs/Checkbox.h
+    src/catalog/inputs/Checkbox.cpp
+    src/catalog/inputs/Toggle.h
+    src/catalog/inputs/Toggle.cpp
+    src/catalog/inputs/ComboBox.h
+    src/catalog/inputs/ComboBox.cpp
+    src/catalog/inputs/TextEdit.h
+    src/catalog/inputs/TextEdit.cpp
+    src/catalog/containers/Tab.h
+    src/catalog/containers/Tab.cpp
 )
 
 set(SOURCES
