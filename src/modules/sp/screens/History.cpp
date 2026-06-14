@@ -3,7 +3,7 @@
 #include "i18n/Tr.h"
 #include "theme/Display.h"
 #include "theme/Label.h"
-#include "utils.h"
+#include "screens/utils.h"
 #include <Qontrol>
 #include <common.h>
 #include <silent.h>
@@ -42,13 +42,13 @@ void History::init() {
     m_h_amount->setContentsMargins(hPad, 0, 0, 0);
 }
 
-void History::recvPayload(const CoinState &state) {
+void History::onRecvPayload(const CoinState &state) {
     m_state = state;
     this->view();
 }
 
 void History::doConnect() {
-    connect(m_controller, &AccountController::updateCoins, this, &History::recvPayload,
+    connect(m_controller, &AccountController::updateCoins, this, &History::onRecvPayload,
             qontrol::UNIQUE);
 }
 

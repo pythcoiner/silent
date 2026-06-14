@@ -1,5 +1,5 @@
 #include "CreateAccount.h"
-#include "../utils.h"
+#include "screens/utils.h"
 #include "AppController.h"
 #include "common.h"
 #include "i18n/Tr.h"
@@ -91,8 +91,6 @@ void CreateAccount::doConnect() {
             qontrol::UNIQUE);
     connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate, qontrol::UNIQUE);
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
-    connect(this, &CreateAccount::createAccount, AppController::get(),
-            &AppController::createAccount, qontrol::UNIQUE);
     connect(this, &CreateAccount::backendInfoReady, this, &CreateAccount::onBackendInfoReady,
             qontrol::UNIQUE);
     connect(this, &CreateAccount::p2pTestReady, this, &CreateAccount::onP2pTestReady,
@@ -180,7 +178,13 @@ void CreateAccount::onCreate() {
     auto electrumUrl = m_electrum_input->text().trimmed();
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
 
-    emit createAccount(name, mnemonic, network, blindbitUrl, p2pNode, electrumUrl);
+    auto config =
+        new_config(rust::String(name.toStdString()), network, rust::String(mnemonic.toStdString()),
+                   rust::String(blindbitUrl.toStdString()), rust::String(p2pNode.toStdString()),
+                   rust::String(electrumUrl.toStdString()), 546, rust::String("sp"));
+    config->to_file();
+
+    AppController::get()->onAccountCreated(name);
     accept();
 }
 

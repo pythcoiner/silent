@@ -39,15 +39,15 @@ signals:
     void electrumTestReady(ConnectionResult result);
 
 public slots:
-    void actionSave();
-    void actionToggleBlindbit();
-    void actionToggleElectrum();
-    void actionTestBackend();
-    void actionTestP2p();
-    void actionTestElectrum();
-    void actionApplyLanguage();
-    void updateBlindbitToggleButton(bool running);
-    void updateElectrumToggleButton();
+    void onActionSave();
+    void onActionToggleBlindbit();
+    void onActionToggleElectrum();
+    void onActionTestBackend();
+    void onActionTestP2p();
+    void onActionTestElectrum();
+    void onActionApplyLanguage();
+    void onUpdateBlindbitToggleButton(bool running);
+    void onUpdateElectrumToggleButton();
     void onScanProgress(uint32_t height, uint32_t tip);
 
 protected:

@@ -21,13 +21,13 @@ public:
     explicit StatusBar(AccountController *controller, QWidget *parent = nullptr);
 
 public slots:
-    void updateConnectionState(bool connected);
-    void updateScanProgress(uint32_t height, uint32_t tip);
-    void updateWaitingForBlocks(uint32_t tip_height);
-    void updateScanError(rust::String error);
+    void onUpdateConnectionState(bool connected);
+    void onUpdateScanProgress(uint32_t height, uint32_t tip);
+    void onUpdateWaitingForBlocks(uint32_t tip_height);
+    void onUpdateScanError(rust::String error);
     void onElectrumConnected(const QString &address);
     void onElectrumDisconnected();
-    void reloadUrl();
+    void onReloadUrl();
 
 protected:
     void onToggled(bool checked);
