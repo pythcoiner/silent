@@ -182,6 +182,18 @@ set(SILENT_APP_SOURCES
     src/catalog/StatusBarItem.cpp
     src/catalog/BalanceHeader.h
     src/catalog/BalanceHeader.cpp
+    src/catalog/panels/receive/ChunkedAddress.h
+    src/catalog/panels/receive/ChunkedAddress.cpp
+    src/catalog/panels/receive/LabelRow.h
+    src/catalog/panels/receive/LabelRow.cpp
+    src/catalog/panels/receive/IndexPill.h
+    src/catalog/panels/receive/IndexPill.cpp
+    src/catalog/panels/receive/QrCode.h
+    src/catalog/panels/receive/QrCode.cpp
+    src/catalog/panels/receive/AddressRow.h
+    src/catalog/panels/receive/AddressRow.cpp
+    src/catalog/panels/send/TxFlow.h
+    src/catalog/panels/send/TxFlow.cpp
 )
 
 set(SOURCES
