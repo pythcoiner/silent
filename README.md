@@ -27,6 +27,11 @@ Qt6 GUI (C++)  --CXX FFI-->  Rust Backend (bwk-sp)
 - Local development uses system Qt; release builds use Nix flakes.
 - Release binaries are produced in `./result/bin/`.
 
+## External Plugin Example
+
+- Standalone external plugin repository:
+  - https://github.com/pythcoiner/silent-plugin
+
 ## i18n Quick Rules
 
 - Use `TR("id")` for stable ID-based singular UI text.

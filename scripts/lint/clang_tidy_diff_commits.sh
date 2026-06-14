@@ -74,7 +74,10 @@ for commit in "${commits[@]}"; do
         continue
     fi
 
-    mapfile -t changed_files < <(git diff --name-only "$parent" "$commit" -- ':(glob)src/**/*.cpp' ':(glob)src/**/*.h')
+    # Only lint files that still exist in the working tree: this script tidies the
+    # HEAD version of each changed file, so a file added by this commit but later
+    # deleted (or renamed away) at HEAD has nothing to lint.
+    mapfile -t changed_files < <(git diff --name-only "$parent" "$commit" -- ':(glob)src/**/*.cpp' ':(glob)src/**/*.h' | while IFS= read -r f; do [[ -f "$f" ]] && printf '%s\n' "$f"; done)
     if [[ ${#changed_files[@]} -eq 0 ]]; then
         continue
     fi
@@ -89,7 +92,7 @@ if [[ "$check_worktree" == "--worktree" ]]; then
         exit 0
     fi
 
-    mapfile -t changed_files < <(git diff --name-only HEAD -- ':(glob)src/**/*.cpp' ':(glob)src/**/*.h')
+    mapfile -t changed_files < <(git diff --name-only HEAD -- ':(glob)src/**/*.cpp' ':(glob)src/**/*.h' | while IFS= read -r f; do [[ -f "$f" ]] && printf '%s\n' "$f"; done)
     if [[ ${#changed_files[@]} -eq 0 ]]; then
         exit 0
     fi
