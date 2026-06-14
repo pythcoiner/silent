@@ -8,7 +8,7 @@
 
 namespace color {
 
-// Neutrals — dark
+// Neutrals: dark
 const QColor GRAY_95 = QColor(30, 30, 30);
 const QColor GRAY_90 = QColor(40, 40, 40);
 const QColor GRAY_85 = QColor(50, 50, 50);
@@ -28,7 +28,7 @@ const QColor GRAY_4 = QColor(245, 245, 245);
 const QColor WHITE = QColor(255, 255, 255);
 const QColor BLACK = QColor(30, 30, 30);
 
-// Neutrals — light
+// Neutrals: light
 const QColor LIGHT_GRAY_65 = QColor(90, 90, 90);
 
 // Blue
@@ -49,6 +49,14 @@ const QColor RED_DARK = QColor(200, 50, 50);
 const QColor YELLOW = QColor(220, 180, 50);
 const QColor YELLOW_DARK = QColor(200, 160, 30);
 
+// Transaction flow
+const QColor TX_SELF = QColor(0x3d, 0x8b, 0xf0);
+const QColor TX_SELF_LABEL = QColor(0x1f, 0x5f, 0xb0);
+const QColor TX_FEE_LABEL = QColor(0xa8, 0x28, 0x28);
+const QColor TX_RECIPIENT_LABEL = QColor(0x8a, 0x6d, 0x00);
+const QColor TX_WARNING_DARK = QColor(0xff, 0xff, 0x4a);
+const QColor TX_WARNING_LIGHT = QColor(0xe6, 0xe6, 0x00);
+
 } // namespace color
 
 // ===== Size Constants =====
@@ -65,12 +73,52 @@ const int CAPTION = 8;
 
 } // namespace size
 
+// ===== Radius Constants =====
+
+namespace radius {
+
+const int INPUT = 6;
+const int BUTTON = 8;
+const int MENU = 8;
+const int COMBO = 8;
+const int ICON = 4;
+const int TAB = 4;
+const int CHECKBOX = 4;
+const int BADGE = 999;
+
+} // namespace radius
+
+// ===== Metric Constants =====
+
+namespace metric {
+
+const int SIDEBAR_WIDTH = 200;
+const int STATUS_BAR_HEIGHT = 30;
+const int CHECKBOX_BOX = 18;
+const int TOGGLE_WIDTH = 40;
+const int TOGGLE_HEIGHT = 20;
+const int VALIDATION_MARK_WIDTH = 20;
+const int ICON_SIZE = 24;
+const int ICON_STROKE = 2;
+const int BUTTON_MIN_HEIGHT = 36;
+const int COMBO_DROPDOWN_WIDTH = 30;
+const int COMBO_ARROW_SIZE = 12;
+const int FORM_LABEL_WIDTH = 130;
+const int SELECT_ROW_ICON_SIZE = 18;
+const int SELECT_ROW_PADDING_H = 14;
+const int SELECT_ROW_PADDING_V = 12;
+const int MODAL_STATUS_ICON_SIZE = 40;
+const int TABLE_ROW_HEIGHT = 34;
+const int TABLE_CELL_PAD = 7;
+
+} // namespace metric
+
 // ===== Font Constants =====
 
 namespace font {
 
 const QString DEFAULT = "Noto Sans";
-const QString MONO = "monospace";
+const QString MONO = "Noto Sans Mono";
 
 } // namespace font
 
@@ -171,11 +219,34 @@ struct Palette {
     // Brand / Accent
     QColor accent;
     QColor accentHover;
+    QColor onAccent;
 
     // Semantic
     QColor success;
     QColor error;
+    QColor errorHover;
     QColor warning;
+
+    // Transaction flow
+    QColor txSelf;
+    QColor txSelfLabel;
+    QColor txFeeLabel;
+    QColor txRecipientLabel;
+    QColor txWarning;
+
+    // Badges
+    QColor badgeSuccessBg;
+    QColor badgeSuccessBorder;
+    QColor badgeSuccessText;
+    QColor badgeWarningBg;
+    QColor badgeWarningBorder;
+    QColor badgeWarningText;
+    QColor badgeErrorBg;
+    QColor badgeErrorBorder;
+    QColor badgeErrorText;
+    QColor badgeNeutralBg;
+    QColor badgeNeutralBorder;
+    QColor badgeNeutralText;
 
     // Borders
     QColor border;

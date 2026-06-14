@@ -18,11 +18,34 @@ auto Palette::dark() -> Palette {
         // Brand / Accent
         .accent = color::BLUE,
         .accentHover = color::BLUE_LIGHT,
+        .onAccent = color::WHITE,
 
         // Semantic
         .success = color::GREEN,
         .error = color::RED,
+        .errorHover = QColor(255, 81, 81),
         .warning = color::YELLOW,
+
+        // Transaction flow
+        .txSelf = color::TX_SELF,
+        .txSelfLabel = color::TX_SELF_LABEL,
+        .txFeeLabel = color::TX_FEE_LABEL,
+        .txRecipientLabel = color::TX_RECIPIENT_LABEL,
+        .txWarning = color::TX_WARNING_DARK,
+
+        // Badges
+        .badgeSuccessBg = QColor(80, 190, 80, 36),
+        .badgeSuccessBorder = QColor(80, 190, 80, 115),
+        .badgeSuccessText = color::GREEN,
+        .badgeWarningBg = QColor(220, 180, 50, 41),
+        .badgeWarningBorder = QColor(220, 180, 50, 122),
+        .badgeWarningText = color::YELLOW,
+        .badgeErrorBg = QColor(220, 70, 70, 36),
+        .badgeErrorBorder = QColor(220, 70, 70, 115),
+        .badgeErrorText = color::RED,
+        .badgeNeutralBg = color::GRAY_90,
+        .badgeNeutralBorder = color::GRAY_80,
+        .badgeNeutralText = color::GRAY_35,
 
         // Borders
         .border = color::GRAY_70,
@@ -51,11 +74,34 @@ auto Palette::light() -> Palette {
         // Brand / Accent
         .accent = color::BLUE_DARK,
         .accentHover = color::BLUE_DARK_LIGHT,
+        .onAccent = color::WHITE,
 
         // Semantic
         .success = color::GREEN_DARK,
         .error = color::RED_DARK,
+        .errorHover = QColor(240, 60, 60),
         .warning = color::YELLOW_DARK,
+
+        // Transaction flow
+        .txSelf = color::TX_SELF,
+        .txSelfLabel = color::TX_SELF_LABEL,
+        .txFeeLabel = color::TX_FEE_LABEL,
+        .txRecipientLabel = color::TX_RECIPIENT_LABEL,
+        .txWarning = color::TX_WARNING_LIGHT,
+
+        // Badges
+        .badgeSuccessBg = QColor(40, 160, 40, 36),
+        .badgeSuccessBorder = QColor(40, 160, 40, 115),
+        .badgeSuccessText = color::GREEN_DARK,
+        .badgeWarningBg = QColor(200, 160, 30, 41),
+        .badgeWarningBorder = QColor(200, 160, 30, 122),
+        .badgeWarningText = color::YELLOW_DARK,
+        .badgeErrorBg = QColor(200, 50, 50, 36),
+        .badgeErrorBorder = QColor(200, 50, 50, 115),
+        .badgeErrorText = color::RED_DARK,
+        .badgeNeutralBg = color::GRAY_8,
+        .badgeNeutralBorder = color::GRAY_15,
+        .badgeNeutralText = color::LIGHT_GRAY_65,
 
         // Borders
         .border = color::GRAY_20,
@@ -82,7 +128,7 @@ auto ButtonPalette::defaultButtonPalette() -> ButtonPalette {
         .menu = {.font = {.family = font::DEFAULT, .size = size::H3, .weight = QFont::Normal},
                  .paddingH = 16,
                  .paddingV = 12,
-                 .borderRadius = 8},
+                 .borderRadius = radius::MENU},
         .icon = {.font = {.family = font::DEFAULT, .size = size::BODY, .weight = QFont::Normal},
                  .width = 50,
                  .height = 50,
@@ -93,7 +139,7 @@ auto ButtonPalette::defaultButtonPalette() -> ButtonPalette {
                        .height = 30,
                        .paddingH = 0,
                        .paddingV = 0,
-                       .borderRadius = 4},
+                       .borderRadius = radius::ICON},
         .tabOpen = {.font = {.family = font::DEFAULT, .size = size::H3, .weight = QFont::Normal},
                     .width = 300,
                     .height = 50},
@@ -130,7 +176,7 @@ auto FontPalette::defaultFontPalette() -> FontPalette {
                        .weight = QFont::Normal,
                        .width = resolve(Size::S)},
         .checkboxLabel = {.family = font::DEFAULT,
-                          .size = size::BODY,
+                          .size = size::CAPTION,
                           .weight = QFont::Normal,
                           .width = resolve(Size::XS)},
         .infoLabel = {.family = font::DEFAULT,
@@ -173,7 +219,7 @@ auto InputPalette::light() -> InputPalette {
 
 auto IconPalette::defaultIconPalette() -> IconPalette {
     return IconPalette{
-        .defaultIcon = {.size = 24, .strokeWidth = 2},
+        .defaultIcon = {.size = metric::ICON_SIZE, .strokeWidth = metric::ICON_STROKE},
     };
 }
 

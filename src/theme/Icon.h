@@ -2,19 +2,47 @@
 
 #include <QIcon>
 
-// Builds a QIcon that re-renders the SVG with the live theme foreground color on
-// every paint, so icons follow theme (light/dark) changes without recreation.
-auto renderIcon(const char *svg_data, int stroke_width = 2) -> QIcon;
+// Resolved against the live palette at paint time, so an icon both follows the
+// theme and can be tinted per use site (accent / secondary / muted).
+enum class IconColor { Default, Accent, Secondary, Muted, Success, Error };
+
+// Builds a QIcon that re-renders the SVG with the chosen palette color on every
+// paint, so icons follow theme (light/dark) changes without recreation.
+auto renderIcon(const char *svg_data, int stroke_width = 2, IconColor color = IconColor::Default)
+    -> QIcon;
 
 namespace icon {
 
-auto trash() -> QIcon;
-auto close() -> QIcon;
-auto coins() -> QIcon;
-auto send() -> QIcon;
-auto receive() -> QIcon;
-auto settings() -> QIcon;
-auto pencil() -> QIcon;
-auto history() -> QIcon;
+auto trash(IconColor color = IconColor::Default) -> QIcon;
+auto close(IconColor color = IconColor::Default) -> QIcon;
+auto copy(IconColor color = IconColor::Default) -> QIcon;
+auto plus(IconColor color = IconColor::Default) -> QIcon;
+auto minus(IconColor color = IconColor::Default) -> QIcon;
+auto download(IconColor color = IconColor::Default) -> QIcon;
+auto upload(IconColor color = IconColor::Default) -> QIcon;
+auto chevronLeft(IconColor color = IconColor::Default) -> QIcon;
+auto chevronRight(IconColor color = IconColor::Default) -> QIcon;
+auto chevronDown(IconColor color = IconColor::Default) -> QIcon;
+auto check(IconColor color = IconColor::Default) -> QIcon;
+auto x(IconColor color = IconColor::Default) -> QIcon;
+auto shield(IconColor color = IconColor::Default) -> QIcon;
+auto wallet(IconColor color = IconColor::Default) -> QIcon;
+auto server(IconColor color = IconColor::Default) -> QIcon;
+auto network(IconColor color = IconColor::Default) -> QIcon;
+auto eyeOff(IconColor color = IconColor::Default) -> QIcon;
+auto lockOpen(IconColor color = IconColor::Default) -> QIcon;
+auto bitcoin(IconColor color = IconColor::Default) -> QIcon;
+auto coins(IconColor color = IconColor::Default) -> QIcon;
+auto send(IconColor color = IconColor::Default) -> QIcon;
+auto receive(IconColor color = IconColor::Default) -> QIcon;
+auto settings(IconColor color = IconColor::Default) -> QIcon;
+auto pencil(IconColor color = IconColor::Default) -> QIcon;
+auto history(IconColor color = IconColor::Default) -> QIcon;
+auto folder(IconColor color = IconColor::Default) -> QIcon;
+auto usb(IconColor color = IconColor::Default) -> QIcon;
+auto refresh(IconColor color = IconColor::Default) -> QIcon;
+auto qr(IconColor color = IconColor::Default) -> QIcon;
+auto layout(IconColor color = IconColor::Default) -> QIcon;
+auto silentMark(IconColor color = IconColor::Default) -> QIcon;
 
 } // namespace icon
