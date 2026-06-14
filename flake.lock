@@ -36,15 +36,16 @@
     "qontrol": {
       "flake": false,
       "locked": {
-        "lastModified": 1769086476,
-        "narHash": "sha256-OH0JamopFo3GnGYYgshJiHSmcO52jDZnZdWH3/X2lEU=",
+        "lastModified": 1781415717,
+        "narHash": "sha256-lJ1+DKEYTXCmJHDd/+5sZTmpaksXWeOZHbvlbgvOSXg=",
         "owner": "pythcoiner",
         "repo": "qontrol",
-        "rev": "0475eee642841da567d291bbc196a567380eefcc",
+        "rev": "dfc65d17ddb7e04f242cc53cedc59c06f0a7700e",
         "type": "github"
       },
       "original": {
         "owner": "pythcoiner",
+        "ref": "dfc65d1",
         "repo": "qontrol",
         "type": "github"
       }

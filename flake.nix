@@ -30,7 +30,7 @@
     };
 
     qontrol = {
-      url = "github:pythcoiner/qontrol";
+      url = "github:pythcoiner/qontrol/dfc65d1";
       flake = false;
     };
 

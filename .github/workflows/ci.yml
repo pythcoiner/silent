@@ -72,7 +72,7 @@ jobs:
         run: |
           if [ ! -d lib/qontrol ]; then
             git clone https://github.com/pythcoiner/qontrol.git lib/qontrol
-            git -C lib/qontrol checkout 7bc317d
+            git -C lib/qontrol checkout dfc65d1
             rm -rf lib/qontrol/.git
           fi
           if [ ! -f lib/include/silent.h ]; then

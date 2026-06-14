@@ -35,7 +35,7 @@ else()
     FetchContent_Declare(
         qontrol_src
         GIT_REPOSITORY https://github.com/pythcoiner/qontrol.git
-        GIT_TAG 7bc317d
+        GIT_TAG dfc65d1
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(qontrol_src)
