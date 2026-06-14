@@ -30,10 +30,12 @@ impl From<Network> for NetworkInternal {
             Network::Signet => NetworkInternal::Signet,
             Network::Testnet => NetworkInternal::Testnet,
             Network::Bitcoin => NetworkInternal::Bitcoin,
-            // SAFETY: Network enum is defined in CXX bridge with exactly 4 variants.
-            // CXX guarantees type safety - invalid values cannot be constructed.
-            // This wildcard exists only for exhaustiveness checking.
-            _ => unreachable!("CXX enum type safety guarantees no other variants exist"),
+            // An out-of-range repr cannot be constructed from valid CXX usage, but a
+            // panic here would cross the FFI boundary. Log and fall back to Signet.
+            _ => {
+                log::error!("unexpected Network variant, falling back to Signet");
+                NetworkInternal::Signet
+            }
         }
     }
 }
@@ -77,6 +79,9 @@ pub struct Config {
     /// Base directory for account data
     #[serde(skip)]
     pub data_dir: PathBuf,
+    /// Runtime-only load error. None when the config was created or loaded successfully.
+    #[serde(skip)]
+    pub load_error: Option<String>,
 }
 
 fn default_plugin_id() -> String {
@@ -125,6 +130,7 @@ impl Config {
             dust_limit,
             plugin_id: default_plugin_id(),
             data_dir,
+            load_error: None,
         }
     }
 
@@ -155,6 +161,16 @@ impl Config {
             }
             Err(e) => log::error!("Config::to_file() failed to serialize: {e}"),
         }
+    }
+
+    /// Check if the config was loaded successfully.
+    pub fn is_ok(&self) -> bool {
+        self.load_error.is_none()
+    }
+
+    /// Get error message (empty if is_ok).
+    pub fn get_error(&self) -> String {
+        self.load_error.clone().unwrap_or_default()
     }
 
     /// Get account directory path.
@@ -453,9 +469,11 @@ mod tests {
 pub fn config_from_file(account_name: String) -> Box<Config> {
     match Config::from_file(account_name.clone()) {
         Ok(config) => Box::new(config),
-        Err(_) => {
-            // Return a default config if file doesn't exist
-            Box::new(Config::new(
+        Err(e) => {
+            let error = format!("failed to load config: {e}");
+            log::error!("config_from_file: {error}");
+            // Return a config marked not-ok. Check is_ok() before use.
+            let mut config = Config::new(
                 account_name,
                 Network::Signet,
                 String::new(),
@@ -463,7 +481,9 @@ pub fn config_from_file(account_name: String) -> Box<Config> {
                 String::new(),
                 String::new(),
                 None,
-            ))
+            );
+            config.load_error = Some(error);
+            Box::new(config)
         }
     }
 }
