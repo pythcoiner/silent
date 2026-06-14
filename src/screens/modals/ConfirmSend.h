@@ -28,8 +28,8 @@ signals:
 
 public slots:
     void onConfirmClicked();
-    void setBroadcasting();
-    void setResult(bool ok, const QString &message);
+    void onSetBroadcasting();
+    void onSetResult(bool ok, const QString &message);
 
 protected:
     void init();

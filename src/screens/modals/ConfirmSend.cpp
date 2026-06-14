@@ -57,19 +57,19 @@ void ConfirmSend::doConnect() {
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void ConfirmSend::onConfirmClicked() {
-    setBroadcasting();
+    onSetBroadcasting();
     emit confirmed();
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void ConfirmSend::setBroadcasting() {
+void ConfirmSend::onSetBroadcasting() {
     m_cancel_btn->setVisible(false);
     m_confirm_btn->setVisible(false);
     m_status_label->setVisible(true);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void ConfirmSend::setResult(bool ok, const QString &message) {
+void ConfirmSend::onSetResult(bool ok, const QString &message) {
     m_details_label->setVisible(false);
     if (ok) {
         m_status_label->setText(TR("confirm-send-success").arg(message));

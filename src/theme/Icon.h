@@ -1,9 +1,10 @@
 #pragma once
 
-#include <QColor>
 #include <QIcon>
 
-auto renderIcon(const char *svg_data, int size, const QColor &color, int stroke_width = 2) -> QIcon;
+// Builds a QIcon that re-renders the SVG with the live theme foreground color on
+// every paint, so icons follow theme (light/dark) changes without recreation.
+auto renderIcon(const char *svg_data, int stroke_width = 2) -> QIcon;
 
 namespace icon {
 

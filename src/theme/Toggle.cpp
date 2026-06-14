@@ -50,6 +50,10 @@ void Toggle::resizeEvent([[maybe_unused]] QResizeEvent *e) {
     // Override to prevent ToggleSwitch aspect-ratio enforcement
 }
 
+auto Toggle::hitButton(const QPoint &pos) const -> bool {
+    return rect().contains(pos);
+}
+
 void Toggle::paintEvent([[maybe_unused]] QPaintEvent *e) {
     QPainter painter(this);
     painter.setPen(Qt::NoPen);

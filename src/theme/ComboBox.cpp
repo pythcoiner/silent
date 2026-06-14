@@ -5,16 +5,35 @@
 #include <QAbstractItemView>
 #include <QDir>
 #include <QFont>
+#include <QFrame>
 #include <QPainter>
-#include <QPainterPath>
 #include <QPixmap>
+#include <QProxyStyle>
 #include <QStandardPaths>
 #include <QStyle>
 #include <QSvgRenderer>
 
 namespace theme {
 
+namespace {
+// Forces a plain list popup instead of the menu-style one, so Qt never creates the
+// top/bottom scroll-indicator widgets that otherwise overlay the dropdown as bands.
+class PlainPopupStyle final : public QProxyStyle {
+public:
+    int styleHint(StyleHint hint, const QStyleOption *option, const QWidget *widget,
+                  QStyleHintReturn *return_data) const override {
+        if (hint == QStyle::SH_ComboBox_Popup) {
+            return 0;
+        }
+        return QProxyStyle::styleHint(hint, option, widget, return_data);
+    }
+};
+} // namespace
+
 ComboBox::ComboBox(ComboBoxRole role, QWidget *parent) : QComboBox(parent), m_role(role) {
+    auto *popupStyle = new PlainPopupStyle;
+    popupStyle->setParent(this);
+    setStyle(popupStyle);
     applyRole();
 }
 
@@ -65,11 +84,12 @@ void ComboBox::showPopup() {
 
     container->setWindowFlag(Qt::FramelessWindowHint);
     container->setAttribute(Qt::WA_TranslucentBackground);
-
-    constexpr int radius = 8;
-    QPainterPath path;
-    path.addRoundedRect(container->rect(), radius, radius);
-    container->setMask(path.toFillPolygon().toPolygon());
+    container->setContentsMargins(0, 0, 0, 0);
+    if (auto *frame = qobject_cast<QFrame *>(container)) {
+        frame->setFrameShape(QFrame::NoFrame);
+    }
+    // No mask: a 1-bit mask aliases the rounded corners. The translucent window lets the
+    // view's QSS border-radius round them with anti-aliasing instead.
 }
 
 auto ComboBox::renderChevron(const QColor &color) -> QString {

@@ -12,6 +12,7 @@ public:
     static void init();
     static auto get() -> Theme *;
     void setMode(ThemeMode mode);
+    void setPalette(const Palette &palette);
     [[nodiscard]] auto mode() const -> ThemeMode;
     [[nodiscard]] auto palette() const -> const Palette &;
     [[nodiscard]] auto fontPalette() const -> const FontPalette &;
