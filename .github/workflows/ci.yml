@@ -79,6 +79,9 @@ jobs:
             bash build.sh
           fi
           cmake -B build .
+          # Generate AUTOMOC outputs (e.g. TxFlow.moc) so clang-tidy can resolve
+          # the inline-moc includes; the lint configures but never builds.
+          cmake --build build --target silent_autogen
       - name: Lint C++ diff (each commit)
         run: scripts/lint/clang_tidy_diff_commits.sh "$LINT_RANGE"
 
