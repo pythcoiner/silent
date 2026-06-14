@@ -3,7 +3,7 @@
 #include "i18n/Tr.h"
 #include "theme/Button.h"
 #include "theme/Label.h"
-#include "utils.h"
+#include "screens/utils.h"
 #include <QApplication>
 #include <QClipboard>
 #include <Qontrol>

@@ -98,24 +98,24 @@ signals:
     void broadcastReady(TxResult result);
 
 public slots:
-    void outputSetMax(int id);
-    void deleteOutput(int id);
-    void addOutput();
+    void onOutputSetMax(int id);
+    void onDeleteOutput(int id);
+    void onAddOutput();
     void onOutputDeleteClicked();
     void onOutputMaxToggled();
-    void clearOutputs();
-    void clearInputs();
+    void onClearOutputs();
+    void onClearInputs();
     void onFeeToggled();
-    void setBroadcastable(bool broadcastable);
+    void onSetBroadcastable(bool broadcastable);
     void onCoinToggled();
     void onAutoSelectionToggled();
-    void updateInputsTotal();
-    void updateOutputValidations();
-    void updateFeeValidation();
-    void updateSelectedCoinsFromSimulation();
-    void setSpendable(bool spendable);
-    void process();
-    void sendTransaction();
+    void onUpdateInputsTotal();
+    void onUpdateOutputValidations();
+    void onUpdateFeeValidation();
+    void onUpdateSelectedCoinsFromSimulation();
+    void onSetSpendable(bool spendable);
+    void onProcess();
+    void onSendTransaction();
     void onValidationResult(PsbtValidation result);
     void onSendConfirmed();
     void onSignResult(TxResult result);

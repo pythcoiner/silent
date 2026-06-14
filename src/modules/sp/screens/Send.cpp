@@ -2,7 +2,7 @@
 #include "AccountController.h"
 #include "AppController.h"
 #include "i18n/Tr.h"
-#include "modals/ConfirmSend.h"
+#include "screens/modals/ConfirmSend.h"
 #include "theme/Button.h"
 #include "theme/Checkbox.h"
 #include "theme/Display.h"
@@ -12,12 +12,13 @@
 #include "theme/Palette.h"
 #include "theme/Theme.h"
 #include "theme/Toggle.h"
-#include "utils.h"
+#include "screens/utils.h"
 #include <QApplication>
 #include <QDebug>
 #include <QDoubleValidator>
 #include <QIntValidator>
 #include <QThread>
+#include <QtGlobal>
 #include <Qontrol>
 #include <algorithm>
 #include <common.h>
@@ -113,14 +114,14 @@ OutputW::OutputW(Send *screen, int id) {
     m_label_input->setPlaceholderText(TR("send-placeholder-label"));
 
     m_max = new Checkbox;
-    QObject::connect(m_max, &Checkbox::toggled, screen, &Send::process, qontrol::UNIQUE);
+    QObject::connect(m_max, &Checkbox::toggled, screen, &Send::onProcess, qontrol::UNIQUE);
 
     m_max_label = new Label(TR("send-max"), LabelRole::CheckboxLabel);
 
-    // Connect to process() which handles validation updates
-    QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::process,
+    // Connect to onProcess() which handles validation updates
+    QObject::connect(m_address_input, &QLineEdit::textChanged, screen, &Send::onProcess,
                      qontrol::UNIQUE);
-    QObject::connect(m_amount_input, &QLineEdit::textChanged, screen, &Send::process,
+    QObject::connect(m_amount_input, &QLineEdit::textChanged, screen, &Send::onProcess,
                      qontrol::UNIQUE);
 
     auto *addrRow = (new qontrol::Row)
@@ -150,8 +151,13 @@ OutputW::OutputW(Send *screen, int id) {
                      qontrol::UNIQUE);
 
     m_max->setProperty("outputId", id);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    QObject::connect(m_max, &QCheckBox::checkStateChanged, screen, &Send::onOutputMaxToggled,
+                     qontrol::UNIQUE);
+#else
     QObject::connect(m_max, &QCheckBox::stateChanged, screen, &Send::onOutputMaxToggled,
                      qontrol::UNIQUE);
+#endif
 
     m_widget = col;
 }
@@ -205,7 +211,7 @@ void Send::onFeeToggled() {
         // sats: integers only
         m_fee_value_input->setValidator(new QIntValidator(1, 100000000, m_fee_value_input));
     }
-    process();
+    onProcess();
 }
 
 Send::Send(AccountController *ctrl) {
@@ -213,10 +219,10 @@ Send::Send(AccountController *ctrl) {
     m_controller = ctrl;
     this->init();
     this->doConnect();
-    this->addOutput();
+    this->onAddOutput();
     this->view();
     this->onFeeToggled();
-    this->setBroadcastable(false);
+    this->onSetBroadcastable(false);
 }
 
 void Send::init() {
@@ -288,16 +294,16 @@ void Send::init() {
 
 void Send::doConnect() {
     qDebug() << "Send::doConnect()";
-    connect(m_add_output_btn, &QPushButton::clicked, this, &Send::addOutput, qontrol::UNIQUE);
-    connect(m_send_btn, &QPushButton::clicked, this, &Send::sendTransaction, qontrol::UNIQUE);
-    connect(m_clear_outputs_btn, &QPushButton::clicked, this, &Send::clearOutputs, qontrol::UNIQUE);
-    connect(m_clear_inputs_btn, &QPushButton::clicked, this, &Send::clearInputs, qontrol::UNIQUE);
+    connect(m_add_output_btn, &QPushButton::clicked, this, &Send::onAddOutput, qontrol::UNIQUE);
+    connect(m_send_btn, &QPushButton::clicked, this, &Send::onSendTransaction, qontrol::UNIQUE);
+    connect(m_clear_outputs_btn, &QPushButton::clicked, this, &Send::onClearOutputs, qontrol::UNIQUE);
+    connect(m_clear_inputs_btn, &QPushButton::clicked, this, &Send::onClearInputs, qontrol::UNIQUE);
     connect(m_auto_coin_selection, &Checkbox::toggled, this, &Send::onAutoSelectionToggled,
             qontrol::UNIQUE);
     connect(m_controller, &AccountController::updateCoins, this, &Send::onCoinsUpdated,
             qontrol::UNIQUE);
     connect(m_fee_toggle, &QCheckBox::toggled, this, &Send::onFeeToggled, qontrol::UNIQUE);
-    connect(m_fee_value_input, &QLineEdit::textChanged, this, &Send::process, qontrol::UNIQUE);
+    connect(m_fee_value_input, &QLineEdit::textChanged, this, &Send::onProcess, qontrol::UNIQUE);
     connect(this, &Send::validationReady, this, &Send::onValidationResult, qontrol::UNIQUE);
     connect(this, &Send::signReady, this, &Send::onSignResult, qontrol::UNIQUE);
     connect(this, &Send::broadcastReady, this, &Send::onBroadcastResult, qontrol::UNIQUE);
@@ -435,7 +441,12 @@ auto Send::inputsView() -> QWidget * {
             }
         }
         checkbox->setChecked(isSelected);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+        connect(checkbox, &QCheckBox::checkStateChanged, this, &Send::onCoinToggled,
+                qontrol::UNIQUE);
+#else
         connect(checkbox, &QCheckBox::stateChanged, this, &Send::onCoinToggled, qontrol::UNIQUE);
+#endif
 
         QString typeStr = QString::fromUtf8(coin.account_type.data(), coin.account_type.size());
         auto *typeField = new Display(typeStr);
@@ -488,7 +499,7 @@ auto Send::inputsView() -> QWidget * {
                          ->pushSpacer(resolve(Padding::M));
 
     // Update total and minimum displays
-    updateInputsTotal();
+    onUpdateInputsTotal();
 
     auto *col = (new qontrol::Column)
                     ->push(titleRow)
@@ -502,8 +513,8 @@ auto Send::inputsView() -> QWidget * {
     return col;
 }
 
-void Send::addOutput() {
-    qDebug() << "Send::addOutput()";
+void Send::onAddOutput() {
+    qDebug() << "Send::onAddOutput()";
     auto *output = new OutputW(this, m_output_id);
     if (m_outputs.empty()) {
         output->setDeletable(false);
@@ -521,12 +532,12 @@ void Send::addOutput() {
     m_outputs.insert(m_output_id, output);
     m_outputs_column->push(output->widget());
     m_output_id++;
-    process();
+    onProcess();
     view();
 }
 
-void Send::deleteOutput(int id) {
-    qDebug() << "Send::deleteOutput()" << id;
+void Send::onDeleteOutput(int id) {
+    qDebug() << "Send::onDeleteOutput()" << id;
     auto *output = m_outputs.take(id);
     if (output->isMax()) {
         for (auto *outp : m_outputs) {
@@ -542,12 +553,12 @@ void Send::deleteOutput(int id) {
             outp->enableMax(true);
         }
     }
-    process();
+    onProcess();
     view();
 }
 
-void Send::outputSetMax(int id) {
-    qDebug() << "Send::outputSetMax()" << id;
+void Send::onOutputSetMax(int id) {
+    qDebug() << "Send::onOutputSetMax()" << id;
     if (m_outputs.value(id)->isMax()) {
         for (auto &key : m_outputs.keys()) {
             if (key != id) {
@@ -559,33 +570,33 @@ void Send::outputSetMax(int id) {
             m_outputs.value(key)->enableMax(true);
         }
     }
-    process();
+    onProcess();
 }
 
-void Send::setBroadcastable(bool broadcastable) {
-    qDebug() << "Send::setBroadcastable()" << broadcastable;
+void Send::onSetBroadcastable(bool broadcastable) {
+    qDebug() << "Send::onSetBroadcastable()" << broadcastable;
     m_broadcastable = broadcastable;
     m_send_btn->setEnabled(broadcastable);
 }
 
-void Send::clearOutputs() {
-    qDebug() << "Send::clearOutputs()";
+void Send::onClearOutputs() {
+    qDebug() << "Send::onClearOutputs()";
     for (auto *outp : m_outputs) {
         delete outp;
     }
     m_outputs.clear();
-    addOutput();
-    process();
+    onAddOutput();
+    onProcess();
     view();
 }
 
-void Send::clearInputs() {
-    qDebug() << "Send::clearInputs()";
+void Send::onClearInputs() {
+    qDebug() << "Send::onClearInputs()";
     m_selected_coins.clear();
     for (auto *cb : m_coin_checkboxes.values()) {
         cb->setChecked(false);
     }
-    process();
+    onProcess();
     view();
 }
 
@@ -626,16 +637,16 @@ void Send::onCoinToggled() {
             }
         }
     }
-    process();
+    onProcess();
 }
 
 void Send::onAutoSelectionToggled() {
     qDebug() << "Send::onAutoSelectionToggled()";
     if (!m_auto_coin_selection->isChecked()) {
         // Switching to manual: populate m_selected_coins from last auto selection
-        updateSelectedCoinsFromSimulation();
+        onUpdateSelectedCoinsFromSimulation();
     }
-    process();
+    onProcess();
     view();
 }
 
@@ -659,13 +670,13 @@ void Send::onCoinsUpdated(CoinState state) {
     if (m_auto_coin_selection->isChecked()) {
         auto txTemp = txTemplate();
         if (txTemp.has_value()) {
-            process();
+            onProcess();
         }
     }
 }
 
-void Send::updateSelectedCoinsFromSimulation() {
-    qDebug() << "Send::updateSelectedCoinsFromSimulation()";
+void Send::onUpdateSelectedCoinsFromSimulation() {
+    qDebug() << "Send::onUpdateSelectedCoinsFromSimulation()";
     m_selected_coins.clear();
     auto availableCoins = m_controller->getCoins();
     for (const auto &coin : availableCoins) {
@@ -676,8 +687,8 @@ void Send::updateSelectedCoinsFromSimulation() {
     }
 }
 
-void Send::updateInputsTotal() {
-    qDebug() << "Send::updateInputsTotal()";
+void Send::onUpdateInputsTotal() {
+    qDebug() << "Send::onUpdateInputsTotal()";
     // Calculate total selected based on mode
     uint64_t totalSelected = 0;
 
@@ -859,22 +870,22 @@ auto Send::txTemplate() -> std::optional<TransactionTemplate> {
     return txTemplate;
 }
 
-void Send::setSpendable(bool spendable) {
-    qDebug() << "Send::setSpendable()" << spendable;
+void Send::onSetSpendable(bool spendable) {
+    qDebug() << "Send::onSetSpendable()" << spendable;
     m_send_btn->setEnabled(spendable);
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void Send::updateOutputValidations() {
-    qDebug() << "Send::updateOutputValidations()";
+void Send::onUpdateOutputValidations() {
+    qDebug() << "Send::onUpdateOutputValidations()";
     for (auto *out : m_outputs) {
         out->updateAddressValidation();
         out->updateAmountValidation();
     }
 }
 
-void Send::updateFeeValidation() {
-    qDebug() << "Send::updateFeeValidation()";
+void Send::onUpdateFeeValidation() {
+    qDebug() << "Send::onUpdateFeeValidation()";
     QString text = m_fee_value_input->text();
     if (text.isEmpty()) {
         setValidationIndicator(m_fee_indicator, text, false);
@@ -885,22 +896,22 @@ void Send::updateFeeValidation() {
     }
 }
 
-void Send::process() {
-    qDebug() << "Send::process()";
-    updateOutputValidations();
-    updateFeeValidation();
-    updateInputsTotal();
+void Send::onProcess() {
+    qDebug() << "Send::onProcess()";
+    onUpdateOutputValidations();
+    onUpdateFeeValidation();
+    onUpdateInputsTotal();
 
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
-        setSpendable(false);
-        setBroadcastable(false);
+        onSetSpendable(false);
+        onSetBroadcastable(false);
         m_fee_estimate_label->setVisible(false);
         // Clear auto selection when outputs are invalid
         if (m_auto_coin_selection->isChecked() && !m_auto_selected_outpoints.isEmpty()) {
             m_auto_selected_outpoints.clear();
             updateCoinCheckboxes();
-            updateInputsTotal();
+            onUpdateInputsTotal();
         }
         return;
     }
@@ -909,7 +920,7 @@ void Send::process() {
 
     if (simu.error.empty()) {
         if (simu.is_valid) {
-            setSpendable(true);
+            onSetSpendable(true);
             m_warning_label->setVisible(false);
 
             // Display estimated fee
@@ -944,17 +955,17 @@ void Send::process() {
                 }
                 m_auto_selected_outpoints = newSelection;
                 updateCoinCheckboxes();
-                updateInputsTotal();
+                onUpdateInputsTotal();
             }
         } else {
-            setSpendable(false);
+            onSetSpendable(false);
             m_fee_estimate_label->setVisible(false);
             m_warning_label->setText(TR("send-transaction-invalid"));
             m_warning_label->setVisible(true);
         }
     } else {
-        setSpendable(false);
-        setBroadcastable(false);
+        onSetSpendable(false);
+        onSetBroadcastable(false);
         m_fee_estimate_label->setVisible(false);
         auto rawError = QString::fromStdString(std::string(simu.error.c_str()));
         m_warning_label->setText(mapBackendErrorSummary(rawError));
@@ -962,8 +973,8 @@ void Send::process() {
     }
 }
 
-void Send::sendTransaction() {
-    qDebug() << "Send::sendTransaction()";
+void Send::onSendTransaction() {
+    qDebug() << "Send::onSendTransaction()";
     auto txTemp = txTemplate();
     if (!txTemp.has_value()) {
         AppController::execModal(
@@ -1095,7 +1106,7 @@ void Send::onSendConfirmed() {
     auto &account = m_controller->getAccount();
     if (!account.has_value() || !m_psbt_result.has_value()) {
         if (m_confirm_modal != nullptr) {
-            m_confirm_modal->setResult(false, TR("send-transaction-state-lost"));
+            m_confirm_modal->onSetResult(false, TR("send-transaction-state-lost"));
         }
         return;
     }
@@ -1118,7 +1129,7 @@ void Send::onSignResult(TxResult result) {
         auto error = QString::fromStdString(std::string(result.error.c_str()));
         m_tx_template = std::nullopt;
         if (m_confirm_modal != nullptr) {
-            m_confirm_modal->setResult(
+            m_confirm_modal->onSetResult(
                 false, TR("send-signing-failed") + "\n\n" + formatBackendErrorDetails(error));
         }
         return;
@@ -1154,10 +1165,10 @@ void Send::onBroadcastResult(TxResult result) {
     if (m_confirm_modal != nullptr) {
         if (result.is_ok) {
             auto txid = QString::fromStdString(std::string(result.value.c_str()));
-            m_confirm_modal->setResult(true, txid);
+            m_confirm_modal->onSetResult(true, txid);
         } else {
             auto error = QString::fromStdString(std::string(result.error.c_str()));
-            m_confirm_modal->setResult(false, error);
+            m_confirm_modal->onSetResult(false, error);
         }
     }
 
@@ -1165,8 +1176,8 @@ void Send::onBroadcastResult(TxResult result) {
     m_controller->pollCoins();
 
     if (result.is_ok) {
-        clearOutputs();
-        clearInputs();
+        onClearOutputs();
+        onClearInputs();
     }
 }
 
@@ -1175,7 +1186,7 @@ void Send::onOutputDeleteClicked() {
     auto *btn = qobject_cast<QPushButton *>(sender());
     if (btn != nullptr) {
         int id = btn->property("outputId").toInt();
-        deleteOutput(id);
+        onDeleteOutput(id);
     }
 }
 
@@ -1188,7 +1199,7 @@ void Send::onOutputMaxToggled() {
         if (output != nullptr) {
             output->setMaxMode(checkbox->isChecked());
         }
-        outputSetMax(id);
+        onOutputSetMax(id);
     }
 }
 

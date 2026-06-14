@@ -8,7 +8,7 @@
 #include "theme/ComboBox.h"
 #include "theme/Input.h"
 #include "theme/Label.h"
-#include "utils.h"
+#include "screens/utils.h"
 #include <Qontrol>
 #include <common.h>
 #include <qlogging.h>
@@ -118,28 +118,28 @@ void Settings::init() {
 }
 
 void Settings::doConnect() {
-    connect(m_save_btn, &QPushButton::clicked, this, &Settings::actionSave, qontrol::UNIQUE);
-    connect(m_toggle_blindbit_btn, &QPushButton::clicked, this, &Settings::actionToggleBlindbit,
+    connect(m_save_btn, &QPushButton::clicked, this, &Settings::onActionSave, qontrol::UNIQUE);
+    connect(m_toggle_blindbit_btn, &QPushButton::clicked, this, &Settings::onActionToggleBlindbit,
             qontrol::UNIQUE);
-    connect(m_toggle_electrum_btn, &QPushButton::clicked, this, &Settings::actionToggleElectrum,
+    connect(m_toggle_electrum_btn, &QPushButton::clicked, this, &Settings::onActionToggleElectrum,
             qontrol::UNIQUE);
-    connect(m_test_btn, &QPushButton::clicked, this, &Settings::actionTestBackend, qontrol::UNIQUE);
+    connect(m_test_btn, &QPushButton::clicked, this, &Settings::onActionTestBackend, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scannerStateChanged, this,
-            &Settings::updateBlindbitToggleButton, qontrol::UNIQUE);
+            &Settings::onUpdateBlindbitToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumConnected, this,
-            &Settings::updateElectrumToggleButton, qontrol::UNIQUE);
+            &Settings::onUpdateElectrumToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumDisconnected, this,
-            &Settings::updateElectrumToggleButton, qontrol::UNIQUE);
+            &Settings::onUpdateElectrumToggleButton, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, this, &Settings::onScanProgress,
             qontrol::UNIQUE);
     connect(m_blindbit_url_input, &QLineEdit::textChanged, this, &Settings::invalidateBackendTest,
             qontrol::UNIQUE);
-    connect(m_test_p2p_btn, &QPushButton::clicked, this, &Settings::actionTestP2p, qontrol::UNIQUE);
+    connect(m_test_p2p_btn, &QPushButton::clicked, this, &Settings::onActionTestP2p, qontrol::UNIQUE);
     connect(m_p2p_node_input, &QLineEdit::textChanged, this, &Settings::invalidateP2pTest,
             qontrol::UNIQUE);
-    connect(m_test_electrum_btn, &QPushButton::clicked, this, &Settings::actionTestElectrum,
+    connect(m_test_electrum_btn, &QPushButton::clicked, this, &Settings::onActionTestElectrum,
             qontrol::UNIQUE);
-    connect(m_apply_language_btn, &QPushButton::clicked, this, &Settings::actionApplyLanguage,
+    connect(m_apply_language_btn, &QPushButton::clicked, this, &Settings::onActionApplyLanguage,
             qontrol::UNIQUE);
     connect(m_electrum_url_input, &QLineEdit::textChanged, this, &Settings::invalidateElectrumTest,
             qontrol::UNIQUE);
@@ -150,8 +150,8 @@ void Settings::doConnect() {
             qontrol::UNIQUE);
 }
 
-void Settings::actionSave() {
-    qDebug() << "Settings::actionSave()";
+void Settings::onActionSave() {
+    qDebug() << "Settings::onActionSave()";
 
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
@@ -191,7 +191,7 @@ void Settings::actionSave() {
     emit configSaved();
 }
 
-void Settings::actionToggleBlindbit() {
+void Settings::onActionToggleBlindbit() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
         auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-no-account-loaded"));
@@ -213,7 +213,7 @@ void Settings::actionToggleBlindbit() {
     }
 }
 
-void Settings::actionToggleElectrum() {
+void Settings::onActionToggleElectrum() {
     auto &accountOpt = m_controller->getAccount();
     if (m_controller == nullptr || !accountOpt.has_value()) {
         auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-no-account-loaded"));
@@ -232,7 +232,7 @@ void Settings::actionToggleElectrum() {
     }
 }
 
-void Settings::actionTestBackend() {
+void Settings::onActionTestBackend() {
     auto url = m_blindbit_url_input->text().trimmed();
     if (url.isEmpty()) {
         auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-blindbit-empty"));
@@ -328,7 +328,7 @@ void Settings::invalidateBackendTest() {
     updateButtons();
 }
 
-void Settings::actionTestP2p() {
+void Settings::onActionTestP2p() {
     auto addr = m_p2p_node_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-p2p-empty"));
@@ -370,7 +370,7 @@ void Settings::invalidateP2pTest() {
     updateButtons();
 }
 
-void Settings::actionTestElectrum() {
+void Settings::onActionTestElectrum() {
     auto addr = m_electrum_url_input->text().trimmed();
     if (addr.isEmpty()) {
         auto *modal = new qontrol::Modal(TR("common-error"), TR("settings-electrum-empty"));
@@ -436,7 +436,7 @@ void Settings::onScanProgress(uint32_t height, [[maybe_unused]] uint32_t tip) {
     }
 }
 
-void Settings::updateBlindbitToggleButton(bool running) {
+void Settings::onUpdateBlindbitToggleButton(bool running) {
     if (m_toggle_blindbit_btn != nullptr) {
         m_toggle_blindbit_btn->setText(running ? TR("settings-disconnect-blindbit")
                                                : TR("settings-connect-blindbit"));
@@ -445,7 +445,7 @@ void Settings::updateBlindbitToggleButton(bool running) {
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void Settings::updateElectrumToggleButton() {
+void Settings::onUpdateElectrumToggleButton() {
     m_electrum_running = !m_electrum_running;
     if (m_toggle_electrum_btn != nullptr) {
         m_toggle_electrum_btn->setText(m_electrum_running ? TR("settings-disconnect-electrum")
@@ -454,7 +454,7 @@ void Settings::updateElectrumToggleButton() {
     updateButtons();
 }
 
-void Settings::actionApplyLanguage() {
+void Settings::onActionApplyLanguage() {
     auto locale = m_language_selector->currentData().toString();
     bool ok = i18n::I18nManager::get()->applyLocale(locale, true);
     m_language_status_label->setText(ok ? TR("settings-language-applied")

@@ -34,7 +34,7 @@ StatusBar::StatusBar(AccountController *controller, QWidget *parent)
 
     // Set initial blindbit state
     m_connected = m_controller->isScannerRunning();
-    updateConnectionState(m_connected);
+    onUpdateConnectionState(m_connected);
 
     // Set initial electrum state (sub-accounts auto-start on construction)
     if (!m_electrum_url.isEmpty()) {
@@ -119,7 +119,7 @@ void StatusBar::loadElectrumUrl() {
     }
 }
 
-void StatusBar::updateConnectionState(bool connected) {
+void StatusBar::onUpdateConnectionState(bool connected) {
     m_connected = connected;
 
     m_toggle->setChecked(connected);
@@ -131,7 +131,7 @@ void StatusBar::updateConnectionState(bool connected) {
     }
 }
 
-void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
+void StatusBar::onUpdateScanProgress(uint32_t height, uint32_t tip) {
     if (height < tip) {
         auto eta = m_controller->etaSecs();
         QString text = TR("status-scanning-progress").arg(height).arg(tip);
@@ -145,11 +145,11 @@ void StatusBar::updateScanProgress(uint32_t height, uint32_t tip) {
     }
 }
 
-void StatusBar::updateWaitingForBlocks(uint32_t tip_height) {
+void StatusBar::onUpdateWaitingForBlocks(uint32_t tip_height) {
     m_status_label->setText(TR("status-synced-watching").arg(tip_height));
 }
 
-void StatusBar::updateScanError(rust::String error) {
+void StatusBar::onUpdateScanError(rust::String error) {
     QString errorStr = QString::fromStdString(std::string(error.c_str()));
     m_status_label->setText(mapBackendErrorSummary(errorStr));
 }
@@ -171,7 +171,7 @@ void StatusBar::onElectrumDisconnected() {
     m_electrum_status_label->setText(TR("status-electrum-disconnected"));
 }
 
-void StatusBar::reloadUrl() {
+void StatusBar::onReloadUrl() {
     loadBlindbitUrl();
     loadElectrumUrl();
 }

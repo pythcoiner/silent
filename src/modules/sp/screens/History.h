@@ -26,7 +26,7 @@ public:
     static const int AMOUNT_W = resolve(Size::S);
 
 public slots:
-    void recvPayload(const CoinState &state);
+    void onRecvPayload(const CoinState &state);
 
 protected:
     void init() override;

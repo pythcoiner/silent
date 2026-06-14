@@ -36,7 +36,7 @@ signals:
     void coinsUpdated();
 
 public slots:
-    void recvPayload(const CoinState &state);
+    void onRecvPayload(const CoinState &state);
     void onEditLabelClicked();
     void onLabelEditFinished();
 

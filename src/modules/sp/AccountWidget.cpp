@@ -103,12 +103,12 @@ void AccountWidget::initUI() {
 
     // Connect status bar signals
     connect(m_controller, &AccountController::scannerStateChanged, m_status_bar,
-            &StatusBar::updateConnectionState, qontrol::UNIQUE);
+            &StatusBar::onUpdateConnectionState, qontrol::UNIQUE);
     connect(m_controller, &AccountController::scanProgress, m_status_bar,
-            &StatusBar::updateScanProgress, qontrol::UNIQUE);
+            &StatusBar::onUpdateScanProgress, qontrol::UNIQUE);
     connect(m_controller, &AccountController::waitingForBlocks, m_status_bar,
-            &StatusBar::updateWaitingForBlocks, qontrol::UNIQUE);
-    connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::updateScanError,
+            &StatusBar::onUpdateWaitingForBlocks, qontrol::UNIQUE);
+    connect(m_controller, &AccountController::scanError, m_status_bar, &StatusBar::onUpdateScanError,
             qontrol::UNIQUE);
     connect(m_controller, &AccountController::electrumConnected, m_status_bar,
             &StatusBar::onElectrumConnected, qontrol::UNIQUE);

@@ -7,7 +7,7 @@
 #include "theme/Input.h"
 #include "theme/Theme.h"
 #include "theme/Label.h"
-#include "utils.h"
+#include "screens/utils.h"
 #include <QKeyEvent>
 #include <Qontrol>
 #include <common.h>
@@ -55,7 +55,7 @@ void Coins::init() {
     m_h_value->setContentsMargins(hPad, 0, 0, 0);
 }
 
-void Coins::recvPayload(const CoinState &state) {
+void Coins::onRecvPayload(const CoinState &state) {
     m_state = state;
     this->view();
     emit coinsUpdated();
@@ -63,7 +63,7 @@ void Coins::recvPayload(const CoinState &state) {
 
 void Coins::doConnect() {
     auto *ctrl = m_controller;
-    connect(ctrl, &AccountController::updateCoins, this, &Coins::recvPayload, qontrol::UNIQUE);
+    connect(ctrl, &AccountController::updateCoins, this, &Coins::onRecvPayload, qontrol::UNIQUE);
 }
 
 auto balanceRow(const QString &label_str, uint64_t balance, uint64_t coins_count) -> QWidget * {
