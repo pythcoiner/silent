@@ -148,6 +148,20 @@ set(SILENT_APP_SOURCES
     src/catalog/inputs/TextEdit.cpp
     src/catalog/containers/Tab.h
     src/catalog/containers/Tab.cpp
+    src/catalog/containers/Card.h
+    src/catalog/containers/Card.cpp
+    src/catalog/containers/Separator.h
+    src/catalog/containers/Separator.cpp
+    src/catalog/containers/ScrollArea.h
+    src/catalog/containers/ScrollArea.cpp
+    src/catalog/containers/FoldSection.h
+    src/catalog/containers/FoldSection.cpp
+    src/catalog/containers/Tabs.h
+    src/catalog/containers/Tabs.cpp
+    src/catalog/display/Badge.h
+    src/catalog/display/Badge.cpp
+    src/catalog/inputs/Stepper.h
+    src/catalog/inputs/Stepper.cpp
 )
 
 set(SOURCES
