@@ -8,88 +8,88 @@
 #include "resources/icon/history.h"
 #include "resources/icon/pencil.h"
 #include "resources/icon/x.h"
-#include <QByteArray>
+#include <QIconEngine>
 #include <QPainter>
 #include <QPixmap>
+#include <QRectF>
 #include <QString>
 #include <QSvgRenderer>
 
-auto renderIcon(const char *svg_data, int size, const QColor &color, int stroke_width) -> QIcon {
-    auto svg = QString(svg_data);
-    svg.replace("stroke=\"currentColor\"", QString("stroke=\"%1\"").arg(color.name()));
-    svg.replace("stroke-width=\"2\"", QString("stroke-width=\"%1\"").arg(stroke_width));
+namespace {
+// Renders an embedded SVG with the current theme foreground color at paint time.
+// Used through a QIcon so widgets follow theme changes without re-creating icons.
+class SvgIconEngine final : public QIconEngine {
+public:
+    SvgIconEngine(const char *svg, int stroke_width) : m_svg(svg), m_stroke_width(stroke_width) {}
 
-    QSvgRenderer renderer(svg.toUtf8());
-    QPixmap pixmap(size, size);
-    pixmap.fill(Qt::transparent);
-    QPainter painter(&pixmap);
-    renderer.render(&painter);
-    return QIcon(pixmap);
+    void paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override {
+        Q_UNUSED(mode);
+        Q_UNUSED(state);
+        auto *theme = Theme::get();
+        QColor color = theme != nullptr ? theme->palette().text : QColor(Qt::black);
+        QString svg = QString::fromUtf8(m_svg);
+        svg.replace(QStringLiteral("stroke=\"currentColor\""),
+                    QStringLiteral("stroke=\"%1\"").arg(color.name()));
+        svg.replace(QStringLiteral("stroke-width=\"2\""),
+                    QStringLiteral("stroke-width=\"%1\"").arg(m_stroke_width));
+        QSvgRenderer renderer(svg.toUtf8());
+        renderer.render(painter, QRectF(rect));
+    }
+
+    QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override {
+        QPixmap pixmap(size);
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        paint(&painter, QRect(QPoint(0, 0), size), mode, state);
+        return pixmap;
+    }
+
+    [[nodiscard]] QIconEngine *clone() const override {
+        return new SvgIconEngine(m_svg, m_stroke_width);
+    }
+
+private:
+    const char *m_svg;
+    int m_stroke_width;
+};
+} // namespace
+
+auto renderIcon(const char *svg_data, int stroke_width) -> QIcon {
+    return QIcon(new SvgIconEngine(svg_data, stroke_width));
 }
 
 namespace icon {
 
 auto trash() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::TRASH_2, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::TRASH_2, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto close() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::X, ip.defaultIcon.size, p.text, ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::X, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto coins() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::COINS, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::COINS, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto send() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::UPLOAD, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::UPLOAD, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto receive() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::DOWNLOAD, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::DOWNLOAD, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto settings() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::SETTINGS, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::SETTINGS, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto pencil() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::PENCIL, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::PENCIL, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 auto history() -> QIcon {
-    auto *theme = Theme::get();
-    const auto &p = theme->palette();
-    const auto &ip = theme->iconPalette();
-    return renderIcon(embedded_icon::HISTORY, ip.defaultIcon.size, p.text,
-                      ip.defaultIcon.strokeWidth);
+    return renderIcon(embedded_icon::HISTORY, Theme::get()->iconPalette().defaultIcon.strokeWidth);
 }
 
 } // namespace icon

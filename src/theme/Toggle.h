@@ -21,6 +21,10 @@ public:
 protected:
     void paintEvent(QPaintEvent *e) override;
     void resizeEvent(QResizeEvent *e) override;
+    // The whole switch body is clickable. QCheckBox's default hit region is the
+    // style's indicator rect, which for this text-less custom switch is a tiny
+    // left strip, so clicks on the visible body never register as a press.
+    [[nodiscard]] auto hitButton(const QPoint &pos) const -> bool override;
 
 private:
     ToggleRole m_role = ToggleRole::Default;

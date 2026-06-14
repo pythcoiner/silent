@@ -79,6 +79,10 @@ void Theme::setMode(ThemeMode mode) {
     emit themeChanged(m_mode);
 }
 
+void Theme::setPalette(const Palette &palette) {
+    m_palette = palette;
+}
+
 auto Theme::mode() const -> ThemeMode {
     return m_mode;
 }
