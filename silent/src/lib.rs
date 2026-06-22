@@ -537,7 +537,7 @@ pub fn init_logging(level: LogLevel) {
 pub fn generate_mnemonic() -> String {
     let mut entropy = [0u8; 16]; // 128 bits = 12 words
     getrandom::getrandom(&mut entropy).expect("failed to generate random entropy");
-    bwk_sp::spdk_core::bip39::Mnemonic::from_entropy(&entropy)
+    bwk_sp::receiver::bip39::Mnemonic::from_entropy(&entropy)
         .expect("mnemonic generation from 128-bit entropy should not fail")
         .to_string()
 }
@@ -548,7 +548,7 @@ pub fn notification_to_string(notif: &Notification) -> String {
 
 /// Query backend info. Returns a BackendInfo with is_ok=false on error.
 pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
-    match bwk_sp::backend_info(blindbit_url) {
+    match bwk_sp::account::backend_info(blindbit_url) {
         Ok((info, url)) => BackendInfo {
             is_ok: true,
             error: String::new(),
@@ -576,7 +576,7 @@ pub fn get_backend_info(blindbit_url: String) -> BackendInfo {
 
 /// Validate a BIP39 mnemonic string.
 pub fn validate_mnemonic(mnemonic: String) -> bool {
-    bwk_sp::spdk_core::bip39::Mnemonic::parse(&mnemonic).is_ok()
+    bwk_sp::receiver::bip39::Mnemonic::parse(&mnemonic).is_ok()
 }
 
 /// Validate a recipient address (SP address, legacy Bitcoin address, or hex data).
@@ -585,7 +585,7 @@ pub fn validate_address(address: String) -> String {
     if address.is_empty() {
         return String::new();
     }
-    match bwk_sp::spdk_core::RecipientAddress::try_from(address) {
+    match bwk_sp::receiver::RecipientAddress::try_from(address) {
         Ok(_) => String::new(),
         Err(e) => e.to_string(),
     }

@@ -5,12 +5,11 @@
 use std::sync::mpsc;
 use std::time::Duration;
 
+use bwk_sp::account::recipient::SpRecipientAddress;
+use bwk_sp::account::{Account as SpAccount, AccountError, ScanMode};
 use bwk_sp::bwk::TxListenerNotif;
-use bwk_sp::spdk_core::RecipientAddress;
-use bwk_sp::{
-    Account as SpAccount, AccountError, Notification as BwkNotification, ScanMode, SpNotification,
-    SpRecipientAddress,
-};
+use bwk_sp::receiver::RecipientAddress;
+use bwk_sp::{Notification as BwkNotification, SpNotification};
 
 use crate::config::Config;
 use crate::ffi::{
@@ -339,8 +338,8 @@ impl Account {
             .into_iter()
             .map(|payment| {
                 let direction = match payment.payment_type {
-                    bwk_sp::PaymentType::Receive => "incoming",
-                    bwk_sp::PaymentType::Send => "outgoing",
+                    bwk_sp::account::PaymentType::Receive => "incoming",
+                    bwk_sp::account::PaymentType::Send => "outgoing",
                 };
 
                 RustTx {
@@ -1332,7 +1331,7 @@ fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, AccountError> {
 /// Convert an SpCoinEntry to a bwk_sp::bwk_tx::Coin for use with TxBuilder.
 fn sp_coin_entry_to_coin(
     outpoint: bitcoin::OutPoint,
-    entry: &bwk_sp::SpCoinEntry,
+    entry: &bwk_sp::account::coin_store::SpCoinEntry,
 ) -> bwk_sp::bwk_tx::Coin {
     const TR_KEYSPEND_SATISFACTION_WEIGHT: u64 = 66;
     bwk_sp::bwk_tx::Coin {

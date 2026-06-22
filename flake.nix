@@ -86,13 +86,8 @@
       cargoVendorDir = pkgs.rustPlatform.importCargoLock {
         lockFile = ./silent/Cargo.lock;
         outputHashes = {
-          "silentpayments-0.4.1" = "sha256-MnhGRxrWVAcDxowVt1hkNURDxTpzLy1VV3TVmdXzTks=";
-          "ureq-3.1.4" = "sha256-FmZ9WMxSloIYI03X6YOkfJVfZUAZwumrAkz7t8HbeE4=";
-          "bwk-sp-0.1.0" = "sha256-eaQsBHZB2tQBdB2iy+DDpHxQAFK1GYBidwuw08EYa+c=";
-          "spdk-core-0.1.0" = "sha256-P7IjjkxlgW+iyg0NBBolYD6LARV++FmmdrKPHhmVDqk=";
           "blindbitd-0.0.1" = "sha256-XfO7P9uVLbw8mpiqLZbUoKw8XsxqM1MyeBuq6TKeZ24=";
-          "corepc-client-0.10.0" = "sha256-xDcYdrty69X6/2lgpTGzUq4Cyq1fmIYtg0AtQqUbigc=";
-          "bitcoin-0.32.8" = "sha256-U1zAufR3Dirxc9gPSGGpyf9HBHEuSNoXxaAyt1Yx5vE=";
+          "bwk-sp-0.1.0" = "sha256-dPioj7DZ6/GP9aSZwyjbmiYoLAZGeNcizph3ZaYGlUQ=";
         };
       };
 
@@ -125,38 +120,13 @@
 [source.crates-io]
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/pythcoiner/rust-silentpayments.git?branch=secp_29"]
-git = "https://github.com/pythcoiner/rust-silentpayments.git"
-branch = "secp_29"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/pythcoiner/ureq.git?branch=gzip"]
-git = "https://github.com/pythcoiner/ureq.git"
-branch = "gzip"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/pythcoiner/bwk.git?rev=fb0adf5af6968552149579d94c339eaf25500664"]
+[source."git+https://github.com/pythcoiner/bwk.git?rev=fed9d71f2bc1b7628350c12cc9757c4bb892c40c"]
 git = "https://github.com/pythcoiner/bwk.git"
-rev = "fb0adf5af6968552149579d94c339eaf25500664"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/pythcoiner/spdk.git?rev=f00f559"]
-git = "https://github.com/pythcoiner/spdk.git"
-rev = "f00f559"
+rev = "fed9d71f2bc1b7628350c12cc9757c4bb892c40c"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/pythcoiner/blindbitd.git"]
 git = "https://github.com/pythcoiner/blindbitd.git"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/pythcoiner/corepc.git?branch=bip375"]
-git = "https://github.com/pythcoiner/corepc.git"
-branch = "bip375"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/pythcoiner/rust-bitcoin.git?rev=d7998651"]
-git = "https://github.com/pythcoiner/rust-bitcoin.git"
-rev = "d7998651"
 replace-with = "vendored-sources"
 
 [source.vendored-sources]

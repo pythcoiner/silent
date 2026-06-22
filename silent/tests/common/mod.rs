@@ -13,7 +13,7 @@ use bitcoin::{Amount, OutPoint, ScriptBuf, TxOut, XOnlyPublicKey};
 use blindbitd::BlindbitD;
 use bwk_sp::bwk_sign::bwk_descriptor::{descriptor::DescriptorDerivator, tr_path};
 use bwk_sp::bwk_sign::HotSigner;
-use bwk_sp::spdk_core::{bip39, SpClient};
+use bwk_sp::receiver::{bip39, SpReceiver};
 use bwk_utils::test as bwk_test;
 use bwk_utils::test::corepc_node;
 
@@ -74,7 +74,7 @@ pub fn cleanup_test_account(account_name: &str) {
 // ===== Sync Helpers =====
 
 /// Wait until BlindbitD has synced to at least the given block height.
-/// Polls via `bwk_sp::backend_info()` every 2s, with 60s timeout.
+/// Polls via `bwk_sp::account::backend_info()` every 2s, with 60s timeout.
 pub fn wait_for_sync(url: &str, height: u32) {
     let start = std::time::Instant::now();
     let timeout = Duration::from_secs(60);
@@ -82,7 +82,7 @@ pub fn wait_for_sync(url: &str, height: u32) {
         if start.elapsed() > timeout {
             panic!("wait_for_sync: timed out waiting for height {height}");
         }
-        if let Ok((info, _)) = bwk_sp::backend_info(url.to_string()) {
+        if let Ok((info, _)) = bwk_sp::account::backend_info(url.to_string()) {
             if info.height.to_consensus_u32() >= height {
                 return;
             }
@@ -161,7 +161,7 @@ fn generate_recipient_pubkey(
     sk: bitcoin::secp256k1::SecretKey,
     outpoint: OutPoint,
     txout: &TxOut,
-    sp_addr: bwk_sp::spdk_core::silentpayments::SilentPaymentAddress,
+    sp_addr: bwk_sp::core::utils::common::SilentPaymentAddress,
     secp: &bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>,
 ) -> Option<XOnlyPublicKey> {
     use bitcoin::key::TapTweak;
@@ -179,20 +179,13 @@ fn generate_recipient_pubkey(
     let outpoints = vec![(outpoint.txid.to_string(), outpoint.vout)];
 
     let partial_secret =
-        bwk_sp::spdk_core::silentpayments::utils::sending::calculate_partial_secret(
-            &input_keys,
-            &outpoints,
-        )
-        .ok()?;
+        bwk_sp::core::sending::calculate_partial_secret(&input_keys, &outpoints).ok()?;
 
-    bwk_sp::spdk_core::silentpayments::sending::generate_recipient_pubkeys(
-        vec![sp_addr],
-        partial_secret,
-    )
-    .ok()?
-    .into_iter()
-    .next()
-    .and_then(|(_addr, k)| k.into_iter().next())
+    bwk_sp::core::sending::generate_recipient_pubkeys(vec![sp_addr], partial_secret)
+        .ok()?
+        .into_iter()
+        .next()
+        .and_then(|(_addr, k)| k.into_iter().next())
 }
 
 /// Build and sign a transaction that sends to a Silent Payment output.
@@ -278,7 +271,7 @@ pub fn fund_sp_wallet(
     // Create SP client to get the receiving address
     let bip39_mnemonic = bip39::Mnemonic::parse(mnemonic).expect("valid mnemonic");
     let sp_client =
-        SpClient::new_from_mnemonic(bip39_mnemonic.clone(), network).expect("sp_client");
+        SpReceiver::new_from_mnemonic(bip39_mnemonic.clone(), network).expect("sp_client");
     let sp_address = sp_client.get_receiving_address();
 
     // Create taproot signer from same mnemonic
@@ -411,7 +404,7 @@ pub fn fund_sp_wallet_at_index(
 
     let bip39_mnemonic = bip39::Mnemonic::parse(mnemonic).expect("valid mnemonic");
     let sp_client =
-        SpClient::new_from_mnemonic(bip39_mnemonic.clone(), network).expect("sp_client");
+        SpReceiver::new_from_mnemonic(bip39_mnemonic.clone(), network).expect("sp_client");
     let sp_address = sp_client.get_receiving_address();
 
     let tr_signer =

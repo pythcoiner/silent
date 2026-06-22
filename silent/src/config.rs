@@ -7,9 +7,8 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use bitcoin::Network as BtcNetwork;
+use bwk_sp::account::config::{Config as SpConfig, SubAccountConfig};
 use bwk_sp::bwk_sign::hot_signer::HotSigner;
-use bwk_sp::Config as SpConfig;
-use bwk_sp::SubAccountConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::ffi::Network;
