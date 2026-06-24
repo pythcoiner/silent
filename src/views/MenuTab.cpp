@@ -216,7 +216,7 @@ void MenuTab::onRefreshLauncherItems() {
         if (m_sync_list_responses.contains(module)
             && m_sync_list_responses.value(module).first == reqId) {
             auto response = m_sync_list_responses.take(module);
-            onModuleInstances(response.first, response.second);
+            applyModuleInstances(module, response.first, response.second);
         }
     }
 }
@@ -226,6 +226,11 @@ void MenuTab::onModuleInstances(ReqId req_id, QList<QPair<QString, QString>> ins
     if (module == nullptr) {
         return;
     }
+    applyModuleInstances(module, req_id, std::move(instances));
+}
+
+void MenuTab::applyModuleInstances(IModule *module, ReqId req_id,
+                                   QList<QPair<QString, QString>> instances) {
     if (!m_pending_list.contains(module) || m_pending_list.value(module) != req_id) {
         if (req_id != 0) {
             m_sync_list_responses.insert(module, {req_id, std::move(instances)});

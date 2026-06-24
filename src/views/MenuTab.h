@@ -47,6 +47,8 @@ protected:
     void clearRows();
     void rebuildRows();
     void ensureModuleConnections();
+    void applyModuleInstances(IModule *module, ReqId req_id,
+                              QList<QPair<QString, QString>> instances);
 
 private:
     struct LauncherEntry {
