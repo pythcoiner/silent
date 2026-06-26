@@ -86,6 +86,8 @@ SpInstance::SpInstance(QString id) : m_id(std::move(id)) {
         qCritical() << "SpInstance: failed to open tab for account" << m_id;
         m_account_widget->deleteLater();
         m_account_widget = nullptr;
+    } else {
+        Host::get()->setTabTitle(m_tab_id, m_id);
     }
 }
 
