@@ -327,12 +327,14 @@ impl Account {
         true
     }
 
-    /// Get payment history.
+    /// Get payment history (SP + sub-accounts), newest first.
     pub fn payment_history(&self) -> Vec<RustTx> {
         let Some(inner) = &self.inner else {
             return vec![];
         };
-        inner
+
+        // SP payments
+        let mut txs: Vec<RustTx> = inner
             .account
             .payment_history()
             .into_iter()
@@ -341,7 +343,6 @@ impl Account {
                     bwk_sp::account::PaymentType::Receive => "incoming",
                     bwk_sp::account::PaymentType::Send => "outgoing",
                 };
-
                 RustTx {
                     txid: payment.txid,
                     direction: direction.to_string(),
@@ -350,7 +351,38 @@ impl Account {
                     height: payment.height.unwrap_or(0),
                 }
             })
-            .collect()
+            .collect();
+
+        // Sub-account (segwit, taproot) payments. bwk::Payment has no height, so
+        // read it from the matching tx_history entry.
+        for sub in inner.account.sub_accounts() {
+            for entry in sub.tx_history() {
+                let height = entry.height().unwrap_or(0) as u32;
+                let payment: bwk_sp::bwk::coin_store::Payment = entry.into();
+                let direction = match payment.payment_type {
+                    bwk_sp::bwk::coin_store::PaymentType::Receive => "incoming",
+                    bwk_sp::bwk::coin_store::PaymentType::Send => "outgoing",
+                    bwk_sp::bwk::coin_store::PaymentType::ToSelf => "outgoing",
+                };
+                txs.push(RustTx {
+                    txid: payment.txid,
+                    direction: direction.to_string(),
+                    amount: payment.amount,
+                    fee: 0,
+                    height,
+                });
+            }
+        }
+
+        // Newest first: unconfirmed (height 0) on top, then by height descending.
+        txs.sort_by(|a, b| match (a.height, b.height) {
+            (0, 0) => std::cmp::Ordering::Equal,
+            (0, _) => std::cmp::Ordering::Less,
+            (_, 0) => std::cmp::Ordering::Greater,
+            (x, y) => y.cmp(&x),
+        });
+
+        txs
     }
 
     /// Build a configured TxBuilder from a TransactionTemplate.
