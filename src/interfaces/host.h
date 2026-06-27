@@ -47,7 +47,9 @@ public:
 
     virtual TabId openTab(QWidget *content, IInstance *owner) = 0;
     virtual void setTabTitle(TabId tab, const QString &title) = 0;
-    virtual void closeTab(TabId tab) = 0;
+    // delete_content=false detaches the tab from view but keeps the content
+    // widget alive, leaving its deletion to the caller.
+    virtual void closeTab(TabId tab, bool delete_content = true) = 0;
 
     virtual SectionId addSettingSection(
         QWidget *content, IInstance *owner, const QString &title = QString()) = 0;

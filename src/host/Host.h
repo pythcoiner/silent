@@ -18,7 +18,7 @@ public:
 
     TabId openTab(QWidget *content, IInstance *owner) override;
     void setTabTitle(TabId tab, const QString &title) override;
-    void closeTab(TabId tab) override;
+    void closeTab(TabId tab, bool delete_content = true) override;
 
     SectionId addSettingSection(
         QWidget *content, IInstance *owner, const QString &title = QString()) override;

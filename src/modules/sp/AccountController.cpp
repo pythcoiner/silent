@@ -247,13 +247,38 @@ auto AccountController::startScanner() -> void {
 }
 
 auto AccountController::stop() -> void {
-    if (m_account.has_value()) {
-        m_account.value()->stop_scanner();
+    if (m_stopping) {
+        return;
     }
-    // Thread exits when the channel disconnects (sender dropped by stop_scanner)
-    if (m_notif_thread != nullptr && m_notif_thread->isRunning()) {
-        m_notif_thread->wait(5000);
+    m_stopping = true;
+
+    if (!m_account.has_value()) {
+        // Nothing to tear down (mock controller or never initialized).
+        emit stopped();
+        return;
     }
+
+    // Hand the account and notification thread to a background thread so the GUI
+    // thread never blocks. Dropping the account disconnects the notification
+    // channel, which unblocks the notification thread's recv(); the teardown
+    // thread then waits for it to exit and emits stopped() so the owner can
+    // delete the widget once everything is gone.
+    auto account = std::move(m_account.value());
+    m_account.reset();
+    QThread *notif = m_notif_thread;
+    m_notif_thread = nullptr;
+
+    auto *teardown = QThread::create([acc = std::move(account), notif]() mutable {
+        acc->stop_scanner();
+        acc->stop_electrum();
+        { auto dropped = std::move(acc); } // drop the account, disconnecting the channel
+        if (notif != nullptr) {
+            notif->wait();
+        }
+    });
+    connect(teardown, &QThread::finished, this, &AccountController::stopped, qontrol::UNIQUE);
+    connect(teardown, &QThread::finished, teardown, &QThread::deleteLater);
+    teardown->start();
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)

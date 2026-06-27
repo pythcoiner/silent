@@ -9,6 +9,7 @@
 #include "interfaces/theme.h"
 
 #include <QDebug>
+#include <common.h>
 
 namespace {
 class InertFeed final : public IFeed {
@@ -101,14 +102,26 @@ void SpInstance::stop() {
     }
     m_stopped = true;
 
-    if (m_account_controller != nullptr) {
-        m_account_controller->stop();
-    }
-
+    // Detach the tab from view immediately, but keep the widget alive: the
+    // controller tears the account down in the background and emits stopped()
+    // once its notification thread is gone, at which point the widget (and the
+    // controller it owns) can be deleted safely.
     if (m_tab_id != 0) {
-        Host::get()->closeTab(m_tab_id);
+        Host::get()->closeTab(m_tab_id, false);
         m_tab_id = 0;
     }
+
+    if (m_account_controller != nullptr && m_account_widget != nullptr) {
+        QObject::connect(m_account_controller, &AccountController::stopped, m_account_widget,
+                         &QWidget::deleteLater, qontrol::UNIQUE);
+        m_account_controller->stop();
+    } else if (m_account_widget != nullptr) {
+        m_account_widget->deleteLater();
+    }
+
+    // The widget now owns its own teardown; drop our non-owning references.
+    m_account_widget = nullptr;
+    m_account_controller = nullptr;
 }
 
 IAccount *SpInstance::account() {

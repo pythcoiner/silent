@@ -78,7 +78,7 @@ auto MainWindow::addTab(QWidget *content, const QString &title) -> int {
     return m_tab->indexOf(content);
 }
 
-auto MainWindow::removeTab(QWidget *content) -> void {
+auto MainWindow::removeTab(QWidget *content, bool delete_content) -> void {
     if (content == nullptr) {
         return;
     }
@@ -90,7 +90,11 @@ auto MainWindow::removeTab(QWidget *content) -> void {
                 m_tab->removeTab(tabIndex);
             }
             m_tabs.removeAt(i);
-            content->deleteLater();
+            if (delete_content) {
+                content->deleteLater();
+            } else {
+                content->setParent(nullptr);
+            }
             return;
         }
     }

@@ -39,6 +39,9 @@ signals:
     void electrumConnected(QString address);
     void electrumDisconnected();
     void notificationReceived(Notification notif);
+    // Emitted once the background teardown is done and the notification thread
+    // has exited, so the owner can safely delete the widget.
+    void stopped();
 
 public slots:
     auto loadPanel(const QString &name) -> void;
@@ -75,6 +78,7 @@ private:
     QThread *m_notif_thread = nullptr;
     rust::Box<SyncEstimator> m_estimator = new_sync_estimator();
     bool m_init = false;
+    bool m_stopping = false;
     bool m_scanner_running = false;
     int m_electrum_connected_count = 0;
     int m_electrum_expected_count = 0;

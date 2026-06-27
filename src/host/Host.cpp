@@ -117,7 +117,7 @@ void HostImpl::setTabTitle(TabId tab, const QString &title) {
     window->setTabTitle(entry.content, title);
 }
 
-void HostImpl::closeTab(TabId tab) {
+void HostImpl::closeTab(TabId tab, bool delete_content) {
     assertGuiThread();
     if (!m_tabs.contains(tab)) {
         return;
@@ -126,8 +126,8 @@ void HostImpl::closeTab(TabId tab) {
     m_tab_by_owner.remove(entry.owner);
     auto *window = mainWindow();
     if (window != nullptr) {
-        window->removeTab(entry.content);
-    } else if (entry.content != nullptr) {
+        window->removeTab(entry.content, delete_content);
+    } else if (entry.content != nullptr && delete_content) {
         entry.content->deleteLater();
     }
 }

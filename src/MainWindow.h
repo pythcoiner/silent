@@ -20,7 +20,7 @@ public:
     ~MainWindow() override;
 
     auto addTab(QWidget *content, const QString &title) -> int;
-    auto removeTab(QWidget *content) -> void;
+    auto removeTab(QWidget *content, bool delete_content = true) -> void;
     auto setTabTitle(QWidget *content, const QString &title) -> void;
     auto tabExists(QWidget *content) const -> bool;
     auto updateTabs() -> void;
