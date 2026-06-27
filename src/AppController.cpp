@@ -150,7 +150,8 @@ auto AppController::addAccount(const QString &name) -> void {
         qCritical() << "Failed to start account instance:" << name;
         return;
     }
-    m_open_accounts.insert(name);
+    // m_open_accounts is populated by onHostInstanceRegistered when the instance
+    // registers with the host, so no explicit insert here.
 }
 
 auto AppController::removeAccount(const QString &account) -> void {
@@ -279,7 +280,7 @@ auto AppController::onHostInstanceRemoved(const QString &id) -> void {
 }
 
 auto AppController::onHostInstanceRegistered(const QString &id) -> void {
-    Q_UNUSED(id);
+    m_open_accounts.insert(id);
     applyPersistedThemeAtStartup();
 }
 
