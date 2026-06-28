@@ -26,7 +26,6 @@ fn create_test_config(account_name: String) -> Config {
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
-        String::new(),
         Some(546),
     )
 }
@@ -47,7 +46,6 @@ fn test_multiple_accounts_independent_state() {
         mnemonic1.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
-        String::new(),
         Some(546),
     );
 
@@ -56,7 +54,6 @@ fn test_multiple_accounts_independent_state() {
         Network::Signet,
         mnemonic2.to_string(),
         "http://localhost:50002".to_string(),
-        String::new(),
         String::new(),
         Some(1000),
     );
@@ -97,7 +94,6 @@ fn test_account_config_isolation() {
         "test mnemonic 1".to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
-        String::new(),
         Some(546),
     );
 
@@ -106,7 +102,6 @@ fn test_account_config_isolation() {
         Network::Testnet,
         "test mnemonic 2".to_string(),
         "http://localhost:50002".to_string(),
-        String::new(),
         String::new(),
         Some(1000),
     );
@@ -142,7 +137,6 @@ fn test_invalid_blindbit_url_error() {
         Network::Regtest,
         TEST_MNEMONIC.to_string(),
         url,
-        String::new(),
         String::new(),
         Some(546),
     );
@@ -187,7 +181,6 @@ fn test_invalid_mnemonic_error() {
         Network::Regtest,
         "invalid mnemonic phrase that is not bip39 compliant".to_string(),
         "http://localhost:50001".to_string(),
-        String::new(),
         String::new(),
         Some(546),
     );

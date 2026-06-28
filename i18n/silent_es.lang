@@ -64,9 +64,6 @@ create-account-name => "Account Name:" => "Nombre de cuenta:"
 create-account-network-mismatch-suffix
 => " (mismatch: selected %1)"
 => " (mismatch: selected %1)";;
-create-account-p2p-empty
-=> "P2P node address cannot be empty."
-=> "P2P node address cannot be empty.";;
 create-account-placeholder-blindbit
 => "http://localhost:8080"
 => "http://localhost:8080";;
@@ -74,7 +71,6 @@ create-account-placeholder-mnemonic => "Mnemonic phrase" => "Frase mnemotecnica"
 create-account-placeholder-name
 => "Enter account name"
 => "Introduce el nombre de la cuenta";;
-create-account-placeholder-p2p => "127.0.0.1:18444" => "127.0.0.1:18444"
 create-account-title => "Create Account" => "Crear cuenta"
 delete-wallet-confirmation
 => "Delete wallet '%1'? This cannot be undone."
@@ -220,8 +216,6 @@ settings-network-mismatch-message
 => "Backend network is %1 but account network is %2"
 => "Backend network is %1 but account network is %2";;
 settings-no-account-loaded => "No account loaded" => "No hay cuenta cargada"
-settings-p2p-node => "P2P Node:" => "Nodo P2P:"
-settings-p2p-test-failed => "P2P Test Failed" => "Prueba P2P fallida"
 settings-placeholder-blindbit
 => "https://blindbit.example.com"
 => "https://blindbit.example.com";;

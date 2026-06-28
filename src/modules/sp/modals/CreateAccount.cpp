@@ -51,11 +51,7 @@ void CreateAccount::init() {
     m_blindbit_input->setPlaceholderText(TR("create-account-placeholder-blindbit"));
     m_blindbit_input->setText(TR("create-account-default-blindbit"));
 
-    m_p2p_input = new Input;
-    m_p2p_input->setPlaceholderText(TR("create-account-placeholder-p2p"));
-
     m_test_btn = new Button(TR("common-test"));
-    m_test_p2p_btn = new Button(TR("common-test"));
 
     m_electrum_input = new Input;
     m_electrum_input->setPlaceholderText(TR("settings-placeholder-electrum"));
@@ -81,10 +77,6 @@ void CreateAccount::doConnect() {
             qontrol::UNIQUE);
     connect(m_blindbit_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateBackendTest,
             qontrol::UNIQUE);
-    connect(m_test_p2p_btn, &QPushButton::clicked, this, &CreateAccount::onTestP2p,
-            qontrol::UNIQUE);
-    connect(m_p2p_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateP2pTest,
-            qontrol::UNIQUE);
     connect(m_test_electrum_btn, &QPushButton::clicked, this, &CreateAccount::onTestElectrum,
             qontrol::UNIQUE);
     connect(m_electrum_input, &QLineEdit::textChanged, this, &CreateAccount::invalidateElectrumTest,
@@ -92,8 +84,6 @@ void CreateAccount::doConnect() {
     connect(m_create_btn, &QPushButton::clicked, this, &CreateAccount::onCreate, qontrol::UNIQUE);
     connect(m_cancel_btn, &QPushButton::clicked, this, &QDialog::reject, qontrol::UNIQUE);
     connect(this, &CreateAccount::backendInfoReady, this, &CreateAccount::onBackendInfoReady,
-            qontrol::UNIQUE);
-    connect(this, &CreateAccount::p2pTestReady, this, &CreateAccount::onP2pTestReady,
             qontrol::UNIQUE);
     connect(this, &CreateAccount::electrumTestReady, this, &CreateAccount::onElectrumTestReady,
             qontrol::UNIQUE);
@@ -124,13 +114,6 @@ void CreateAccount::view() {
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_test_btn);
 
-    auto *p2pRow = (new qontrol::Row)
-                       ->push(new Label(TR("settings-p2p-node"), LabelRole::InputLabel))
-                       ->pushSpacer(resolve(Spacing::XS))
-                       ->push(m_p2p_input)
-                       ->pushSpacer(resolve(Spacing::XS))
-                       ->push(m_test_p2p_btn);
-
     auto *electrumRow = (new qontrol::Row)
                             ->push(new Label(TR("create-account-electrum"), LabelRole::InputLabel))
                             ->pushSpacer(resolve(Spacing::XS))
@@ -156,8 +139,6 @@ void CreateAccount::view() {
                     ->pushSpacer(resolve(Spacing::XS))
                     ->push(urlRow)
                     ->pushSpacer(resolve(Spacing::XS))
-                    ->push(p2pRow)
-                    ->pushSpacer(resolve(Spacing::XS))
                     ->push(electrumRow)
                     ->pushSpacer(resolve(Spacing::XS))
                     ->push(buttonRow);
@@ -174,14 +155,13 @@ void CreateAccount::onCreate() {
     auto name = m_name_input->text().trimmed();
     auto mnemonic = m_mnemonic_input->toPlainText().trimmed();
     auto blindbitUrl = m_blindbit_input->text().trimmed();
-    auto p2pNode = m_p2p_input->text().trimmed();
     auto electrumUrl = m_electrum_input->text().trimmed();
     auto network = static_cast<Network>(m_network_combo->currentData().toInt());
 
     auto config =
         new_config(rust::String(name.toStdString()), network, rust::String(mnemonic.toStdString()),
-                   rust::String(blindbitUrl.toStdString()), rust::String(p2pNode.toStdString()),
-                   rust::String(electrumUrl.toStdString()), 546, rust::String("sp"));
+                   rust::String(blindbitUrl.toStdString()), rust::String(electrumUrl.toStdString()),
+                   546, rust::String("sp"));
     config->to_file();
 
     AppController::get()->onAccountCreated(name);
@@ -195,7 +175,6 @@ void CreateAccount::onNetworkChanged() {
 
     m_generate_btn->setEnabled(!isMainnet);
     invalidateBackendTest();
-    invalidateP2pTest();
     invalidateElectrumTest();
     applyRegtestDefaults();
 }
@@ -286,58 +265,14 @@ void CreateAccount::applyRegtestDefaults() {
     }
 
     m_blindbit_input->setText(defaults.value().blindbit_url);
-    m_p2p_input->setText(defaults.value().p2p_node);
     m_electrum_input->setText(defaults.value().electrum_url);
     m_backend_verified = true;
-    m_p2p_verified = true;
     m_electrum_verified = true;
     onUpdateCreateButton();
 }
 
 void CreateAccount::invalidateBackendTest() {
     m_backend_verified = false;
-    onUpdateCreateButton();
-}
-
-void CreateAccount::onTestP2p() {
-    auto addr = m_p2p_input->text().trimmed();
-    if (addr.isEmpty()) {
-        AppController::execModal(
-            new qontrol::Modal(TR("create-account-invalid-input"), TR("create-account-p2p-empty")));
-        return;
-    }
-
-    m_test_p2p_btn->setEnabled(false);
-    m_test_p2p_btn->setText(TR("common-testing"));
-
-    auto network = static_cast<Network>(m_network_combo->currentData().toInt());
-    auto *thread = QThread::create([this, addr = addr.toStdString(), network]() {
-        auto result = ::test_p2p_node(rust::String(addr), network);
-        emit p2pTestReady(result);
-    });
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    thread->start();
-}
-
-void CreateAccount::onP2pTestReady(ConnectionResult result) {
-    m_test_p2p_btn->setEnabled(true);
-    m_test_p2p_btn->setText(TR("common-test"));
-
-    if (!result.is_ok) {
-        m_p2p_verified = false;
-        onUpdateCreateButton();
-        auto rawError = QString::fromStdString(std::string(result.error.c_str()));
-        auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
-        AppController::execModal(new qontrol::Modal(TR("settings-p2p-test-failed"), message));
-        return;
-    }
-
-    m_p2p_verified = true;
-    onUpdateCreateButton();
-}
-
-void CreateAccount::invalidateP2pTest() {
-    m_p2p_verified = false;
     onUpdateCreateButton();
 }
 
@@ -405,7 +340,7 @@ void CreateAccount::onUpdateCreateButton() {
         return;
     }
 
-    m_create_btn->setEnabled(m_backend_verified && m_p2p_verified && m_electrum_verified);
+    m_create_btn->setEnabled(m_backend_verified && m_electrum_verified);
 }
 
 auto CreateAccount::generateMnemonic() -> QString { // NOLINT

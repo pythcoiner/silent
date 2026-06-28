@@ -64,9 +64,6 @@ pub struct Config {
     pub mnemonic: String,
     /// Blindbit server URL
     pub blindbit_url: String,
-    /// P2P node address for broadcasting (e.g. "127.0.0.1:8333")
-    #[serde(default)]
-    pub p2p_node: String,
     /// Electrum server address (host:port) for sub-account syncing
     #[serde(default)]
     pub electrum_url: String,
@@ -114,7 +111,6 @@ impl Config {
         network: Network,
         mnemonic: String,
         blindbit_url: String,
-        p2p_node: String,
         electrum_url: String,
         dust_limit: Option<u64>,
     ) -> Self {
@@ -124,7 +120,6 @@ impl Config {
             network,
             mnemonic,
             blindbit_url,
-            p2p_node,
             electrum_url,
             dust_limit,
             plugin_id: default_plugin_id(),
@@ -265,16 +260,6 @@ impl Config {
         self.blindbit_url = url;
     }
 
-    /// Get P2P node address.
-    pub fn get_p2p_node(&self) -> String {
-        self.p2p_node.clone()
-    }
-
-    /// Set P2P node address.
-    pub fn set_p2p_node(&mut self, node: String) {
-        self.p2p_node = node;
-    }
-
     /// Get Electrum URL.
     pub fn get_electrum_url(&self) -> String {
         self.electrum_url.clone()
@@ -402,13 +387,11 @@ pub(crate) fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
 // CXX FFI functions
 
 /// Create a new config.
-#[allow(clippy::too_many_arguments)]
 pub fn new_config(
     account_name: String,
     network: Network,
     mnemonic: String,
     blindbit_url: String,
-    p2p_node: String,
     electrum_url: String,
     dust_limit: u64,
     plugin_id: String,
@@ -423,7 +406,6 @@ pub fn new_config(
         network,
         mnemonic,
         blindbit_url,
-        p2p_node,
         electrum_url,
         dust,
     );
@@ -454,7 +436,6 @@ mod tests {
             "network":"Signet",
             "mnemonic":"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
             "blindbit_url":"http://localhost:50001",
-            "p2p_node":"",
             "electrum_url":"",
             "dust_limit":546
         }"#;
@@ -475,7 +456,6 @@ pub fn config_from_file(account_name: String) -> Box<Config> {
             let mut config = Config::new(
                 account_name,
                 Network::Signet,
-                String::new(),
                 String::new(),
                 String::new(),
                 String::new(),

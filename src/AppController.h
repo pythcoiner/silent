@@ -22,7 +22,6 @@ class IThemeProvider;
 
 struct RegtestDefaultsInfo {
     QString blindbit_url;
-    QString p2p_node;
     QString electrum_url;
 };
 
@@ -43,7 +42,7 @@ public:
 signals:
     void accountList(QList<QString>);
     void accountCreated(const QString &name);
-    void regtestDefaultsReady(const QString &blindbit, const QString &p2p, const QString &electrum);
+    void regtestDefaultsReady(const QString &blindbit, const QString &electrum);
 
 public slots:
     auto initState() -> void;
@@ -51,8 +50,7 @@ public slots:
     auto removeAccount(const QString &account) -> void;
     auto listAccounts() -> void;
     auto createAccount(const QString &name, const QString &mnemonic, Network network,
-                       const QString &blindbit_url, const QString &p2p_node,
-                       const QString &electrum_url) -> void;
+                       const QString &blindbit_url, const QString &electrum_url) -> void;
     auto onAccountCreated(const QString &name) -> void;
     auto openAccount(const QString &name) -> void;
     auto deleteAccount(const QString &name) -> void;
@@ -60,8 +58,7 @@ public slots:
     auto onDeleteConfirmed(const QString &account) -> void;
     auto onHostInstanceRemoved(const QString &id) -> void;
     auto onHostInstanceRegistered(const QString &id) -> void;
-    auto onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
-                                const QString &electrum) -> void;
+    auto onRegtestDefaultsReady(const QString &blindbit, const QString &electrum) -> void;
     auto onHostSettingsSectionsChanged() -> void;
     auto onPluginRegistryChanged() -> void;
 

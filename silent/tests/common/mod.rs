@@ -46,7 +46,6 @@ pub fn create_test_account(account_name: &str, blindbit_url: &str) -> Account {
         TEST_MNEMONIC.to_string(),
         blindbit_url.to_string(),
         String::new(),
-        String::new(),
         Some(546),
     );
     Account::new(config).expect("Account creation should succeed")
@@ -383,7 +382,6 @@ pub fn create_test_account_with_electrum_mnemonic(
         Network::Regtest,
         mnemonic.to_string(),
         blindbit_url.to_string(),
-        String::new(),
         electrum_url.to_string(),
         Some(546),
     );

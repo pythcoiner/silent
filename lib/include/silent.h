@@ -1134,8 +1134,6 @@ struct RegtestDefaults final {
   ::rust::String error;
   // BlindBit server URL (with http:// prefix).
   ::rust::String blindbit_url;
-  // P2P node address (host:port).
-  ::rust::String p2p_node;
   // Electrum server address (host:port).
   ::rust::String electrum_url;
 
@@ -1221,12 +1219,6 @@ struct Config final : public ::rust::Opaque {
 
   // Set BlindBit URL.
   void set_blindbit_url(::rust::String url) noexcept;
-
-  // Get P2P node address.
-  ::rust::String get_p2p_node() const noexcept;
-
-  // Set P2P node address.
-  void set_p2p_node(::rust::String node) noexcept;
 
   // Get Electrum URL.
   ::rust::String get_electrum_url() const noexcept;
@@ -1470,10 +1462,6 @@ bool validate_mnemonic(::rust::String mnemonic) noexcept;
 // Returns empty string if valid, or error message if invalid.
 ::rust::String validate_address(::rust::String address) noexcept;
 
-// Test P2P node connectivity.
-// Blocking call - attempts to connect and perform version handshake.
-::ConnectionResult test_p2p_node(::rust::String address, ::Network network) noexcept;
-
 // Test Electrum server connectivity.
 // Blocking call - attempts TCP connect and server.version handshake.
 ::ConnectionResult test_electrum(::rust::String address) noexcept;
@@ -1495,7 +1483,7 @@ void app_set_plugin_enabled(::rust::String id, bool enabled) noexcept;
 void app_set_active_theme(::rust::String name) noexcept;
 
 // Create a new config.
-::rust::Box<::Config> new_config(::rust::String account_name, ::Network network, ::rust::String mnemonic, ::rust::String blindbit_url, ::rust::String p2p_node, ::rust::String electrum_url, ::std::uint64_t dust_limit, ::rust::String plugin_id) noexcept;
+::rust::Box<::Config> new_config(::rust::String account_name, ::Network network, ::rust::String mnemonic, ::rust::String blindbit_url, ::rust::String electrum_url, ::std::uint64_t dust_limit, ::rust::String plugin_id) noexcept;
 
 // Load config from file.
 ::rust::Box<::Config> config_from_file(::rust::String account_name) noexcept;

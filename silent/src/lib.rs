@@ -170,8 +170,6 @@ mod ffi {
         pub error: String,
         /// BlindBit server URL (with http:// prefix).
         pub blindbit_url: String,
-        /// P2P node address (host:port).
-        pub p2p_node: String,
         /// Electrum server address (host:port).
         pub electrum_url: String,
     }
@@ -260,10 +258,6 @@ mod ffi {
         /// Returns empty string if valid, or error message if invalid.
         fn validate_address(address: String) -> String;
 
-        /// Test P2P node connectivity.
-        /// Blocking call - attempts to connect and perform version handshake.
-        fn test_p2p_node(address: String, network: Network) -> ConnectionResult;
-
         /// Test Electrum server connectivity.
         /// Blocking call - attempts TCP connect and server.version handshake.
         fn test_electrum(address: String) -> ConnectionResult;
@@ -289,13 +283,11 @@ mod ffi {
 
     extern "Rust" {
         /// Create a new config.
-        #[allow(clippy::too_many_arguments)]
         fn new_config(
             account_name: String,
             network: Network,
             mnemonic: String,
             blindbit_url: String,
-            p2p_node: String,
             electrum_url: String,
             dust_limit: u64,
             plugin_id: String,
@@ -336,12 +328,6 @@ mod ffi {
 
         /// Set BlindBit URL.
         fn set_blindbit_url(self: &mut Config, url: String);
-
-        /// Get P2P node address.
-        fn get_p2p_node(self: &Config) -> String;
-
-        /// Set P2P node address.
-        fn set_p2p_node(self: &mut Config, node: String);
 
         /// Get Electrum URL.
         fn get_electrum_url(self: &Config) -> String;
@@ -591,47 +577,6 @@ pub fn validate_address(address: String) -> String {
     }
 }
 
-/// Test P2P node connectivity by attempting a version handshake.
-pub fn test_p2p_node(address: String, network: Network) -> ffi::ConnectionResult {
-    use std::net::SocketAddr;
-    use std::time::Duration;
-
-    log::info!("test_p2p_node()");
-    let addr: SocketAddr = match address.parse() {
-        Ok(a) => a,
-        Err(e) => {
-            return ffi::ConnectionResult {
-                is_ok: false,
-                error: format!("Invalid address '{address}': {e}"),
-            }
-        }
-    };
-
-    let btc_network: bitcoin::Network = network.into();
-
-    log::info!("test_p2p_node() create client");
-    let mut client = match bwk_p2p::Client::new(addr, btc_network)
-        .timeout(Duration::from_secs(1))
-        .connect()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            return ffi::ConnectionResult {
-                is_ok: false,
-                error: format!("Connection failed: {e}"),
-            }
-        }
-    };
-
-    log::info!("test_p2p_node() stop client");
-    client.stop();
-
-    ffi::ConnectionResult {
-        is_ok: true,
-        error: String::new(),
-    }
-}
-
 /// Test Electrum server connectivity by attempting a TCP connect and server.version handshake.
 pub fn test_electrum(address: String) -> ffi::ConnectionResult {
     use std::time::Duration;
@@ -703,7 +648,6 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
                 is_ok: false,
                 error: format!("HTTP request failed: {e}"),
                 blindbit_url: String::new(),
-                p2p_node: String::new(),
                 electrum_url: String::new(),
             };
         }
@@ -717,7 +661,6 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
                 is_ok: false,
                 error: format!("Failed to read response: {e}"),
                 blindbit_url: String::new(),
-                p2p_node: String::new(),
                 electrum_url: String::new(),
             };
         }
@@ -731,22 +674,19 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
                 is_ok: false,
                 error: format!("JSON parse failed: {e}"),
                 blindbit_url: String::new(),
-                p2p_node: String::new(),
                 electrum_url: String::new(),
             };
         }
     };
 
     let blindbit_connect = json["blindbit_connect"].as_str().unwrap_or_default();
-    let p2p_connect = json["p2p_connect"].as_str().unwrap_or_default();
     let electrum_connect = json["electrum_connect"].as_str().unwrap_or_default();
 
-    if blindbit_connect.is_empty() || p2p_connect.is_empty() {
+    if blindbit_connect.is_empty() {
         return RegtestDefaults {
             is_ok: false,
             error: "Missing fields in API response".to_string(),
             blindbit_url: String::new(),
-            p2p_node: String::new(),
             electrum_url: String::new(),
         };
     }
@@ -755,7 +695,6 @@ pub fn get_regtest_defaults() -> RegtestDefaults {
         is_ok: true,
         error: String::new(),
         blindbit_url: format!("http://{blindbit_connect}"),
-        p2p_node: p2p_connect.to_string(),
         electrum_url: electrum_connect.to_string(),
     }
 }

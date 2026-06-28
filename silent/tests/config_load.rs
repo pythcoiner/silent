@@ -35,7 +35,6 @@ fn write_valid_config(account_name: &str) {
         TEST_MNEMONIC.to_string(),
         "http://localhost:50001".to_string(),
         String::new(),
-        String::new(),
         Some(546),
     );
     config.to_file();
@@ -122,7 +121,6 @@ fn config_from_file_defaults_plugin_id_to_sp() {
             "network":"Regtest",
             "mnemonic":"{TEST_MNEMONIC}",
             "blindbit_url":"http://localhost:50001",
-            "p2p_node":"",
             "electrum_url":"",
             "dust_limit":546
         }}"#

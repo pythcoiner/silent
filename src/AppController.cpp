@@ -75,9 +75,8 @@ auto AppController::initState() -> void {
         auto defaults = ::get_regtest_defaults();
         if (defaults.is_ok) {
             auto blindbit = QString::fromStdString(std::string(defaults.blindbit_url.c_str()));
-            auto p2p = QString::fromStdString(std::string(defaults.p2p_node.c_str()));
             auto electrum = QString::fromStdString(std::string(defaults.electrum_url.c_str()));
-            emit regtestDefaultsReady(blindbit, p2p, electrum);
+            emit regtestDefaultsReady(blindbit, electrum);
         }
     });
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
@@ -230,13 +229,12 @@ auto AppController::onPluginRegistryChanged() -> void {
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 auto AppController::createAccount(const QString &name, const QString &mnemonic, Network network,
-                                  const QString &blindbit_url, const QString &p2p_node,
+                                  const QString &blindbit_url,
                                   const QString &electrum_url) -> void {
     Q_UNUSED(name);
     Q_UNUSED(mnemonic);
     Q_UNUSED(network);
     Q_UNUSED(blindbit_url);
-    Q_UNUSED(p2p_node);
     Q_UNUSED(electrum_url);
     qCritical() << "createAccount is deprecated in AppController and should be handled by module UI";
 }
@@ -299,10 +297,9 @@ auto AppController::isAccountOpen(const QString &name) const -> bool {
     return m_open_accounts.contains(name);
 }
 
-auto AppController::onRegtestDefaultsReady(const QString &blindbit, const QString &p2p,
+auto AppController::onRegtestDefaultsReady(const QString &blindbit,
                                            const QString &electrum) -> void {
     m_regtest_defaults = RegtestDefaultsInfo{.blindbit_url = blindbit,
-                                             .p2p_node = p2p,
                                              .electrum_url = electrum};
 }
 
