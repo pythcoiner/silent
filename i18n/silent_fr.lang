@@ -45,9 +45,6 @@ confirm-send-success
 confirm-send-txid => "Txid: %1" => "Txid: %1"
 confirm-transaction-title => "Confirm Transaction" => "Confirmer la transaction"
 create-account-action-create => "Create" => "Creer"
-create-account-backend-info-template
-=> "Network: %1%2\nBlock Height: %3\n\nCapabilities:\n  Tweaks Only: %4\n  Full Basic: %5\n  Full + Dust Filter: %6\n  Cut-Through + Dust Filter: %7"
-=> "Reseau: %1%2\nHauteur de bloc: %3\n\nCapacites:\n  Tweaks seulement: %4\n  Full Basic: %5\n  Full + filtre poussiere: %6\n  Cut-Through + filtre poussiere: %7";;
 create-account-blindbit-empty
 => "BlindBit URL cannot be empty."
 => "L'URL BlindBit ne peut pas etre vide.";;
@@ -59,9 +56,6 @@ create-account-electrum-empty
 create-account-invalid-input => "Invalid Input" => "Entree invalide"
 create-account-mnemonic => "Mnemonic:" => "Phrase mnemotechnique:"
 create-account-name => "Account Name:" => "Nom du compte:"
-create-account-network-mismatch-suffix
-=> " (mismatch: selected %1)"
-=> " (incompatibilite: selectionne %1)";;
 create-account-placeholder-blindbit
 => "http://localhost:8080"
 => "http://localhost:8080";;

@@ -7,6 +7,7 @@
 #include "catalog/inputs/ComboBox.h"
 #include "catalog/inputs/Input.h"
 #include "catalog/display/Label.h"
+#include "catalog/form/ValidationMark.h"
 #include "catalog/inputs/TextEdit.h"
 #include <qthread.h>
 
@@ -20,6 +21,7 @@ using catalog::InputRole;
 using catalog::Label;
 using catalog::LabelRole;
 using catalog::TextEdit;
+using catalog::ValidationMark;
 
 CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     setWindowTitle(TR("create-account-title"));
@@ -52,11 +54,13 @@ void CreateAccount::init() {
     m_blindbit_input->setText(TR("create-account-default-blindbit"));
 
     m_test_btn = new Button(TR("common-test"));
+    m_backend_status = new ValidationMark;
 
     m_electrum_input = new Input;
     m_electrum_input->setPlaceholderText(TR("settings-placeholder-electrum"));
 
     m_test_electrum_btn = new Button(TR("common-test"));
+    m_electrum_status = new ValidationMark;
 
     m_create_btn = new Button(TR("create-account-action-create"), ButtonRole::Primary);
     m_create_btn->setEnabled(false);
@@ -112,14 +116,18 @@ void CreateAccount::view() {
                        ->pushSpacer(resolve(Spacing::XS))
                        ->push(m_blindbit_input)
                        ->pushSpacer(resolve(Spacing::XS))
-                       ->push(m_test_btn);
+                       ->push(m_test_btn)
+                       ->pushSpacer(resolve(Spacing::XS))
+                       ->push(m_backend_status);
 
     auto *electrumRow = (new qontrol::Row)
                             ->push(new Label(TR("create-account-electrum"), LabelRole::InputLabel))
                             ->pushSpacer(resolve(Spacing::XS))
                             ->push(m_electrum_input)
                             ->pushSpacer(resolve(Spacing::XS))
-                            ->push(m_test_electrum_btn);
+                            ->push(m_test_electrum_btn)
+                            ->pushSpacer(resolve(Spacing::XS))
+                            ->push(m_electrum_status);
 
     auto *buttonRow = (new qontrol::Row)
                           ->pushSpacer()
@@ -189,6 +197,7 @@ void CreateAccount::onTestBackend() {
 
     m_test_btn->setEnabled(false);
     m_test_btn->setText(TR("common-testing"));
+    m_backend_status->setState(ValidationMark::State::None);
 
     auto *thread = QThread::create([this, url = url.toStdString()]() {
         auto info = ::get_backend_info(rust::String(url));
@@ -204,27 +213,12 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
 
     if (!info.is_ok) {
         m_backend_verified = false;
+        m_backend_status->setState(ValidationMark::State::Invalid);
         onUpdateCreateButton();
         auto rawError = QString::fromStdString(std::string(info.error.c_str()));
         auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
         AppController::execModal(new qontrol::Modal(TR("settings-connection-failed"), message));
         return;
-    }
-
-    QString networkStr;
-    switch (info.network) {
-    case Network::Regtest:
-        networkStr = TR("network-regtest");
-        break;
-    case Network::Signet:
-        networkStr = TR("network-signet");
-        break;
-    case Network::Testnet:
-        networkStr = TR("network-testnet");
-        break;
-    case Network::Bitcoin:
-        networkStr = TR("network-bitcoin");
-        break;
     }
 
     auto selectedNetwork = static_cast<Network>(m_network_combo->currentData().toInt());
@@ -233,24 +227,9 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
     m_blindbit_input->setText(QString::fromStdString(std::string(info.url.c_str())));
 
     m_backend_verified = networkMatch;
+    m_backend_status->setState(networkMatch ? ValidationMark::State::Valid
+                                            : ValidationMark::State::Invalid);
     onUpdateCreateButton();
-
-    auto yn = [](bool v) -> QString { return v ? TR("common-yes") : TR("common-no"); };
-    QString msg =
-        TR("create-account-backend-info-template")
-            .arg(networkStr)
-            .arg(networkMatch
-                     ? QString()
-                     : TR("create-account-network-mismatch-suffix").arg(m_network_combo->currentText()))
-            .arg(info.height)
-            .arg(yn(info.tweaks_only))
-            .arg(yn(info.tweaks_full_basic))
-            .arg(yn(info.tweaks_full_with_dust_filter))
-            .arg(yn(info.tweaks_cut_through_with_dust_filter));
-
-    auto *modal = new qontrol::Modal(TR("settings-backend-info"), msg);
-    modal->setFixedSize(300, 230);
-    AppController::execModal(modal);
 }
 
 void CreateAccount::applyRegtestDefaults() {
@@ -268,11 +247,14 @@ void CreateAccount::applyRegtestDefaults() {
     m_electrum_input->setText(defaults.value().electrum_url);
     m_backend_verified = true;
     m_electrum_verified = true;
+    m_backend_status->setState(ValidationMark::State::Valid);
+    m_electrum_status->setState(ValidationMark::State::Valid);
     onUpdateCreateButton();
 }
 
 void CreateAccount::invalidateBackendTest() {
     m_backend_verified = false;
+    m_backend_status->setState(ValidationMark::State::None);
     onUpdateCreateButton();
 }
 
@@ -286,6 +268,7 @@ void CreateAccount::onTestElectrum() {
 
     m_test_electrum_btn->setEnabled(false);
     m_test_electrum_btn->setText(TR("common-testing"));
+    m_electrum_status->setState(ValidationMark::State::None);
 
     auto *thread = QThread::create([this, addr = addr.toStdString()]() {
         auto result = ::test_electrum(rust::String(addr));
@@ -301,6 +284,7 @@ void CreateAccount::onElectrumTestReady(ConnectionResult result) {
 
     if (!result.is_ok) {
         m_electrum_verified = false;
+        m_electrum_status->setState(ValidationMark::State::Invalid);
         onUpdateCreateButton();
         auto rawError = QString::fromStdString(std::string(result.error.c_str()));
         auto message = mapBackendErrorSummary(rawError) + "\n\n" + formatBackendErrorDetails(rawError);
@@ -309,11 +293,13 @@ void CreateAccount::onElectrumTestReady(ConnectionResult result) {
     }
 
     m_electrum_verified = true;
+    m_electrum_status->setState(ValidationMark::State::Valid);
     onUpdateCreateButton();
 }
 
 void CreateAccount::invalidateElectrumTest() {
     m_electrum_verified = false;
+    m_electrum_status->setState(ValidationMark::State::None);
     onUpdateCreateButton();
 }
 

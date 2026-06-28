@@ -47,9 +47,6 @@ confirm-send-success
 confirm-send-txid => "Txid: %1" => "Txid: %1"
 confirm-transaction-title => "Confirm Transaction" => "Confirmar transaccion"
 create-account-action-create => "Create" => "Crear"
-create-account-backend-info-template
-=> "Network: %1%2\nBlock Height: %3\n\nCapabilities:\n  Tweaks Only: %4\n  Full Basic: %5\n  Full + Dust Filter: %6\n  Cut-Through + Dust Filter: %7"
-=> "Network: %1%2\nBlock Height: %3\n\nCapabilities:\n  Tweaks Only: %4\n  Full Basic: %5\n  Full + Dust Filter: %6\n  Cut-Through + Dust Filter: %7";;
 create-account-blindbit-empty
 => "BlindBit URL cannot be empty."
 => "BlindBit URL cannot be empty.";;
@@ -61,9 +58,6 @@ create-account-electrum-empty
 create-account-invalid-input => "Invalid Input" => "Entrada invalida"
 create-account-mnemonic => "Mnemonic:" => "Mnemotecnica:"
 create-account-name => "Account Name:" => "Nombre de cuenta:"
-create-account-network-mismatch-suffix
-=> " (mismatch: selected %1)"
-=> " (mismatch: selected %1)";;
 create-account-placeholder-blindbit
 => "http://localhost:8080"
 => "http://localhost:8080";;
