@@ -16,6 +16,10 @@ class DashboardLayout : public catalog::ScrollArea {
     Q_OBJECT
 
 public:
+    // Minimum single-column content width (the block min). Shared so the main
+    // window can size itself to the sidebar plus this content minimum.
+    static constexpr int MIN_CONTENT_WIDTH = 760;
+
     DashboardLayout(const QString &title, QWidget *content, bool two_column = false,
                     QWidget *parent = nullptr);
 

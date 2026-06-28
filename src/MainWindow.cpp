@@ -3,9 +3,11 @@
 #include "host/Host.h"
 #include "interfaces/instance.h"
 #include "i18n/Tr.h"
+#include "views/DashboardLayout.h"
 #include "views/MenuTab.h"
 #include "catalog/Button.h"
 #include "theme/Icon.h"
+#include "theme/Palette.h"
 #include "catalog/containers/Tabs.h"
 #include <algorithm>
 #include <common.h>
@@ -16,6 +18,10 @@
 
 MainWindow::MainWindow(QWidget *parent) : Window(parent) {
     resize(1024, 768);
+    // Never shrink below the sidebar plus the dashboard's minimum content width
+    // (with its horizontal padding), so screens never clip horizontally.
+    setMinimumWidth(metric::SIDEBAR_WIDTH + DashboardLayout::MIN_CONTENT_WIDTH +
+                    2 * resolve(Spacing::S));
     initWindow();
     retranslateUi();
 }

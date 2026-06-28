@@ -7,7 +7,7 @@
 
 namespace {
 // silent-design DashboardLayout constants.
-const int DASH_MIN_W = 760;                             // min single-column / block width
+const int DASH_MIN_W = DashboardLayout::MIN_CONTENT_WIDTH; // min single-column / block width
 const int DASH_COL_MAX = 1140;                          // 1.5x min: single-column cap
 const int DASH_MAX_W = 1600;                            // two-column total cap
 const int DASH_GUTTER = 49;                             // 1px rule + 2x space-l
