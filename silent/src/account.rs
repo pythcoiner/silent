@@ -79,7 +79,7 @@ impl Account {
         let Some(inner) = &mut self.inner else {
             return false;
         };
-        match inner.account.start_scan(ScanMode::Continuous) {
+        match inner.account.start_scan(ScanMode::Continuous, None) {
             Ok(()) => true,
             Err(e) => {
                 log::error!("scanner error: {e}");
@@ -662,6 +662,12 @@ impl Account {
             };
         }
 
+        // Reflect the spend locally so spent SP coins drop from spendable at once
+        // (sub-account inputs are handled by their own Electrum listeners).
+        if let Err(e) = inner.account.record_unconfirmed_spend(&tx) {
+            log::warn!("record_unconfirmed_spend after broadcast failed: {e}");
+        }
+
         TxResult {
             is_ok: true,
             error: String::new(),
@@ -709,6 +715,12 @@ impl Account {
                 error: e,
                 value: String::new(),
             };
+        }
+
+        // Reflect the spend locally so spent SP coins drop from spendable at once
+        // (sub-account inputs are handled by their own Electrum listeners).
+        if let Err(e) = inner.account.record_unconfirmed_spend(&signed_tx) {
+            log::warn!("record_unconfirmed_spend after broadcast failed: {e}");
         }
 
         TxResult {
@@ -1161,7 +1173,8 @@ fn convert_sp_notification(sp_notif: SpNotification) -> Notification {
             flag: NotificationFlag::ScanStopped,
             payload: String::new(),
         },
-        SpNotification::ScanProgress { current, end } => Notification {
+        SpNotification::ScanReceiveProgress { current, end }
+        | SpNotification::ScanSpendProgress { current, end } => Notification {
             flag: NotificationFlag::ScanProgress,
             payload: format!("{current},{end}"),
         },
