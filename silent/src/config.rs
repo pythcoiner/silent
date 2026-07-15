@@ -84,6 +84,11 @@ fn default_plugin_id() -> String {
     "sp".into()
 }
 
+/// Birthday for new mainnet accounts. Scanning from block 1 costs ~958k blocks,
+/// and bwk's taproot-activation floor never applies: it only lives in
+/// Config::sanitize, which the sp crate never calls.
+const MAINNET_BIRTHDAY_HEIGHT: u32 = 899_300;
+
 /// Serde serialization helpers for Network.
 mod network_serde {
     use super::*;
@@ -192,7 +197,12 @@ impl Config {
             self.data_dir.clone(),
         );
         config.set_dust_limit(self.dust_limit);
-        config.set_birthday_height(Some(1));
+        // Only seeds a fresh store: bwk keeps the persisted birthday once scanned.
+        let birthday = match self.network {
+            Network::Bitcoin => MAINNET_BIRTHDAY_HEIGHT,
+            _ => 1,
+        };
+        config.set_birthday_height(Some(birthday));
 
         // Generate sub-account descriptors when electrum is configured
         if !self.electrum_url.is_empty() {
@@ -449,6 +459,40 @@ mod tests {
 
         let config: Config = serde_json::from_str(json).expect("config json should deserialize");
         assert_eq!(config.plugin_id, "sp");
+    }
+
+    const TEST_MNEMONIC: &str =
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    fn config_for(network: Network) -> Config {
+        Config::new(
+            "test_birthday".to_string(),
+            network,
+            TEST_MNEMONIC.to_string(),
+            "http://localhost:8000".to_string(),
+            String::new(),
+            Some(546),
+        )
+    }
+
+    #[test]
+    fn mainnet_birthday_skips_the_pre_sp_chain() {
+        assert_eq!(
+            config_for(Network::Bitcoin).to_sp_config().birthday_height,
+            Some(MAINNET_BIRTHDAY_HEIGHT)
+        );
+    }
+
+    #[test]
+    fn test_networks_scan_from_the_first_block() {
+        // A birthday above a short regtest chain would scan past the tip.
+        for network in [Network::Regtest, Network::Signet, Network::Testnet] {
+            assert_eq!(
+                config_for(network).to_sp_config().birthday_height,
+                Some(1),
+                "network {network:?} must scan from block 1"
+            );
+        }
     }
 
     #[test]
