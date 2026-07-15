@@ -68,22 +68,23 @@ void ComboBox::setWidth(Size s) {
 }
 
 void ComboBox::showPopup() {
+    // Restyle the container before showing it: changing a window flag on a visible
+    // window re-parents it, and that hides it, so doing this after the base class
+    // swallowed the first click on every combobox. view() creates the container
+    // lazily, and it is still hidden here, so the flags apply without a hide.
+    auto *container = view()->parentWidget();
+    if (container != nullptr) {
+        container->setWindowFlag(Qt::FramelessWindowHint);
+        container->setAttribute(Qt::WA_TranslucentBackground);
+        container->setContentsMargins(0, 0, 0, 0);
+        if (auto *frame = qobject_cast<QFrame *>(container)) {
+            frame->setFrameShape(QFrame::NoFrame);
+        }
+        // No mask: a 1-bit mask aliases the rounded corners. The translucent window lets the
+        // view's QSS border-radius round them with anti-aliasing instead.
+    }
+
     QComboBox::showPopup();
-
-    auto *popup = view();
-    auto *container = popup->parentWidget();
-    if (container == nullptr) {
-        return;
-    }
-
-    container->setWindowFlag(Qt::FramelessWindowHint);
-    container->setAttribute(Qt::WA_TranslucentBackground);
-    container->setContentsMargins(0, 0, 0, 0);
-    if (auto *frame = qobject_cast<QFrame *>(container)) {
-        frame->setFrameShape(QFrame::NoFrame);
-    }
-    // No mask: a 1-bit mask aliases the rounded corners. The translucent window lets the
-    // view's QSS border-radius round them with anti-aliasing instead.
 }
 
 auto ComboBox::renderChevron(const QColor &color) -> QString {
