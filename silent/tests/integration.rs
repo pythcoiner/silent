@@ -270,6 +270,9 @@ fn test_wallet_restore_from_mnemonic() {
     let account1 = Account::new(config1).expect("First account creation should succeed");
     let addr1 = account1.sp_address();
 
+    // The account dir holds an advisory lock, so close the first instance before
+    // reopening the same account.
+    drop(account1);
     cleanup_test_account(&account_name);
 
     let config2 = Config::new(

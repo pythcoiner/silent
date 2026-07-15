@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use bwk_sp::account::recipient::SpRecipientAddress;
 use bwk_sp::account::{Account as SpAccount, AccountError, ScanMode};
+use bwk_sp::bwk::coin_store::PaymentType;
 use bwk_sp::bwk::TxListenerNotif;
 use bwk_sp::receiver::RecipientAddress;
 use bwk_sp::{Notification as BwkNotification, SpNotification};
@@ -333,46 +334,25 @@ impl Account {
             return vec![];
         };
 
-        // SP payments
+        // Already aggregated over SP and sub-accounts by bwk.
         let mut txs: Vec<RustTx> = inner
             .account
             .payment_history()
             .into_iter()
             .map(|payment| {
                 let direction = match payment.payment_type {
-                    bwk_sp::account::PaymentType::Receive => "incoming",
-                    bwk_sp::account::PaymentType::Send => "outgoing",
+                    PaymentType::Receive => "incoming",
+                    PaymentType::Send | PaymentType::ToSelf => "outgoing",
                 };
                 RustTx {
                     txid: payment.txid,
                     direction: direction.to_string(),
                     amount: payment.amount,
                     fee: 0,
-                    height: payment.height.unwrap_or(0),
+                    height: payment.height.unwrap_or(0) as u32,
                 }
             })
             .collect();
-
-        // Sub-account (segwit, taproot) payments. bwk::Payment has no height, so
-        // read it from the matching tx_history entry.
-        for sub in inner.account.sub_accounts() {
-            for entry in sub.tx_history() {
-                let height = entry.height().unwrap_or(0) as u32;
-                let payment: bwk_sp::bwk::coin_store::Payment = entry.into();
-                let direction = match payment.payment_type {
-                    bwk_sp::bwk::coin_store::PaymentType::Receive => "incoming",
-                    bwk_sp::bwk::coin_store::PaymentType::Send => "outgoing",
-                    bwk_sp::bwk::coin_store::PaymentType::ToSelf => "outgoing",
-                };
-                txs.push(RustTx {
-                    txid: payment.txid,
-                    direction: direction.to_string(),
-                    amount: payment.amount,
-                    fee: 0,
-                    height,
-                });
-            }
-        }
 
         // Newest first: unconfirmed (height 0) on top, then by height descending.
         txs.sort_by(|a, b| match (a.height, b.height) {
@@ -389,7 +369,7 @@ impl Account {
     fn build_tx_builder(
         inner: &AccountInner,
         tx_template: &TransactionTemplate,
-    ) -> Result<bwk_sp::bwk_tx::TxBuilder, AccountError> {
+    ) -> Result<bwk_sp::bwk_tx::TxBuilder, TemplateError> {
         let network = inner.network;
         let mut has_max = false;
         let mut max_addr = None;
@@ -398,15 +378,12 @@ impl Account {
 
         // Parse outputs
         for output in &tx_template.outputs {
-            let addr = RecipientAddress::try_from(output.address.clone()).map_err(|e| {
-                AccountError::Transaction(format!("Invalid address '{}': {}", output.address, e))
-            })?;
+            let addr = RecipientAddress::try_from(output.address.clone())
+                .map_err(|e| TemplateError::Address(output.address.clone(), format!("{e}")))?;
 
             if output.max {
                 if has_max {
-                    return Err(AccountError::Transaction(
-                        "Only one output can have max=true".to_string(),
-                    ));
+                    return Err(TemplateError::MultipleMax);
                 }
                 has_max = true;
                 max_addr = Some(addr);
@@ -445,9 +422,7 @@ impl Account {
                 // Try SP coins first
                 if let Some(entry) = sp_coins.get(&outpoint) {
                     if !entry.is_spendable() {
-                        return Err(AccountError::Transaction(format!(
-                            "Coin {outpoint_str} is not spendable"
-                        )));
+                        return Err(TemplateError::NotSpendable(outpoint_str.clone()));
                     }
                     builder.add_input(sp_coin_entry_to_coin(outpoint, entry));
                 } else {
@@ -461,9 +436,7 @@ impl Account {
                                 bwk_sp::bwk_tx::CoinStatus::Spent
                                     | bwk_sp::bwk_tx::CoinStatus::BeingSpend
                             ) {
-                                return Err(AccountError::Transaction(format!(
-                                    "Coin {outpoint_str} is not spendable"
-                                )));
+                                return Err(TemplateError::NotSpendable(outpoint_str.clone()));
                             }
                             builder.add_input(entry.coin.clone());
                             found = true;
@@ -471,9 +444,7 @@ impl Account {
                         }
                     }
                     if !found {
-                        return Err(AccountError::Transaction(format!(
-                            "Coin {outpoint_str} not found in wallet"
-                        )));
+                        return Err(TemplateError::CoinNotFound(outpoint_str.clone()));
                     }
                 }
             }
@@ -484,7 +455,7 @@ impl Account {
             // Auto coin selection
             let coins = builder.select_coins(output_total, feerate_msats_vb);
             if coins.is_empty() {
-                return Err(AccountError::Transaction("Insufficient funds".to_string()));
+                return Err(TemplateError::InsufficientFunds);
             }
             for coin in coins {
                 builder.add_input(coin);
@@ -567,7 +538,12 @@ impl Account {
 
     /// Prepare a transaction for signing.
     pub fn prepare_transaction(&self, tx_template: TransactionTemplate) -> Box<PsbtResult> {
-        let err_psbt = |e: String| Box::new(PsbtResult { inner: Err(e) });
+        let err_psbt = |e: String| {
+            Box::new(PsbtResult {
+                inner: Err(e),
+                change: 0,
+            })
+        };
 
         let Some(inner) = &self.inner else {
             return err_psbt("Account not initialized".to_string());
@@ -581,8 +557,20 @@ impl Account {
             }
         };
 
+        // Only the builder knows the SP change, and record_unconfirmed_spend needs
+        // it at broadcast time to net the send amount until the scan sees the
+        // change coin, so read it here and carry it on the result.
+        let change = builder
+            .simulate()
+            .change
+            .map(|amount| amount.to_sat())
+            .unwrap_or(0);
+
         match builder.generate() {
-            Ok(psbt) => Box::new(PsbtResult { inner: Ok(psbt) }),
+            Ok(psbt) => Box::new(PsbtResult {
+                inner: Ok(psbt),
+                change,
+            }),
             Err(e) => {
                 let error = format!("{e:?}");
                 log_failed_prepare(inner, &tx_template, &error);
@@ -629,7 +617,10 @@ impl Account {
     }
 
     /// Broadcast a signed transaction to the network via Electrum.
-    pub fn broadcast_transaction(&self, signed_tx_hex: String) -> TxResult {
+    ///
+    /// `change` is the SP change from the PsbtResult the transaction was built
+    /// from (see PsbtResult::get_change), 0 if none.
+    pub fn broadcast_transaction(&self, signed_tx_hex: String, change: u64) -> TxResult {
         use bitcoin::consensus::encode::deserialize_hex;
         use bitcoin::Transaction;
 
@@ -664,7 +655,7 @@ impl Account {
 
         // Reflect the spend locally so spent SP coins drop from spendable at once
         // (sub-account inputs are handled by their own Electrum listeners).
-        if let Err(e) = inner.account.record_unconfirmed_spend(&tx) {
+        if let Err(e) = inner.account.record_unconfirmed_spend(&tx, change) {
             log::warn!("record_unconfirmed_spend after broadcast failed: {e}");
         }
 
@@ -719,7 +710,10 @@ impl Account {
 
         // Reflect the spend locally so spent SP coins drop from spendable at once
         // (sub-account inputs are handled by their own Electrum listeners).
-        if let Err(e) = inner.account.record_unconfirmed_spend(&signed_tx) {
+        if let Err(e) = inner
+            .account
+            .record_unconfirmed_spend(&signed_tx, psbt_result.change)
+        {
             log::warn!("record_unconfirmed_spend after broadcast failed: {e}");
         }
 
@@ -1118,9 +1112,14 @@ fn broadcast_via_electrum(electrum_url: &str, tx: &bitcoin::Transaction) -> Resu
 fn convert_notification(notif: BwkNotification) -> Notification {
     match notif {
         BwkNotification::Sp(sp) => convert_sp_notification(sp),
-        BwkNotification::CoinUpdate => Notification {
+        // A chain-tip-advance pass mutated tx state, so the coins need a refresh.
+        BwkNotification::CoinUpdate | BwkNotification::HeaderStoreUpdated => Notification {
             flag: NotificationFlag::CoinUpdate,
             payload: String::new(),
+        },
+        BwkNotification::ValidationFailed(failure) => Notification {
+            flag: NotificationFlag::ElectrumError,
+            payload: format!("{failure:?}"),
         },
         BwkNotification::Electrum(e) => convert_electrum_notification(e),
         BwkNotification::AddressTipChanged => Notification {
@@ -1215,9 +1214,9 @@ fn convert_electrum_notification(notif: TxListenerNotif) -> Notification {
             flag: NotificationFlag::ElectrumConnected,
             payload: url,
         },
-        TxListenerNotif::Error(msg) => Notification {
+        TxListenerNotif::Error(e) => Notification {
             flag: NotificationFlag::ElectrumError,
-            payload: msg,
+            payload: e.to_string(),
         },
         TxListenerNotif::Stopped => Notification {
             flag: NotificationFlag::ElectrumStopped,
@@ -1331,12 +1330,20 @@ impl Poll {
 /// PsbtResult wrapper for CXX.
 pub struct PsbtResult {
     inner: Result<bitcoin::Psbt, String>,
+    /// SP change the builder assigned, 0 if none.
+    change: u64,
 }
 
 impl PsbtResult {
     /// Check if result is valid.
     pub fn is_ok(&self) -> bool {
         self.inner.is_ok()
+    }
+
+    /// Get the SP change (0 if none). Pass it back to broadcast_transaction so a
+    /// just-broadcast send nets its change before the scan records the coin.
+    pub fn get_change(&self) -> u64 {
+        self.change
     }
 
     /// Get error message (only valid if !is_ok()).
@@ -1356,20 +1363,39 @@ impl PsbtResult {
     }
 }
 
+/// Errors from validating a TransactionTemplate before handing it to the builder.
+#[derive(Debug, thiserror::Error)]
+pub enum TemplateError {
+    #[error("Invalid address '{0}': {1}")]
+    Address(String, String),
+    #[error("Only one output can have max=true")]
+    MultipleMax,
+    #[error("Coin {0} is not spendable")]
+    NotSpendable(String),
+    #[error("Coin {0} not found in wallet")]
+    CoinNotFound(String),
+    #[error("Insufficient funds")]
+    InsufficientFunds,
+    #[error("Invalid outpoint format '{0}', expected 'txid:vout'")]
+    OutpointFormat(String),
+    #[error("Invalid txid in '{0}': {1}")]
+    Txid(String, String),
+    #[error("Invalid vout in '{0}': {1}")]
+    Vout(String, String),
+}
+
 /// Parse an outpoint string ("txid:vout") into a bitcoin::OutPoint.
-fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, AccountError> {
+fn parse_outpoint(s: &str) -> Result<bitcoin::OutPoint, TemplateError> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 2 {
-        return Err(AccountError::Transaction(format!(
-            "Invalid outpoint format '{s}', expected 'txid:vout'"
-        )));
+        return Err(TemplateError::OutpointFormat(s.to_string()));
     }
     let txid = parts[0]
         .parse()
-        .map_err(|e| AccountError::Transaction(format!("Invalid txid in '{s}': {e}")))?;
+        .map_err(|e| TemplateError::Txid(s.to_string(), format!("{e}")))?;
     let vout = parts[1]
         .parse()
-        .map_err(|e| AccountError::Transaction(format!("Invalid vout in '{s}': {e}")))?;
+        .map_err(|e| TemplateError::Vout(s.to_string(), format!("{e}")))?;
     Ok(bitcoin::OutPoint { txid, vout })
 }
 

@@ -1324,8 +1324,9 @@ struct Account final : public ::rust::Opaque {
   ::TxResult sign_transaction(::PsbtResult const &psbt_result) const noexcept;
 
   // Broadcast a signed transaction (hex string) to the network.
+  // `change` comes from PsbtResult::get_change() on the prepared tx.
   // Returns TxResult with txid in value.
-  ::TxResult broadcast_transaction(::rust::String signed_tx_hex) const noexcept;
+  ::TxResult broadcast_transaction(::rust::String signed_tx_hex, ::std::uint64_t change) const noexcept;
 
   // Sign and broadcast a transaction in one step.
   // Returns TxResult with txid in value.
@@ -1387,6 +1388,9 @@ struct PsbtResult final : public ::rust::Opaque {
 
   // Get transaction ID preview (only valid if is_ok()).
   ::rust::String get_txid_preview() const noexcept;
+
+  // Get the SP change (0 if none), to hand back to broadcast_transaction.
+  ::std::uint64_t get_change() const noexcept;
 
   ~PsbtResult() = delete;
 

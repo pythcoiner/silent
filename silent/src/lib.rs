@@ -430,8 +430,9 @@ mod ffi {
         fn sign_transaction(self: &Account, psbt_result: &PsbtResult) -> TxResult;
 
         /// Broadcast a signed transaction (hex string) to the network.
+        /// `change` comes from PsbtResult::get_change() on the prepared tx.
         /// Returns TxResult with txid in value.
-        fn broadcast_transaction(self: &Account, signed_tx_hex: String) -> TxResult;
+        fn broadcast_transaction(self: &Account, signed_tx_hex: String, change: u64) -> TxResult;
 
         /// Sign and broadcast a transaction in one step.
         /// Returns TxResult with txid in value.
@@ -483,6 +484,9 @@ mod ffi {
 
         /// Get transaction ID preview (only valid if is_ok()).
         fn get_txid_preview(self: &PsbtResult) -> String;
+
+        /// Get the SP change (0 if none), to hand back to broadcast_transaction.
+        fn get_change(self: &PsbtResult) -> u64;
     }
 
     // ===== SyncEstimator Methods =====
