@@ -51,6 +51,7 @@ protected:
     void init();
     void doConnect();
     void view();
+    void applyNetworkDefaults();
     void applyRegtestDefaults();
     void invalidateBackendTest();
     void invalidateElectrumTest();

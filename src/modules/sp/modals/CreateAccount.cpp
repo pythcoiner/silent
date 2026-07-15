@@ -23,12 +23,17 @@ using catalog::LabelRole;
 using catalog::TextEdit;
 using catalog::ValidationMark;
 
+/// Default endpoints for a new mainnet account. Both are prefilled without a
+/// scheme so the test resolves it: http/https for blindbit, tcp/ssl for electrum.
+constexpr auto MAINNET_BLINDBIT_URL = "blindbit.pythcoiner.dev";
+constexpr auto MAINNET_ELECTRUM_URL = "electrum.pythcoiner.dev:50002";
+
 CreateAccount::CreateAccount([[maybe_unused]] QWidget *parent) {
     setWindowTitle(TR("create-account-title"));
     init();
     doConnect();
     view();
-    applyRegtestDefaults();
+    applyNetworkDefaults();
 }
 
 void CreateAccount::init() {
@@ -184,7 +189,7 @@ void CreateAccount::onNetworkChanged() {
     m_generate_btn->setEnabled(!isMainnet);
     invalidateBackendTest();
     invalidateElectrumTest();
-    applyRegtestDefaults();
+    applyNetworkDefaults();
 }
 
 void CreateAccount::onTestBackend() {
@@ -232,12 +237,23 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
     onUpdateCreateButton();
 }
 
-void CreateAccount::applyRegtestDefaults() {
-    auto network = static_cast<Network>(m_network_combo->currentData().toInt());
-    if (network != Network::Regtest) {
-        return;
+void CreateAccount::applyNetworkDefaults() {
+    switch (static_cast<Network>(m_network_combo->currentData().toInt())) {
+    case Network::Regtest:
+        applyRegtestDefaults();
+        break;
+    case Network::Bitcoin:
+        // Prefilled but left untested: only a passing test resolves the electrum
+        // scheme, and the create button gates on it anyway.
+        m_blindbit_input->setText(MAINNET_BLINDBIT_URL);
+        m_electrum_input->setText(MAINNET_ELECTRUM_URL);
+        break;
+    default:
+        break;
     }
+}
 
+void CreateAccount::applyRegtestDefaults() {
     auto defaults = AppController::get()->regtestDefaults();
     if (!defaults.has_value()) {
         return;
