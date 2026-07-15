@@ -371,17 +371,24 @@ pub enum ConfigError {
     Parse(String),
 }
 
-/// Parse "host:port" into separate components for SubAccountConfig.
+/// Split "[ssl://]host:port" into the address bwk expects and its port.
+///
+/// An SSL address keeps its `ssl://` prefix on the host: bwk's account config has
+/// no scheme field, and `bwk_electrum::client::Client::new` reads the scheme off
+/// that prefix. An unsupported scheme yields no endpoint, leaving electrum off.
 pub(crate) fn parse_electrum_url(url: &str) -> (Option<String>, Option<u16>) {
-    if url.is_empty() {
-        return (None, None);
-    }
-    if let Some((host, port_str)) = url.rsplit_once(':') {
-        if let Ok(port) = port_str.parse::<u16>() {
-            return (Some(host.to_string()), Some(port));
+    let (host, port, scheme) = match bwk_sp::bwk::parse_electrum_url(url) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            log::error!("parse_electrum_url: invalid electrum url '{url}': {e}");
+            return (None, None);
         }
-    }
-    (Some(url.to_string()), None)
+    };
+    let host = host.map(|host| match scheme {
+        bwk_sp::bwk::ElectrumScheme::Ssl => format!("ssl://{host}"),
+        bwk_sp::bwk::ElectrumScheme::Tcp => host,
+    });
+    (host, port)
 }
 
 // CXX FFI functions
@@ -442,6 +449,40 @@ mod tests {
 
         let config: Config = serde_json::from_str(json).expect("config json should deserialize");
         assert_eq!(config.plugin_id, "sp");
+    }
+
+    #[test]
+    fn parse_electrum_url_keeps_ssl_prefix_on_host() {
+        // bwk's Client::new reads the scheme off the host prefix.
+        assert_eq!(
+            parse_electrum_url("ssl://electrum.pythcoiner.dev:50002"),
+            (
+                Some("ssl://electrum.pythcoiner.dev".to_string()),
+                Some(50002)
+            )
+        );
+    }
+
+    #[test]
+    fn parse_electrum_url_leaves_plaintext_bare() {
+        assert_eq!(
+            parse_electrum_url("localhost:50001"),
+            (Some("localhost".to_string()), Some(50001))
+        );
+        assert_eq!(
+            parse_electrum_url("tcp://localhost:50001"),
+            (Some("localhost".to_string()), Some(50001))
+        );
+    }
+
+    #[test]
+    fn parse_electrum_url_empty_is_offline() {
+        assert_eq!(parse_electrum_url(""), (None, None));
+    }
+
+    #[test]
+    fn parse_electrum_url_unsupported_scheme_is_offline() {
+        assert_eq!(parse_electrum_url("wss://host:443"), (None, None));
     }
 }
 

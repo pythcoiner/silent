@@ -377,6 +377,9 @@ void Settings::onElectrumTestReady(ConnectionResult result) {
         return;
     }
 
+    // Before setting verified: setText fires textChanged -> invalidateElectrumTest.
+    m_electrum_url_input->setText(QString::fromStdString(std::string(result.url.c_str())));
+
     m_electrum_verified = true;
     m_electrum_status->setState(ValidationMark::State::Valid);
     updateButtons();

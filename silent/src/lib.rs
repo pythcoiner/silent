@@ -7,6 +7,8 @@ pub mod app_state;
 pub mod config;
 pub mod sync_estimator;
 
+use bwk_sp::bwk::ElectrumScheme;
+
 #[cxx::bridge]
 mod ffi {
     // ===== Shared Enums =====
@@ -159,6 +161,8 @@ mod ffi {
         pub is_ok: bool,
         /// Error message (empty if is_ok is true).
         pub error: String,
+        /// Normalized URL that successfully connected (with scheme).
+        pub url: String,
     }
 
     /// Default regtest infrastructure addresses fetched from minta API.
@@ -581,63 +585,102 @@ pub fn validate_address(address: String) -> String {
     }
 }
 
-/// Test Electrum server connectivity by attempting a TCP connect and server.version handshake.
-pub fn test_electrum(address: String) -> ffi::ConnectionResult {
+/// Attempt a connect and server.version handshake over the given scheme.
+fn electrum_handshake(host: &str, port: u16, scheme: ElectrumScheme) -> Result<(), String> {
     use std::time::Duration;
 
-    log::info!("test_electrum()");
-
-    let (host, port) = match address.rsplit_once(':') {
-        Some((h, p)) => match p.parse::<u16>() {
-            Ok(port) => (h.to_string(), port),
-            Err(e) => {
-                return ffi::ConnectionResult {
-                    is_ok: false,
-                    error: format!("Invalid port in '{address}': {e}"),
-                }
-            }
-        },
-        None => {
-            return ffi::ConnectionResult {
-                is_ok: false,
-                error: format!("Invalid address format '{address}': expected host:port"),
-            }
-        }
-    };
-
-    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_tcp(&host, port)
+    let ssl = matches!(scheme, ElectrumScheme::Ssl);
+    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_ssl_maybe(host, port, ssl)
         .read_timeout(Some(Duration::from_secs(5)))
         .write_timeout(Some(Duration::from_secs(5)));
 
-    if let Err(e) = client.try_connect(Some(Duration::from_secs(5))) {
-        return ffi::ConnectionResult {
-            is_ok: false,
-            error: format!("Connection failed: {e}"),
-        };
-    }
+    client
+        .try_connect(Some(Duration::from_secs(5)))
+        .map_err(|e| format!("Connection failed: {e}"))?;
 
     let request = bwk_sp::bwk::bwk_electrum::electrum::request::Request::version(
         "silent".to_string(),
         "1.4".to_string(),
     );
+    client
+        .try_send(&request)
+        .map_err(|e| format!("Failed to send version request: {e}"))?;
 
-    if let Err(e) = client.try_send(&request) {
-        return ffi::ConnectionResult {
-            is_ok: false,
-            error: format!("Failed to send version request: {e}"),
-        };
-    }
+    let response = client
+        .recv_str()
+        .map_err(|e| format!("No response from server: {e}"))?;
 
-    match client.recv_str() {
-        Ok(_) => ffi::ConnectionResult {
-            is_ok: true,
-            error: String::new(),
-        },
-        Err(e) => ffi::ConnectionResult {
-            is_ok: false,
-            error: format!("No response from server: {e}"),
-        },
+    // A server that does not speak this transport just closes the connection, and
+    // bwk reads a closed connection back as an empty line, so recv_str returning
+    // Ok proves nothing. Only a JSON-RPC reply means the transport is right.
+    match serde_json::from_str::<serde_json::Value>(response.trim()) {
+        Ok(serde_json::Value::Object(_)) => Ok(()),
+        _ => Err("No electrum response from server".to_string()),
     }
+}
+
+/// Render an electrum address the way bwk expects it: the scheme rides as an
+/// `ssl://` prefix on the host (see config::parse_electrum_url).
+fn electrum_url(host: &str, port: u16, scheme: ElectrumScheme) -> String {
+    match scheme {
+        ElectrumScheme::Ssl => format!("ssl://{host}:{port}"),
+        ElectrumScheme::Tcp => format!("{host}:{port}"),
+    }
+}
+
+/// Test Electrum server connectivity with a server.version handshake.
+///
+/// When the address states a scheme it is used as-is, otherwise plaintext then
+/// SSL are tried and the first to answer wins. Returns the URL that connected,
+/// so the caller can store the resolved scheme.
+pub fn test_electrum(address: String) -> ffi::ConnectionResult {
+    log::info!("test_electrum()");
+
+    let err_conn = |error: String| ffi::ConnectionResult {
+        is_ok: false,
+        error,
+        url: String::new(),
+    };
+
+    let (host, port, scheme) = match bwk_sp::bwk::parse_electrum_url(&address) {
+        Ok(parsed) => parsed,
+        Err(e) => return err_conn(format!("Invalid address '{address}': {e}")),
+    };
+    let Some(host) = host else {
+        return err_conn(format!(
+            "Invalid address format '{address}': expected host:port"
+        ));
+    };
+    let Some(port) = port else {
+        // A port that is not a u16 is kept on the host rather than reported, so a
+        // leftover ':' means the port is bad and not simply missing.
+        return err_conn(match host.rsplit_once(':') {
+            Some((_, bad)) => format!("Invalid port '{bad}' in '{address}': must be 1 to 65535"),
+            None => format!("Invalid address format '{address}': expected host:port"),
+        });
+    };
+
+    // An explicit scheme is honored as-is; a bare host:port probes both.
+    let candidates: &[ElectrumScheme] = if address.contains("://") {
+        &[scheme]
+    } else {
+        &[ElectrumScheme::Tcp, ElectrumScheme::Ssl]
+    };
+
+    let mut last_error = String::new();
+    for candidate in candidates {
+        match electrum_handshake(&host, port, *candidate) {
+            Ok(()) => {
+                return ffi::ConnectionResult {
+                    is_ok: true,
+                    error: String::new(),
+                    url: electrum_url(&host, port, *candidate),
+                }
+            }
+            Err(e) => last_error = e,
+        }
+    }
+    err_conn(last_error)
 }
 
 /// Fetch default regtest infrastructure addresses from minta.pythcoiner.dev.
@@ -714,3 +757,56 @@ pub use ffi::{
     RegtestDefaults, TransactionSimulation, TransactionTemplate,
 };
 pub use sync_estimator::{new_sync_estimator, SyncEstimator};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn electrum_url_renders_scheme() {
+        assert_eq!(
+            electrum_url("host", 50002, ElectrumScheme::Ssl),
+            "ssl://host:50002"
+        );
+        assert_eq!(
+            electrum_url("host", 50001, ElectrumScheme::Tcp),
+            "host:50001"
+        );
+    }
+
+    #[test]
+    fn test_electrum_without_port_is_rejected() {
+        let result = test_electrum("electrum.pythcoiner.dev".to_string());
+        assert!(!result.is_ok);
+        assert!(result.url.is_empty());
+        assert!(
+            result.error.contains("expected host:port"),
+            "unexpected error: {}",
+            result.error
+        );
+    }
+
+    #[test]
+    fn test_electrum_reports_an_out_of_range_port() {
+        let result = test_electrum("electrum.pythcoiner.dev:500002".to_string());
+        assert!(!result.is_ok);
+        assert!(result.url.is_empty());
+        assert!(
+            result.error.contains("Invalid port '500002'"),
+            "unexpected error: {}",
+            result.error
+        );
+    }
+
+    #[test]
+    fn test_electrum_rejects_unsupported_scheme() {
+        let result = test_electrum("wss://electrum.pythcoiner.dev:443".to_string());
+        assert!(!result.is_ok);
+        assert!(result.url.is_empty());
+        assert!(
+            result.error.contains("unsupported electrum scheme"),
+            "unexpected error: {}",
+            result.error
+        );
+    }
+}

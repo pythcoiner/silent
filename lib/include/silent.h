@@ -1119,6 +1119,8 @@ struct ConnectionResult final {
   bool is_ok CXX_DEFAULT_VALUE(false);
   // Error message (empty if is_ok is true).
   ::rust::String error;
+  // Normalized URL that successfully connected (with scheme).
+  ::rust::String url;
 
   using IsRelocatable = ::std::true_type;
 };

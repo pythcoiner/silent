@@ -938,7 +938,7 @@ fn validate_psbt_via_electrum(
     let host = host.ok_or("Invalid electrum URL: missing host")?;
     let port = port.ok_or("Invalid electrum URL: missing port")?;
 
-    let mut client = bwk_sp::bwk::bwk_electrum::client::Client::new_local(&host, port)
+    let mut client = bwk_sp::bwk::bwk_electrum::client::Client::new(&host, port)
         .map_err(|e| format!("Connection to {electrum_url} failed: {e}"))?;
 
     let mut reused_outputs = Vec::new();
@@ -1057,11 +1057,13 @@ fn broadcast_via_electrum(electrum_url: &str, tx: &bitcoin::Transaction) -> Resu
         return Err("Electrum server address not configured".to_string());
     }
 
-    let (host, port) = crate::config::parse_electrum_url(electrum_url);
+    let (host, port, scheme) = bwk_sp::bwk::parse_electrum_url(electrum_url)
+        .map_err(|e| format!("Invalid electrum URL '{electrum_url}': {e}"))?;
     let host = host.ok_or("Invalid electrum URL: missing host")?;
     let port = port.ok_or("Invalid electrum URL: missing port")?;
 
-    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_tcp(&host, port);
+    let ssl = matches!(scheme, bwk_sp::bwk::ElectrumScheme::Ssl);
+    let mut client = bwk_sp::bwk::bwk_electrum::raw_client::Client::new_ssl_maybe(&host, port, ssl);
     client
         .try_connect(Some(Duration::from_secs(10)))
         .map_err(|e| {
