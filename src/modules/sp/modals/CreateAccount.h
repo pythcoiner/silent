@@ -52,7 +52,7 @@ protected:
     void doConnect();
     void view();
     void applyNetworkDefaults();
-    void applyRegtestDefaults();
+    auto applyRegtestDefaults() -> bool;
     void invalidateBackendTest();
     void invalidateElectrumTest();
     auto generateMnemonic() -> QString;

@@ -238,34 +238,38 @@ void CreateAccount::onBackendInfoReady(BackendInfo info) {
 }
 
 void CreateAccount::applyNetworkDefaults() {
+    bool applied = false;
     switch (static_cast<Network>(m_network_combo->currentData().toInt())) {
     case Network::Regtest:
-        applyRegtestDefaults();
+        applied = applyRegtestDefaults();
         break;
     case Network::Bitcoin:
-        // Prefilled but left untested: only a passing test resolves the electrum
-        // scheme, and the create button gates on it anyway.
         m_blindbit_input->setText(MAINNET_BLINDBIT_URL);
         m_electrum_input->setText(MAINNET_ELECTRUM_URL);
+        applied = true;
         break;
     default:
         break;
     }
+
+    if (applied) {
+        // Test the defaults rather than assume them: the marks then reflect a real
+        // result, and only a passing electrum test resolves the scheme that gets
+        // saved.
+        onTestBackend();
+        onTestElectrum();
+    }
 }
 
-void CreateAccount::applyRegtestDefaults() {
+auto CreateAccount::applyRegtestDefaults() -> bool {
     auto defaults = AppController::get()->regtestDefaults();
     if (!defaults.has_value()) {
-        return;
+        return false;
     }
 
     m_blindbit_input->setText(defaults.value().blindbit_url);
     m_electrum_input->setText(defaults.value().electrum_url);
-    m_backend_verified = true;
-    m_electrum_verified = true;
-    m_backend_status->setState(ValidationMark::State::Valid);
-    m_electrum_status->setState(ValidationMark::State::Valid);
-    onUpdateCreateButton();
+    return true;
 }
 
 void CreateAccount::invalidateBackendTest() {
